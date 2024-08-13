@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>对话UI</title>
+    <link rel="stylesheet" href="${styleUri}">
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-box"></div>
+        <button id="clear-thread-btn">清除对话</button>
+        <input type="text" id="user-input" placeholder="输入信息...">
+        <button id="send-btn">发送</button>
+    </div>
+    <script>
+        window.threadId = '${threadId}';
+    </script>
+    <script src="${scriptUri}"></script>
+</body>
+</html>
