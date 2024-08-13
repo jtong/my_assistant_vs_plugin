@@ -5,9 +5,8 @@ class ListViewProvider {
         this._onDidChangeTreeData = new vscode.EventEmitter();
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
         this.data = [
-            { label: 'Chat 1', threadId: 'thread1' },
-            { label: 'Chat 2', threadId: 'thread2' },
-            { label: 'Chat 3', threadId: 'thread3' }
+            { label: 'Chat 1', threadId: 'thread_1' },
+            { label: 'Chat 2', threadId: 'thread_2' }
         ];
     }
 

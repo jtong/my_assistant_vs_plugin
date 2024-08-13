@@ -20,7 +20,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我这个script.js是从以前的单页应用中考过来的，我希望在vscode中实现类似服务端的效果，而在webview里扮演前端。首先这个获得threadId，我不知道怎么获得，我希望还是在window.onload的时候获得。
+    我希望点击send-btn或在user-input敲回车是可以更新消息列表的，但是目前会报错。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

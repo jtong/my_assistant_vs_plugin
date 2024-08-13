@@ -1,10 +1,13 @@
+// chatViewProvider.js
 const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
+const ThreadRepository = require('./threadRepository');
 
 class ChatViewProvider {
   constructor(extensionUri) {
     this._extensionUri = extensionUri;
+    this.threadRepository = new ThreadRepository();
   }
 
   getWebviewContent(webview, threadId) {
@@ -19,6 +22,22 @@ class ChatViewProvider {
     htmlContent = htmlContent.replace('${threadId}', threadId);
 
     return htmlContent;
+  }
+
+  getThread(threadId) {
+    return this.threadRepository.getThread(threadId);
+  }
+
+  getThreadMessages(threadId) {
+    return this.threadRepository.getThreadMessages(threadId);
+  }
+
+  addMessage(threadId, message) {
+    this.threadRepository.addMessage(threadId, message);
+  }
+
+  updateMessage(threadId, messageId, updates) {
+    this.threadRepository.updateMessage(threadId, messageId, updates);
   }
 }
 
