@@ -5,9 +5,9 @@ const path = require('path');
 const ThreadRepository = require('./threadRepository');
 
 class ChatViewProvider {
-  constructor(extensionUri) {
+  constructor(extensionUri, threadRepository) {
     this._extensionUri = extensionUri;
-    this.threadRepository = new ThreadRepository();
+    this.threadRepository = threadRepository;
   }
 
   getWebviewContent(webview, threadId) {

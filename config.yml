@@ -20,7 +20,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望点击send-btn或在user-input敲回车是可以更新消息列表的，但是目前会报错。
+    我希望vs插件这边接到消息后要有一个专门的类处理这些消息，这样我就可以通过实现子类来扩展各种不同的处理方法，比如外接一个Agent或者发送到后台。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

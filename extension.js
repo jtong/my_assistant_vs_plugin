@@ -2,13 +2,17 @@ const vscode = require('vscode');
 const path = require('path');
 const ChatViewProvider = require('./chatViewProvider');
 const ListViewProvider = require('./listViewProvider');
+const MessageHandler = require('./messageHandler');
+const ThreadRepository = require('./threadRepository');
 
 // Object to store open chat panels
 const openChatPanels = {};
 
 function activate(context) {
-  const chatProvider = new ChatViewProvider(context.extensionUri);
+  const threadRepository = new ThreadRepository();
+  const chatProvider = new ChatViewProvider(context.extensionUri, threadRepository);
   const listProvider = new ListViewProvider();
+  const messageHandler = new MessageHandler(threadRepository);
 
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('chatList', listProvider)
@@ -32,42 +36,37 @@ function activate(context) {
 
         panel.webview.html = chatProvider.getWebviewContent(panel.webview, threadId);
 
-        panel.webview.onDidReceiveMessage(message => {
+        panel.webview.onDidReceiveMessage(async message => {
+          let thread = chatProvider.getThread(message.threadId);
           switch (message.type) {
             case 'getMessages':
-              const thread = chatProvider.getThread(message.threadId);
               panel.webview.postMessage({ type: 'loadThread', thread });
               break;
             case 'sendMessage':
-              const newMessage = {
-                id: message.messageId,
-                sender: 'user',
-                text: message.message,
-                timestamp: Date.now(),
-                threadId: message.threadId,
-                formSubmitted: false
-              };
-              chatProvider.addMessage(message.threadId, newMessage);
-              
-              // 模拟机器人回复
-              const botReply = {
-                id: 'bot_' + message.messageId,
+              const response = messageHandler.handleMessage(thread, message.message);
+
+              // 添加bot回复到线程
+              const botMessage = {
+                id: 'bot_' + Date.now(),
                 sender: 'bot',
-                text: '回复: ' + message.message,
+                text: response.getFullMessage(),
                 isHtml: false,
                 timestamp: Date.now(),
                 threadId: message.threadId,
                 formSubmitted: false
               };
-              chatProvider.addMessage(message.threadId, botReply);
-              
+              threadRepository.addMessage(message.threadId, botMessage);
+
               // 刷新webview中的消息
-              const updatedThread = chatProvider.getThread(message.threadId);
+              const updatedThread = threadRepository.getThread(message.threadId);
               panel.webview.postMessage({ type: 'loadThread', thread: updatedThread });
+
+              // 如果需要流式输出
+              // for await (const chunk of response.getStream()) {
+              //   panel.webview.postMessage({ type: 'streamResponse', chunk });
+              // }
               break;
-            case 'updateMessage':
-              chatProvider.updateMessage(message.threadId, message.messageId, message.updates);
-              break;
+            // 处理其他类型的消息...
           }
         });
 
@@ -81,7 +80,7 @@ function activate(context) {
   );
 }
 
-function deactivate() {}
+function deactivate() { }
 
 module.exports = {
   activate,
