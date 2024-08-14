@@ -8,7 +8,9 @@
 	"engines": {
 		"vscode": "^1.74.0"
 	},
-	"activationEvents": ["*"],
+	"activationEvents": [
+		"*"
+	],
 	"categories": [
 		"Machine Learning"
 	],
@@ -18,16 +20,18 @@
 		"chatViewProvider.js",
 		"listViewProvider.js",
 		"chat-view.html"
-	  ],
+	],
 	"contributes": {
 		"configuration": {
 			"title": "My Assistant Configuration",
-			"properties": {
-				
-			}
+			"properties": {}
 		},
 		"commands": [
-			
+			{
+				"command": "myAssistant.newChat",
+				"title": "New Chat",
+				"icon": "$(plus)"
+			}
 		],
 		"viewsContainers": {
 			"activitybar": [
@@ -41,14 +45,25 @@
 		"views": {
 			"chatSidebar": [
 				{
-				  "id": "chatList",
-				  "name": "Chat List",
-				  "type": "tree"
+					"id": "chatList",
+					"name": "Chat List",
+					"type": "tree"
+				},
+				{
+					"id": "agentList",
+					"name": "Available Agents",
+					"type": "tree"
 				}
-			  ]
+			]
 		},
 		"menus": {
-			
+			"view/title": [
+				{
+					"command": "myAssistant.newChat",
+					"when": "view == chatList",
+					"group": "navigation"
+				}
+			]
 		}
 	},
 	"scripts": {

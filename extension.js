@@ -6,27 +6,69 @@ const ListViewProvider = require('./listViewProvider');
 const MessageHandler = require('./messageHandler');
 const ThreadRepository = require('./threadRepository');
 const AgentLoader = require('./agentLoader');
+const AgentViewProvider = require('./agentViewProvider');
+
 
 // Object to store open chat panels
 const openChatPanels = {};
 
 function activate(context) {
-    // 获取当前打开的工作区文件夹路径
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders) {
-      vscode.window.showErrorMessage('No workspace folder open');
-      return;
-    }
-    const projectRoot = workspaceFolders[0].uri.fsPath;
+  // 获取当前打开的工作区文件夹路径
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  if (!workspaceFolders) {
+    vscode.window.showErrorMessage('No workspace folder open');
+    return;
+  }
+  const projectRoot = workspaceFolders[0].uri.fsPath;
   const agentLoader = new AgentLoader(path.join(projectRoot, 'ai_helper', 'agent', 'agents.json'));
 
   const threadRepository = new ThreadRepository(agentLoader);
   const chatProvider = new ChatViewProvider(context.extensionUri, threadRepository);
-  const listProvider = new ListViewProvider();
+  const listProvider = new ListViewProvider(threadRepository);
   const messageHandler = new MessageHandler(threadRepository, agentLoader);
+  const agentViewProvider = new AgentViewProvider(agentLoader);
+  
+  context.subscriptions.push(
+    vscode.window.registerTreeDataProvider('chatList', listProvider),
+    vscode.window.registerTreeDataProvider('agentList', agentViewProvider)
+  );
 
   context.subscriptions.push(
-    vscode.window.registerTreeDataProvider('chatList', listProvider)
+    vscode.window.createTreeView('chatList', {
+      treeDataProvider: listProvider,
+      showCollapseAll: false,
+      canSelectMany: false
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('myAssistant.newChat', async () => {
+      const chatName = await vscode.window.showInputBox({
+        prompt: "Enter a name for the new chat"
+      });
+      if (chatName) {
+        const agents = agentLoader.getAgentsList();
+        const agentName = await vscode.window.showQuickPick(
+          agents.map(agent => agent.name),
+          { placeHolder: "Select an agent for this chat" }
+        );
+        if (agentName) {
+          const newThreadId = 'thread_' + Date.now();
+          threadRepository.createThread(newThreadId, chatName, agentName);
+          listProvider.refresh();
+          vscode.commands.executeCommand('myAssistant.openChat', chatName, newThreadId);
+        }
+      }
+    })
+  );
+
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('myAssistant.selectAgent', (agentName) => {
+      // Handle agent selection
+      vscode.window.showInformationMessage(`Selected agent: ${agentName}`);
+      // You can add logic here to change the current agent for new chats
+    })
   );
 
   context.subscriptions.push(

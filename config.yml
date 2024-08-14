@@ -20,8 +20,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    基于当前的代码，我希望给我准备一个测试用的Agent，可以被AgentLoader加载。而且agents.json是基于当前项目文件夹下ai_helper/agent目录下。
-    所有ThreadRepository的存量threads都指定了这个测试用的Agent。这个测试用的Agent的行为和现在MessageHandler里的回应行为一样就可以了。
+    之前还能工作，点在点击chat List 的item，只会报找不到“myAssistant.openChat”命令。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

@@ -24,6 +24,13 @@ class AgentLoader {
     this.loadedAgents[name] = agent;
     return agent;
   }
+
+  getAgentsList() {
+    return this.config.agents.map(agent => ({
+      name: agent.name,
+      path: agent.path
+    }));
+  }
 }
 
 module.exports = AgentLoader;

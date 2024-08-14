@@ -5,6 +5,7 @@ class ThreadRepository {
       this.threads = {
         'thread_1': {
           id: 'thread_1',
+          name: 'thread 1',
           agent: 'testAgent',
           messages: [
             {
@@ -28,6 +29,7 @@ class ThreadRepository {
         },
         'thread_2': {
             id: 'thread_2',
+            name: 'thread 2',
             agent: 'testAgent',
             messages: [
               {
@@ -53,14 +55,15 @@ class ThreadRepository {
       };
     }
 
-    createThread(threadId, agentName = 'testAgent') {
+    createThread(threadId, name, agentName) {
         this.threads[threadId] = {
           id: threadId,
+          name: name,
           agent: agentName,
           messages: []
         };
         return this.threads[threadId];
-    }
+      }
   
     getThread(threadId) {
       return this.threads[threadId];
@@ -91,6 +94,10 @@ class ThreadRepository {
         }
       }
     }
+
+    getAllThreads() {
+        return Object.values(this.threads);
+      }
   }
   
   module.exports = ThreadRepository;
