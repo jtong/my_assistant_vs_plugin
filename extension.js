@@ -1,18 +1,29 @@
+// extension.js
 const vscode = require('vscode');
 const path = require('path');
 const ChatViewProvider = require('./chatViewProvider');
 const ListViewProvider = require('./listViewProvider');
 const MessageHandler = require('./messageHandler');
 const ThreadRepository = require('./threadRepository');
+const AgentLoader = require('./agentLoader');
 
 // Object to store open chat panels
 const openChatPanels = {};
 
 function activate(context) {
-  const threadRepository = new ThreadRepository();
+    // 获取当前打开的工作区文件夹路径
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) {
+      vscode.window.showErrorMessage('No workspace folder open');
+      return;
+    }
+    const projectRoot = workspaceFolders[0].uri.fsPath;
+  const agentLoader = new AgentLoader(path.join(projectRoot, 'ai_helper', 'agent', 'agents.json'));
+
+  const threadRepository = new ThreadRepository(agentLoader);
   const chatProvider = new ChatViewProvider(context.extensionUri, threadRepository);
   const listProvider = new ListViewProvider();
-  const messageHandler = new MessageHandler(threadRepository);
+  const messageHandler = new MessageHandler(threadRepository, agentLoader);
 
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('chatList', listProvider)

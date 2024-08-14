@@ -20,7 +20,8 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望vs插件这边接到消息后要有一个专门的类处理这些消息，这样我就可以通过实现子类来扩展各种不同的处理方法，比如外接一个Agent或者发送到后台。
+    基于当前的代码，我希望给我准备一个测试用的Agent，可以被AgentLoader加载。而且agents.json是基于当前项目文件夹下ai_helper/agent目录下。
+    所有ThreadRepository的存量threads都指定了这个测试用的Agent。这个测试用的Agent的行为和现在MessageHandler里的回应行为一样就可以了。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

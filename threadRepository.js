@@ -1,10 +1,11 @@
 // threadRepository.js
 class ThreadRepository {
-    constructor() {
+    constructor(agentLoader) {
+      this.agentLoader = agentLoader;
       this.threads = {
         'thread_1': {
           id: 'thread_1',
-          agent: 'botAgent',
+          agent: 'testAgent',
           messages: [
             {
               id: 'msg_1',
@@ -27,7 +28,7 @@ class ThreadRepository {
         },
         'thread_2': {
             id: 'thread_2',
-            agent: 'botAgent',
+            agent: 'testAgent',
             messages: [
               {
                 id: 'msg_1',
@@ -50,6 +51,15 @@ class ThreadRepository {
           }
         // 可以添加更多线程
       };
+    }
+
+    createThread(threadId, agentName = 'testAgent') {
+        this.threads[threadId] = {
+          id: threadId,
+          agent: agentName,
+          messages: []
+        };
+        return this.threads[threadId];
     }
   
     getThread(threadId) {
