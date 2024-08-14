@@ -20,7 +20,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    之前还能工作，点在点击chat List 的item，只会报找不到“myAssistant.openChat”命令。
+    我希望创建chat过程中，选择agent的时候，优先选中我在available agent view中已经选中的agent，用户只需要敲回车就行了。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
