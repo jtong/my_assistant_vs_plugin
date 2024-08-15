@@ -1,6 +1,6 @@
 // openai_processor.js
 const OpenAI = require('openai');
-const {HttpsProxyAgent} = require('https-proxy-agent');
+const { HttpsProxyAgent } = require('https-proxy-agent');
 
 
 class OpenAIProcessor {
@@ -8,7 +8,7 @@ class OpenAIProcessor {
         let config = {
             apiKey: apiKey,
         };
-        if(process.env.https_proxy){
+        if (process.env.https_proxy) {
             config.httpAgent = new HttpsProxyAgent(process.env.https_proxy);
         }
         this.openai = new OpenAI(config);

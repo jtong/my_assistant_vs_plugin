@@ -25,7 +25,7 @@ class OpenAIProcessorInstance {
         return this.simulatedOpenAIProcessors[key];
     }
 
-    reset(){
+    reset() {
         Object.keys(this.openAIProcessors).forEach(key => delete this.openAIProcessors[key]);
         Object.keys(this.simulatedOpenAIProcessors).forEach(key => delete this.simulatedOpenAIProcessors[key]);
     }

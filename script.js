@@ -49,7 +49,7 @@ window.addEventListener('message', event => {
             break;
         case 'updateBotMessage':
             updateBotMessage(message.messageId, message.text);
-            break;    
+            break;
     }
 });
 
@@ -99,9 +99,9 @@ function displayBotMessage(message) {
             buttonElement.textContent = buttonName;
             buttonElement.disabled = message.additionalData.buttons[buttonName];
             buttonElement.addEventListener('click', function () {
-                const actionAttributes = { 
+                const actionAttributes = {
                     action: buttonName,
-                    value: true 
+                    value: true
                 };
                 sendMessage(`动作执行: ${buttonName}`, actionAttributes);
             });
@@ -120,7 +120,7 @@ function displayBotMessage(message) {
 function sendMessageHandler() {
     const userInput = document.getElementById('user-input');
     const userInput_value = userInput.value.trim();
-    
+
     if (userInput_value) {
         const messageId = 'msg_' + Math.random().toString(36).substr(2, 9);
         const message = {
@@ -135,7 +135,7 @@ function sendMessageHandler() {
         userInput.value = '';
     }
 }
- 
+
 
 function sendMessage(text, actionAttributes = null) {
     const messageId = 'msg_' + Math.random().toString(36).substr(2, 9);

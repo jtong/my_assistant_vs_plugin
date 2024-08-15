@@ -52,7 +52,7 @@ class SimulatedOpenAIProcessorDecorator {
 
             // 根据 isRecording 决定是否记录请求和响应
             if (isRecording) {
-                this.recordings.push({input: prompt, output: response});
+                this.recordings.push({ input: prompt, output: response });
             }
 
             return response;
@@ -78,7 +78,7 @@ class SimulatedOpenAIProcessorDecorator {
 
             // 根据 isRecording 决定是否记录请求和响应
             if (isRecording) {
-                this.recordings.push({input: inputString, output: outputString});
+                this.recordings.push({ input: inputString, output: outputString });
             }
 
             return outputString;
@@ -96,7 +96,7 @@ class SimulatedOpenAIProcessorDecorator {
         }
 
         if (!fs.existsSync(this.recordPath)) {
-            fs.mkdirSync(this.recordPath, {recursive: true});
+            fs.mkdirSync(this.recordPath, { recursive: true });
         }
 
         this.recordings.forEach((recording, index) => {
