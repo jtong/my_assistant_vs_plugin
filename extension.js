@@ -115,19 +115,43 @@ function activate(context) {
               panel.webview.postMessage({ type: 'loadThread', thread });
               break;
             case 'sendMessage':
-              const response = messageHandler.handleMessage(thread, message.message);
-
+              const response = await messageHandler.handleMessage(thread, message.message);
               // 添加bot回复到线程
-              const botMessage = {
-                id: 'bot_' + Date.now(),
-                sender: 'bot',
-                text: response.getFullMessage(),
-                isHtml: false,
-                timestamp: Date.now(),
-                threadId: message.threadId,
-                formSubmitted: false
-              };
-              threadRepository.addMessage(message.threadId, botMessage);
+              if(!response.isStream()){
+                const botMessage = {
+                    id: 'bot_' + Date.now(),
+                    sender: 'bot',
+                    text: response.getFullMessage(),
+                    isHtml: false,
+                    timestamp: Date.now(),
+                    threadId: message.threadId,
+                    formSubmitted: false
+                  };
+                  threadRepository.addMessage(message.threadId, botMessage);
+              }else {
+                const botMessage = {
+                    id: 'bot_' + Date.now(),
+                    sender: 'bot',
+                    text: '',
+                    isHtml: false,
+                    timestamp: Date.now(),
+                    threadId: message.threadId,
+                    formSubmitted: false
+                };
+                threadRepository.addMessage(message.threadId, botMessage);
+    
+                // 流式输出
+                for await (const chunk of response.getStream()) {
+                    botMessage.text += chunk;
+                    panel.webview.postMessage({ 
+                        type: 'updateBotMessage', 
+                        messageId: botMessage.id, 
+                        text: botMessage.text 
+                    });
+                }
+                // 更新完整的bot回复
+                threadRepository.updateMessage(message.threadId, botMessage.id, { text: botMessage.text });
+              }
 
               // 刷新webview中的消息
               const updatedThread = threadRepository.getThread(message.threadId);

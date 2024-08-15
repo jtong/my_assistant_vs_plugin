@@ -47,8 +47,19 @@ window.addEventListener('message', event => {
         case 'loadThread':
             displayThread(message.thread);
             break;
+        case 'updateBotMessage':
+            updateBotMessage(message.messageId, message.text);
+            break;    
     }
 });
+
+function updateBotMessage(messageId, text) {
+    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (messageElement) {
+        messageElement.textContent = text;
+    }
+}
+
 
 function displayThread(thread) {
     const chatBox = document.getElementById('chat-box');

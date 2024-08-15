@@ -5,7 +5,8 @@ project:
       - target
       - "*/.idea"
       - .mvn
-      - node_modules
+      - node_modules/@(.*)
+      - node_modules/!(ai-agent-response)
       - ai_helper
       - "**/spike"
       - ".git"
@@ -15,12 +16,14 @@ project:
       - "**/.DS_Store"
       - "**/LICENSE.txt"
       - "**/package-lock.json"
-      - repo_to_git.yml
       - media
+      - "*/test"
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望创建chat过程中，选择agent的时候，优先选中我在available agent view中已经选中的agent，用户只需要敲回车就行了。
+    我希望open_client中的OpenAIProcessor支持返回流式输出。
+    我需要的是OpenAIProcessor返回的是ai-agent-response里的Response，你可以修改Response的实现来实现流式响应的效果。
+    我需要客户端通过Response来实现流式输出。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
