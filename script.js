@@ -51,7 +51,7 @@ window.addEventListener('message', event => {
             displayUserMessage(message.message);
             break;    
         case 'addBotMessage':
-            displayBotMessage(message.message);
+            displayBotMessage(message.message, message.isStreaming);
             break;    
         case 'updateBotMessage':
             updateBotMessage(message.messageId, message.text);
@@ -75,21 +75,27 @@ function displayUserMessage(message) {
 function updateBotMessage(messageId, text) {
     const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
     if (messageElement) {
-        messageElement.textContent = text;
+        messageElement.textContent += text; // 使用 += 来累加文本
         messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
 }
 
-function displayBotMessage(message) {
+function displayBotMessage(message, isStreaming = false) {
     const chatBox = document.getElementById('chat-box');
     const messageElement = document.createElement('div');
     messageElement.classList.add(message.sender);
     messageElement.setAttribute('data-message-id', message.id);
 
-    if (message.isHtml) {
-        messageElement.innerHTML = message.text;
+    if (isStreaming) {
+        // 如果是流式消息，初始化为空
+        messageElement.textContent = '';
     } else {
-        messageElement.textContent = message.text;
+        // 如果不是流式消息，使用原来的逻辑
+        if (message.isHtml) {
+            messageElement.innerHTML = message.text;
+        } else {
+            messageElement.textContent = message.text;
+        }
     }
 
     chatBox.appendChild(messageElement);

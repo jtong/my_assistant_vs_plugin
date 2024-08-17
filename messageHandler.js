@@ -6,11 +6,10 @@ class MessageHandler {
         this.agentLoader = agentLoader
     }
 
-    async handleMessage(thread, userMessage) {
-        const updatedThread = this.addUserMessageToThread(thread, userMessage);
+    async handleMessage(thread) {
 
         const agent = this.agentLoader.loadAgent(thread.agent);
-        const response = await agent.generateReply(updatedThread);
+        const response = await agent.generateReply(thread);
 
         return response;
     }

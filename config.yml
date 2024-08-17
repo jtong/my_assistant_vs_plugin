@@ -21,7 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    目前这个发了消息之后，当返回的是stream的response的时候，html上不会流式展示，非要等所有的都输出完才一次更新，请修正这个bug。
+    目前流式显示的时候，只显示了chunk，但我希望显示的是已经返回的所有chunk的拼接message。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

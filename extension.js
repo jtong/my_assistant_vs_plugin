@@ -115,15 +115,8 @@ function activate(context) {
                             panel.webview.postMessage({ type: 'loadThread', thread });
                             break;
                         case 'sendMessage':
-                            const userMessage = {
-                                id: message.messageId,
-                                sender: 'user',
-                                text: message.message,
-                                timestamp: Date.now(),
-                                threadId: message.threadId,
-                                formSubmitted: false
-                            };
-                            threadRepository.addMessage(message.threadId, userMessage);
+                            const updatedThread = messageHandler.addUserMessageToThread(thread, message.message)
+                            const userMessage = updatedThread.messages[updatedThread.messages.length-1];
                             panel.webview.postMessage({
                                 type: 'addUserMessage',
                                 message: userMessage
