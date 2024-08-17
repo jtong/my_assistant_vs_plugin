@@ -21,7 +21,8 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    目前流式显示的时候，只显示了chunk，但我希望显示的是已经返回的所有chunk的拼接message。
+    我希望创建chat过程中，选择agent的时候，优先选中我在available agent view中已经选中的agent，用户只需要敲回车就行了。
+    但实际上，不管你选了哪个agent，创建的时候都默认选中第一个，这个不是我期望的效果。修正这个bug。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

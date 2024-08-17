@@ -41,7 +41,6 @@ function activate(context) {
         })
     );
 
-    let currentlySelectedAgent = null;
 
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.newChat', async () => {
@@ -50,24 +49,10 @@ function activate(context) {
             });
             if (chatName) {
                 const agents = agentLoader.getAgentsList();
-                let agentName;
-
-                if (currentlySelectedAgent && agents.some(agent => agent.name === currentlySelectedAgent)) {
-                    // If there's a currently selected agent, use it as the default
-                    agentName = await vscode.window.showQuickPick(
-                        agents.map(agent => agent.name),
-                        {
-                            placeHolder: "Select an agent for this chat",
-                            default: currentlySelectedAgent
-                        }
-                    );
-                } else {
-                    // If no agent is selected or the selected agent is not in the list, show the regular picker
-                    agentName = await vscode.window.showQuickPick(
-                        agents.map(agent => agent.name),
-                        { placeHolder: "Select an agent for this chat" }
-                    );
-                }
+                let agentName = await vscode.window.showQuickPick(
+                    agents.map(agent => agent.name),
+                    { placeHolder: "Select an agent for this chat" }
+                );
 
                 if (agentName) {
                     const newThreadId = 'thread_' + Date.now();
@@ -79,16 +64,6 @@ function activate(context) {
         })
     );
 
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('myAssistant.selectAgent', (agentName) => {
-            // Handle agent selection
-            //vscode.window.showInformationMessage(`Selected agent: ${agentName}`);
-            // You can add logic here to change the current agent for new chats
-            currentlySelectedAgent = agentName;
-
-        })
-    );
 
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.openChat', (chatName, threadId) => {
@@ -116,7 +91,7 @@ function activate(context) {
                             break;
                         case 'sendMessage':
                             const updatedThread = messageHandler.addUserMessageToThread(thread, message.message)
-                            const userMessage = updatedThread.messages[updatedThread.messages.length-1];
+                            const userMessage = updatedThread.messages[updatedThread.messages.length - 1];
                             panel.webview.postMessage({
                                 type: 'addUserMessage',
                                 message: userMessage
