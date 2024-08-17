@@ -1,3 +1,5 @@
+let isBotResponding = false;
+
 document.getElementById('send-btn').addEventListener('click', sendMessageHandler);
 document.getElementById('user-input').addEventListener('keydown', function (event) {
     // 当用户按下回车键且没有按住Shift键时发送消息
@@ -9,23 +11,6 @@ document.getElementById('user-input').addEventListener('keydown', function (even
 
 
 
-document.getElementById('clear-thread-btn').addEventListener('click', clearThreadMessages);
-function clearThreadMessages() {
-    if (!window.threadId) {
-        alert('没有选定的对话线程！');
-        return;
-    }
-
-    if (confirm('确定要清除当前对话的所有消息吗？')) {
-        fetch(`/clear-thread/${window.threadId}`, { method: 'DELETE' })
-            .then(response => {
-                if (response.ok) {
-                    loadThread(window.threadId); // 重新加载消息，此时应为空
-                }
-            })
-            .catch(error => console.error('清除对话时出错:', error));
-    }
-}
 
 window.onload = function () {
     const threadId = window.threadId;
@@ -55,6 +40,9 @@ window.addEventListener('message', event => {
             break;    
         case 'updateBotMessage':
             updateBotMessage(message.messageId, message.text);
+            break;
+        case 'botResponseComplete':
+            isBotResponding = false;  // 重置标志，表示 bot 回复完成
             break;
     }
 });
@@ -164,10 +152,13 @@ function displayBotMessage(message) {
 }
 
 function sendMessageHandler() {
+    if (isBotResponding) return;  // 如果 bot 正在回复，不允许发送新消息
+
     const userInput = document.getElementById('user-input');
     const userInput_value = userInput.value.trim();
 
     if (userInput_value) {
+        isBotResponding = true;  // 设置标志，表示 bot 开始回复
         const messageId = 'msg_' + Math.random().toString(36).substr(2, 9);
         const message = {
             type: 'sendMessage',

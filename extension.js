@@ -141,18 +141,11 @@ function activate(context) {
                                 }
                                 // 更新完整的bot回复
                                 threadRepository.updateMessage(message.threadId, botMessage.id, { text: botMessage.text });
-
-                                // 刷新webview中的消息
-                                // const updatedThread = threadRepository.getThread(message.threadId);
-                                // panel.webview.postMessage({ type: 'loadThread', thread: updatedThread });
-
-                                // 如果需要流式输出
-                                // for await (const chunk of response.getStream()) {
-                                //   panel.webview.postMessage({ type: 'streamResponse', chunk });
-                                // }
-                                break;
-                                // 处理其他类型的消息...
                             }
+                            panel.webview.postMessage({
+                                type: 'botResponseComplete'
+                            });
+                            break;
                     }
                 });
 

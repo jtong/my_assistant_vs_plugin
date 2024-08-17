@@ -30,7 +30,7 @@ class ThreadRepository {
         'thread_2': {
             id: 'thread_2',
             name: 'thread 2',
-            agent: 'testAgent',
+            agent: 'fakeStreamAgent',
             messages: [
               {
                 id: 'msg_1',
