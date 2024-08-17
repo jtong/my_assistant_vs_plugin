@@ -20,9 +20,11 @@ function activate(context) {
         return;
     }
     const projectRoot = workspaceFolders[0].uri.fsPath;
+    const threadsStoragePath = path.join(projectRoot, `ai_helper/agent/memory_repo/threads`);
+
     const agentLoader = new AgentLoader(path.join(projectRoot, 'ai_helper', 'agent', 'agents.json'));
 
-    const threadRepository = new ThreadRepository(agentLoader);
+    const threadRepository = new ThreadRepository(agentLoader, threadsStoragePath);
     const chatProvider = new ChatViewProvider(context.extensionUri, threadRepository);
     const listProvider = new ListViewProvider(threadRepository);
     const messageHandler = new MessageHandler(threadRepository, agentLoader);
@@ -96,7 +98,7 @@ function activate(context) {
                                 type: 'addUserMessage',
                                 message: userMessage
                             });
-                            const response = await messageHandler.handleMessage(thread, message.message);
+                            const response = await messageHandler.handleMessage(updatedThread, message.message);
 
                             // 添加bot回复到线程
                             if (!response.isStream()) {

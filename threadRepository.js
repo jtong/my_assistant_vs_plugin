@@ -1,103 +1,113 @@
 // threadRepository.js
+const fs = require('fs');
+const path = require('path');
+
 class ThreadRepository {
-    constructor(agentLoader) {
-      this.agentLoader = agentLoader;
-      this.threads = {
-        'thread_1': {
-          id: 'thread_1',
-          name: 'thread 1',
-          agent: 'testAgent',
-          messages: [
-            {
-              id: 'msg_1',
-              sender: 'user',
-              text: '你好',
-              timestamp: 1615000000000,
-              formSubmitted: false,
-              threadId: 'thread_1'
-            },
-            {
-              id: 'msg_2',
-              sender: 'bot',
-              text: '回复: 你好！有什么可以帮到你的？',
-              isHtml: false,
-              timestamp: 1615000020000,
-              threadId: 'thread_1'
-            },
-            // ... 其他消息
-          ]
-        },
-        'thread_2': {
-            id: 'thread_2',
-            name: 'thread 2',
-            agent: 'fakeStreamAgent',
-            messages: [
-              {
-                id: 'msg_1',
-                sender: 'user',
-                text: '你好',
-                timestamp: 1615000000000,
-                formSubmitted: false,
-                threadId: 'thread_2'
-              },
-              {
-                id: 'msg_2',
-                sender: 'bot',
-                text: '回复: 你好！有什么可以帮到你的？',
-                isHtml: false,
-                timestamp: 1615000020000,
-                threadId: 'thread_2'
-              },
-              // ... 其他消息
-            ]
-          }
-        // 可以添加更多线程
-      };
+    constructor(agentLoader, storagePath) {
+        this.agentLoader = agentLoader;
+        this.storagePath = storagePath;
+        this.indexPath = path.join(this.storagePath, 'threads.json');
+        if (!fs.existsSync(this.storagePath)) {
+            fs.mkdirSync(this.storagePath, { recursive: true });
+        }
+        if (!fs.existsSync(this.indexPath)) {
+            this.saveIndex({});
+        }
+    }
+
+    getThreadFilePath(threadId) {
+        return path.join(this.storagePath, threadId, 'thread.json');
+    }
+
+    loadIndex() {
+        return JSON.parse(fs.readFileSync(this.indexPath, 'utf8'));
+    }
+
+    saveIndex(index) {
+        fs.writeFileSync(this.indexPath, JSON.stringify(index, null, 2));
+    }
+
+    loadThread(threadId) {
+        const filePath = this.getThreadFilePath(threadId);
+        if (fs.existsSync(filePath)) {
+            return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        }
+        return null;
+    }
+
+    saveThread(thread) {
+        const threadFolder = path.join(this.storagePath, thread.id);
+        if (!fs.existsSync(threadFolder)) {
+            fs.mkdirSync(threadFolder, { recursive: true });
+        }
+        const filePath = this.getThreadFilePath(thread.id);
+        fs.writeFileSync(filePath, JSON.stringify(thread, null, 2));
+
+        // Update index
+        const index = this.loadIndex();
+        index[thread.id] = { name: thread.name, agent: thread.agent };
+        this.saveIndex(index);
     }
 
     createThread(threadId, name, agentName) {
-        this.threads[threadId] = {
-          id: threadId,
-          name: name,
-          agent: agentName,
-          messages: []
+        const newThread = {
+            id: threadId,
+            name: name,
+            agent: agentName,
+            messages: []
         };
-        return this.threads[threadId];
-      }
-  
-    getThread(threadId) {
-      return this.threads[threadId];
-    }
-  
-    getThreadMessages(threadId) {
-      const thread = this.threads[threadId];
-      return thread ? thread.messages : [];
-    }
-  
-    addMessage(threadId, message) {
-      if (!this.threads[threadId]) {
-        this.threads[threadId] = {
-          id: threadId,
-          agent: 'botAgent', // 默认代理
-          messages: []
-        };
-      }
-      this.threads[threadId].messages.push(message);
-    }
-  
-    updateMessage(threadId, messageId, updates) {
-      const thread = this.threads[threadId];
-      if (thread) {
-        const messageIndex = thread.messages.findIndex(m => m.id === messageId);
-        if (messageIndex !== -1) {
-          thread.messages[messageIndex] = { ...thread.messages[messageIndex], ...updates };
-        }
-      }
+        this.saveThread(newThread);
+        return newThread;
     }
 
-    getAllThreads() {
-        return Object.values(this.threads);
-      }
-  }
-  
-  module.exports = ThreadRepository;
+    getThread(threadId) {
+        return this.loadThread(threadId);
+    }
+
+    getThreadMessages(threadId) {
+        const thread = this.loadThread(threadId);
+        return thread ? thread.messages : [];
+    }
+
+    addMessage(threadId, message) {
+        let thread = this.loadThread(threadId);
+        if (!thread) {
+            thread = {
+                id: threadId,
+                agent: 'botAgent', // 默认代理
+                messages: []
+            };
+        }
+        thread.messages.push(message);
+        this.saveThread(thread);
+    }
+
+    updateMessage(threadId, messageId, updates) {
+        const thread = this.loadThread(threadId);
+        if (thread) {
+            const messageIndex = thread.messages.findIndex(m => m.id === messageId);
+            if (messageIndex !== -1) {
+                thread.messages[messageIndex] = { ...thread.messages[messageIndex], ...updates };
+                this.saveThread(thread);
+            }
+        }
+    }
+
+    getAllThreadsInfo() {
+        return this.loadIndex();
+    }
+
+    deleteThread(threadId) {
+        const threadFolder = path.join(this.storagePath, threadId);
+        if (fs.existsSync(threadFolder)) {
+            fs.rmdirSync(threadFolder, { recursive: true });
+        }
+
+        // Update index
+        const index = this.loadIndex();
+        delete index[threadId];
+        this.saveIndex(index);
+    }
+}
+
+module.exports = ThreadRepository;

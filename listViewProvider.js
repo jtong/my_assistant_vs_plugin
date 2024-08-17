@@ -24,8 +24,9 @@ class ListViewProvider {
     }
 
     getChildren() {
-        const threads = this.threadRepository.getAllThreads();
-        const chatItems = threads.map(thread => ({
+        const threads = this.threadRepository.getAllThreadsInfo();
+        
+        const chatItems = Object.values(threads).flatMap(thread => ({
             name: thread.name,
             id: thread.id
         }));

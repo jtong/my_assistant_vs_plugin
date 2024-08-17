@@ -21,7 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望response打印完之前，点击发送或敲击回车都不响应，无法发起第二次对话，直到打印完才可以继续对话。
+    我希望thread可以存储为文件，每个thread一个文件夹，文件夹的名字就是id的名字，然后每个thread的存储结构是一个json，存在该文件夹下，作为一个thread.json
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
