@@ -47,19 +47,59 @@ window.addEventListener('message', event => {
         case 'loadThread':
             displayThread(message.thread);
             break;
+        case 'addUserMessage':
+            displayUserMessage(message.message);
+            break;    
+        case 'addBotMessage':
+            displayBotMessage(message.message);
+            break;    
         case 'updateBotMessage':
             updateBotMessage(message.messageId, message.text);
             break;
     }
 });
 
+// 修改 displayUserMessage 函数
+function displayUserMessage(message) {
+    const chatBox = document.getElementById('chat-box');
+    const messageElement = document.createElement('div');
+    messageElement.classList.add(message.sender);
+    messageElement.textContent = message.text;
+    messageElement.setAttribute('data-message-id', message.id);
+    chatBox.appendChild(messageElement);
+    // 自动滚动到底部
+    messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+
 function updateBotMessage(messageId, text) {
     const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
     if (messageElement) {
         messageElement.textContent = text;
+        messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
 }
 
+function displayBotMessage(message) {
+    const chatBox = document.getElementById('chat-box');
+    const messageElement = document.createElement('div');
+    messageElement.classList.add(message.sender);
+    messageElement.setAttribute('data-message-id', message.id);
+
+    if (message.isHtml) {
+        messageElement.innerHTML = message.text;
+    } else {
+        messageElement.textContent = message.text;
+    }
+
+    chatBox.appendChild(messageElement);
+    // 自动滚动到底部
+    messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+    if (message.isHtml) {
+        setupForms(messageElement, message.id);
+    }
+}
 
 function displayThread(thread) {
     const chatBox = document.getElementById('chat-box');

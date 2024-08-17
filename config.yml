@@ -21,9 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望open_client中的OpenAIProcessor支持返回流式输出。
-    我需要的是OpenAIProcessor返回的是ai-agent-response里的Response，你可以修改Response的实现来实现流式响应的效果。
-    我需要客户端通过Response来实现流式输出。
+    目前这个发了消息之后，当返回的是stream的response的时候，html上不会流式展示，非要等所有的都输出完才一次更新，请修正这个bug。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

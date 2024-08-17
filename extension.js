@@ -115,7 +115,21 @@ function activate(context) {
                             panel.webview.postMessage({ type: 'loadThread', thread });
                             break;
                         case 'sendMessage':
+                            const userMessage = {
+                                id: message.messageId,
+                                sender: 'user',
+                                text: message.message,
+                                timestamp: Date.now(),
+                                threadId: message.threadId,
+                                formSubmitted: false
+                            };
+                            threadRepository.addMessage(message.threadId, userMessage);
+                            panel.webview.postMessage({
+                                type: 'addUserMessage',
+                                message: userMessage
+                            });
                             const response = await messageHandler.handleMessage(thread, message.message);
+
                             // 添加bot回复到线程
                             if (!response.isStream()) {
                                 const botMessage = {
@@ -128,6 +142,10 @@ function activate(context) {
                                     formSubmitted: false
                                 };
                                 threadRepository.addMessage(message.threadId, botMessage);
+                                panel.webview.postMessage({
+                                    type: 'addBotMessage',
+                                    message: botMessage
+                                });
                             } else {
                                 const botMessage = {
                                     id: 'bot_' + Date.now(),
@@ -139,6 +157,10 @@ function activate(context) {
                                     formSubmitted: false
                                 };
                                 threadRepository.addMessage(message.threadId, botMessage);
+                                panel.webview.postMessage({
+                                    type: 'addBotMessage',
+                                    message: botMessage
+                                });
 
                                 // 流式输出
                                 for await (const chunk of response.getStream()) {
@@ -146,23 +168,23 @@ function activate(context) {
                                     panel.webview.postMessage({
                                         type: 'updateBotMessage',
                                         messageId: botMessage.id,
-                                        text: botMessage.text
+                                        text: chunk
                                     });
                                 }
                                 // 更新完整的bot回复
                                 threadRepository.updateMessage(message.threadId, botMessage.id, { text: botMessage.text });
+
+                                // 刷新webview中的消息
+                                // const updatedThread = threadRepository.getThread(message.threadId);
+                                // panel.webview.postMessage({ type: 'loadThread', thread: updatedThread });
+
+                                // 如果需要流式输出
+                                // for await (const chunk of response.getStream()) {
+                                //   panel.webview.postMessage({ type: 'streamResponse', chunk });
+                                // }
+                                break;
+                                // 处理其他类型的消息...
                             }
-
-                            // 刷新webview中的消息
-                            const updatedThread = threadRepository.getThread(message.threadId);
-                            panel.webview.postMessage({ type: 'loadThread', thread: updatedThread });
-
-                            // 如果需要流式输出
-                            // for await (const chunk of response.getStream()) {
-                            //   panel.webview.postMessage({ type: 'streamResponse', chunk });
-                            // }
-                            break;
-                        // 处理其他类型的消息...
                     }
                 });
 
