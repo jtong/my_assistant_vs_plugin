@@ -8,7 +8,18 @@ document.getElementById('user-input').addEventListener('keydown', function (even
         sendMessageHandler();
     }
 });
+document.getElementById('retry-btn').addEventListener('click', retryMessageHandler);
 
+function retryMessageHandler() {
+    if (isBotResponding) return;  // 如果 bot 正在回复，不允许重试
+
+    isBotResponding = true;  // 设置标志，表示 bot 开始回复
+    const message = {
+        type: 'retryMessage',
+        threadId: window.threadId
+    };
+    window.vscode.postMessage(message);
+}
 
 
 
@@ -44,8 +55,22 @@ window.addEventListener('message', event => {
         case 'botResponseComplete':
             isBotResponding = false;  // 重置标志，表示 bot 回复完成
             break;
+        case 'removeLastBotMessage':
+            removeLastBotMessage();
+            break;    
     }
 });
+
+function removeLastBotMessage() {
+    const chatBox = document.getElementById('chat-box');
+    const messages = chatBox.children;
+    for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].classList.contains('bot')) {
+            chatBox.removeChild(messages[i]);
+            break;
+        }
+    }
+}
 
 // 修改 displayUserMessage 函数
 function displayUserMessage(message) {

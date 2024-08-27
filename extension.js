@@ -89,7 +89,8 @@ function activate(context) {
                     let thread = chatProvider.getThread(message.threadId);
                     switch (message.type) {
                         case 'getMessages':
-                            panel.webview.postMessage({ type: 'loadThread', thread });
+                            const postedMessages = { type: 'loadThread', thread }
+                            panel.webview.postMessage(postedMessages);
                             break;
                         case 'sendMessage':
                             const updatedThread = messageHandler.addUserMessageToThread(thread, message.message)
@@ -98,55 +99,17 @@ function activate(context) {
                                 type: 'addUserMessage',
                                 message: userMessage
                             });
-                            const response = await messageHandler.handleMessage(updatedThread, message.message);
-
-                            // 添加bot回复到线程
-                            if (!response.isStream()) {
-                                const botMessage = {
-                                    id: 'bot_' + Date.now(),
-                                    sender: 'bot',
-                                    text: response.getFullMessage(),
-                                    isHtml: false,
-                                    timestamp: Date.now(),
-                                    threadId: message.threadId,
-                                    formSubmitted: false
-                                };
-                                threadRepository.addMessage(message.threadId, botMessage);
+                            await handleThread(messageHandler, updatedThread, message, threadRepository, panel);
+                            break;
+                        case 'retryMessage':
+                            const removedBot = threadRepository.removeLastBotMessage(message.threadId);
+                            if (removedBot) {
                                 panel.webview.postMessage({
-                                    type: 'addBotMessage',
-                                    message: botMessage
+                                    type: 'removeLastBotMessage'
                                 });
-                            } else {
-                                const botMessage = {
-                                    id: 'bot_' + Date.now(),
-                                    sender: 'bot',
-                                    text: '',
-                                    isHtml: false,
-                                    timestamp: Date.now(),
-                                    threadId: message.threadId,
-                                    formSubmitted: false
-                                };
-                                threadRepository.addMessage(message.threadId, botMessage);
-                                panel.webview.postMessage({
-                                    type: 'addBotMessage',
-                                    message: botMessage
-                                });
-
-                                // 流式输出
-                                for await (const chunk of response.getStream()) {
-                                    botMessage.text += chunk;
-                                    panel.webview.postMessage({
-                                        type: 'updateBotMessage',
-                                        messageId: botMessage.id,
-                                        text: chunk
-                                    });
-                                }
-                                // 更新完整的bot回复
-                                threadRepository.updateMessage(message.threadId, botMessage.id, { text: botMessage.text });
                             }
-                            panel.webview.postMessage({
-                                type: 'botResponseComplete'
-                            });
+                            thread = chatProvider.getThread(message.threadId); // 重新获取更新后的线程
+                            await handleThread(messageHandler, thread, message, threadRepository, panel);
                             break;
                     }
                 });
@@ -159,6 +122,59 @@ function activate(context) {
             }
         })
     );
+}
+
+async function handleThread(messageHandler, updatedThread, message, threadRepository, panel) {
+    const response = await messageHandler.handleMessage(updatedThread);
+
+    // 添加bot回复到线程
+    if (!response.isStream()) {
+        const botMessage = {
+            id: 'bot_' + Date.now(),
+            sender: 'bot',
+            text: response.getFullMessage(),
+            isHtml: false,
+            timestamp: Date.now(),
+            threadId: message.threadId,
+            formSubmitted: false
+        };
+        threadRepository.addMessage(message.threadId, botMessage);
+        panel.webview.postMessage({
+            type: 'addBotMessage',
+            message: botMessage
+        });
+    } else {
+        const botMessage = {
+            id: 'bot_' + Date.now(),
+            sender: 'bot',
+            text: '',
+            isHtml: false,
+            timestamp: Date.now(),
+            threadId: message.threadId,
+            formSubmitted: false
+        };
+        threadRepository.addMessage(message.threadId, botMessage);
+        panel.webview.postMessage({
+            type: 'addBotMessage',
+            message: botMessage
+        });
+
+        // 流式输出
+        for await (const chunk of response.getStream()) {
+            botMessage.text += chunk;
+            panel.webview.postMessage({
+                type: 'updateBotMessage',
+                messageId: botMessage.id,
+                text: chunk
+            });
+        }
+        // 更新完整的bot回复
+        threadRepository.updateMessage(message.threadId, botMessage.id, { text: botMessage.text });
+    }
+    panel.webview.postMessage({
+        type: 'botResponseComplete'
+    });
+    return response;
 }
 
 function deactivate() { }

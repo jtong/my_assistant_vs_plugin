@@ -108,6 +108,19 @@ class ThreadRepository {
         delete index[threadId];
         this.saveIndex(index);
     }
+
+    removeLastBotMessage(threadId) {
+        const thread = this.loadThread(threadId);
+        if (thread && thread.messages.length > 0) {
+            const lastMessage = thread.messages[thread.messages.length - 1];
+            if (lastMessage.sender === 'bot') {
+                thread.messages.pop();
+                this.saveThread(thread);
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 module.exports = ThreadRepository;
