@@ -102,10 +102,11 @@ function activate(context) {
                             await handleThread(messageHandler, updatedThread, message, threadRepository, panel);
                             break;
                         case 'retryMessage':
-                            const removedBot = threadRepository.removeLastBotMessage(message.threadId);
-                            if (removedBot) {
+                            const removedMessages = threadRepository.removeMessagesAfterLastUser(message.threadId);
+                            if (removedMessages.length > 0) {
                                 panel.webview.postMessage({
-                                    type: 'removeLastBotMessage'
+                                    type: 'removeMessagesAfterLastUser',
+                                    removedCount: removedMessages.length
                                 });
                             }
                             thread = chatProvider.getThread(message.threadId); // 重新获取更新后的线程

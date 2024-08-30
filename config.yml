@@ -21,7 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 我想给ai-agent-response的response加一个新功能，叫plan response。plan response里有一个task list和规划的安排，每个Task都匹配了对应的要按照Task List去调用的对应的Agent的名字。这个名字是AgentAPP的内部名字，外部不可见，不需要配置到agent.json里。
+    我希望重试的时候，会删掉的不只是最后一个Bot消息，而是最后一个User消息之后的全部的Bot消息。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

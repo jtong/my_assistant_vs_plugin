@@ -22,7 +22,6 @@ function retryMessageHandler() {
 }
 
 
-
 window.onload = function () {
     const threadId = window.threadId;
     if (threadId) {
@@ -58,6 +57,16 @@ window.addEventListener('message', event => {
         case 'removeLastBotMessage':
             removeLastBotMessage();
             break;    
+        case 'removeMessagesAfterLastUser':
+            const chatBox = document.getElementById('chat-box');
+            const messages = chatBox.children;
+            for (let i = messages.length - 1; i >= 0; i--) {
+                if (messages[i].classList.contains('user')) {
+                    break; // 找到最后一条用户消息，停止删除
+                }
+                chatBox.removeChild(messages[i]);
+            }
+            break;
     }
 });
 

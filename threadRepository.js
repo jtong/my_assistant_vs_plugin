@@ -121,6 +121,18 @@ class ThreadRepository {
         }
         return false;
     }
+
+    removeMessagesAfterLastUser(threadId) {
+        const thread = this.getThread(threadId);
+        if (!thread) return [];
+    
+        const lastUserIndex = thread.messages.findLastIndex(msg => msg.sender === 'user');
+        if (lastUserIndex === -1) return [];
+    
+        const removedMessages = thread.messages.splice(lastUserIndex + 1);
+        this.saveThread(thread);
+        return removedMessages;
+    }
 }
 
 module.exports = ThreadRepository;
