@@ -31,6 +31,11 @@ class AgentLoader {
             path: agent.path
         }));
     }
+
+    filterAgents(filterFn) {
+        const filteredAgents = this.config.agents.filter(filterFn);
+        return filteredAgents.map(agent => this.loadAgent(agent.name));
+    }
 }
 
 module.exports = AgentLoader;

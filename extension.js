@@ -123,58 +123,89 @@ function activate(context) {
         })
     );
 }
+// extension.js
 
 async function handleThread(messageHandler, updatedThread, message, threadRepository, panel) {
-    const response = await messageHandler.handleMessage(updatedThread);
-
-    // 添加bot回复到线程
-    if (!response.isStream()) {
-        const botMessage = {
-            id: 'bot_' + Date.now(),
-            sender: 'bot',
-            text: response.getFullMessage(),
-            isHtml: false,
-            timestamp: Date.now(),
-            threadId: message.threadId,
-            formSubmitted: false
-        };
-        threadRepository.addMessage(message.threadId, botMessage);
-        panel.webview.postMessage({
-            type: 'addBotMessage',
-            message: botMessage
-        });
-    } else {
-        const botMessage = {
-            id: 'bot_' + Date.now(),
-            sender: 'bot',
-            text: '',
-            isHtml: false,
-            timestamp: Date.now(),
-            threadId: message.threadId,
-            formSubmitted: false
-        };
-        threadRepository.addMessage(message.threadId, botMessage);
-        panel.webview.postMessage({
-            type: 'addBotMessage',
-            message: botMessage
-        });
-
-        // 流式输出
-        for await (const chunk of response.getStream()) {
-            botMessage.text += chunk;
+    const responseHandler = async (response, thread) => {
+        if (response.isStream()) {
+            // 处理流式响应
+            const botMessage = {
+                id: 'bot_' + Date.now(),
+                sender: 'bot',
+                text: '',
+                isHtml: false,
+                timestamp: Date.now(),
+                threadId: thread.id,
+                formSubmitted: false
+            };
+            threadRepository.addMessage(thread.id, botMessage);
             panel.webview.postMessage({
-                type: 'updateBotMessage',
-                messageId: botMessage.id,
-                text: chunk
+                type: 'addBotMessage',
+                message: botMessage
+            });
+
+            try {
+                for await (const chunk of response.getStream()) {
+                    botMessage.text += chunk;
+                    panel.webview.postMessage({
+                        type: 'updateBotMessage',
+                        messageId: botMessage.id,
+                        text: chunk
+                    });
+                }
+            } catch (streamError) {
+                console.error('Error in stream processing:', streamError);
+                botMessage.text += ' An error occurred during processing.';
+                panel.webview.postMessage({
+                    type: 'updateBotMessage',
+                    messageId: botMessage.id,
+                    text: ' An error occurred during processing.'
+                });
+            }
+
+            threadRepository.updateMessage(thread.id, botMessage.id, { text: botMessage.text });
+        } else {
+            // 处理非流式响应
+            const botMessage = {
+                id: 'bot_' + Date.now(),
+                sender: 'bot',
+                text: response.getFullMessage(),
+                isHtml: false,
+                timestamp: Date.now(),
+                threadId: thread.id,
+                formSubmitted: false
+            };
+            threadRepository.addMessage(thread.id, botMessage);
+            panel.webview.postMessage({
+                type: 'addBotMessage',
+                message: botMessage
             });
         }
-        // 更新完整的bot回复
-        threadRepository.updateMessage(message.threadId, botMessage.id, { text: botMessage.text });
+    };
+
+    try {
+        await messageHandler.handleMessage(updatedThread, responseHandler);
+    } catch (error) {
+        console.error('Error in handleThread:', error);
+        const errorMessage = {
+            id: 'error_' + Date.now(),
+            sender: 'bot',
+            text: 'An unexpected error occurred while processing your message.',
+            isHtml: false,
+            timestamp: Date.now(),
+            threadId: message.threadId,
+            formSubmitted: false
+        };
+        threadRepository.addMessage(message.threadId, errorMessage);
+        panel.webview.postMessage({
+            type: 'addBotMessage',
+            message: errorMessage
+        });
+    } finally {
+        panel.webview.postMessage({
+            type: 'botResponseComplete'
+        });
     }
-    panel.webview.postMessage({
-        type: 'botResponseComplete'
-    });
-    return response;
 }
 
 function deactivate() { }

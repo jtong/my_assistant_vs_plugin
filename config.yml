@@ -21,7 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 处理流式response的时候，如果抛出了异常，我希望能够捕获到异常。然后安全退出for of
+    我希望 我想给ai-agent-response的response加一个新功能，叫plan response。plan response里有一个task list和规划的安排，每个Task都匹配了对应的要按照Task List去调用的对应的Agent的名字。这个名字是AgentAPP的内部名字，外部不可见，不需要配置到agent.json里。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

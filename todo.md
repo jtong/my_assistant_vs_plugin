@@ -1,2 +1,5 @@
 - [ ] 刷新chatlist
 - [ ] 重新加载agents
+- [ ] 打印日志
+- [ ] response加一个plan response，plan response里有一个task list和规划的安排，每个Task都匹配了对应的要按照Task List去调用的对应的Agent的名字。这个名字是AgentAPP的内部名字，外部不可见，不需要配置到agent.json里。然后再分为两种，一种是顺序调用，就是顺序的调用agent，生成后续的reponse并响应输出。一种是递归调用，就是每次把其中一个响应生成完之后，把生成后的响应和旧的PlanResponse自带的提示词都给扔回大模型，让它看看要不要改。
+  - [ ] 我们这里只生成顺序的就可以了。

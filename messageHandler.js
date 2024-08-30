@@ -6,12 +6,22 @@ class MessageHandler {
         this.agentLoader = agentLoader
     }
 
-    async handleMessage(thread) {
-
+    async handleMessage(thread, responseHandler) {
         const agent = this.agentLoader.loadAgent(thread.agent);
-        const response = await agent.generateReply(thread);
+        const initialResponse = await agent.generateReply(thread);
 
-        return response;
+        if (initialResponse.isPlanResponse()) {
+            const taskList = initialResponse.getTaskList();
+
+            for (const task of taskList) {
+                const taskResponse = await agent.executeTask(task, thread);
+                // 对每个任务响应异步执行 responseHandler
+                await responseHandler(taskResponse, thread);
+            }
+        }else{
+            await responseHandler(initialResponse, thread);
+        }
+
     }
 
     addUserMessageToThread(thread, userMessage) {
@@ -28,14 +38,6 @@ class MessageHandler {
     }
 
 
-    // 如果需要实现流式输出，可以使用这个方法
-    // async *createStream(message) {
-    //   const words = message.split(' ');
-    //   for (const word of words) {
-    //     yield word + ' ';
-    //     await new Promise(resolve => setTimeout(resolve, 100)); // 模拟延迟
-    //   }
-    // }
 }
 
 module.exports = MessageHandler;
