@@ -21,7 +21,8 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望重试的时候，会删掉的不只是最后一个Bot消息，而是最后一个User消息之后的全部的Bot消息。
+    我希望有一种方式打印日志，打印的内容apply到一个文件末尾。这个文件是一个日志文件，我希望在文件末尾打印日志，而不是覆盖文件。
+    打印日志的时候会打印自己在哪个文件的哪一行，这样方便调试。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

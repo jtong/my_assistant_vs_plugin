@@ -1,5 +1,7 @@
 // messageHandler.js
 
+const logger = require("./logger");
+
 class MessageHandler {
     constructor(threadRepository, agentLoader) {
         this.threadRepository = threadRepository;
@@ -12,7 +14,6 @@ class MessageHandler {
 
         if (initialResponse.isPlanResponse()) {
             const taskList = initialResponse.getTaskList();
-
             for (const task of taskList) {
                 const taskResponse = await agent.executeTask(task, thread);
                 // 对每个任务响应异步执行 responseHandler

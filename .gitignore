@@ -5,3 +5,4 @@ node_modules
 dist
 ai_helper
 spike
+debug.log
