@@ -21,8 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望有一种方式打印日志，打印的内容apply到一个文件末尾。这个文件是一个日志文件，我希望在文件末尾打印日志，而不是覆盖文件。
-    打印日志的时候会打印自己在哪个文件的哪一行，这样方便调试。
+    我希望可以控制logger是否打开，关闭的话，就不打印日志了
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
