@@ -21,7 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望可以控制logger是否打开，关闭的话，就不打印日志了
+    我希望 ai-agent-response 可以设置meta数据，这样，后续Agent执行task的时候可以取出前序task的meta来处理后续task
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

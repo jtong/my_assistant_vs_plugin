@@ -79,7 +79,10 @@ function activate(context) {
                     {
                         enableScripts: true,
                         retainContextWhenHidden: true,
-                        localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath))]
+                        localResourceRoots: [
+                            vscode.Uri.file(path.join(context.extensionPath)),
+                            vscode.Uri.file(projectRoot)
+                        ]
                     }
                 );
 
@@ -134,7 +137,7 @@ async function handleThread(messageHandler, updatedThread, message, threadReposi
                 id: 'bot_' + Date.now(),
                 sender: 'bot',
                 text: '',
-                isHtml: false,
+                isHtml: response.isHtml(),
                 timestamp: Date.now(),
                 threadId: thread.id,
                 formSubmitted: false
@@ -164,19 +167,21 @@ async function handleThread(messageHandler, updatedThread, message, threadReposi
                 });
             }
 
-            threadRepository.updateMessage(thread.id, botMessage.id, { text: botMessage.text });
+            threadRepository.updateMessage(thread.id, botMessage.id, { text: botMessage.text, meta: response.meta });
         } else {
             // 处理非流式响应
             const botMessage = {
                 id: 'bot_' + Date.now(),
                 sender: 'bot',
                 text: response.getFullMessage(),
-                isHtml: false,
+                isHtml: response.isHtml(),
                 timestamp: Date.now(),
                 threadId: thread.id,
-                formSubmitted: false
+                formSubmitted: false,
+                meta: response.meta
             };
             threadRepository.addMessage(thread.id, botMessage);
+            thread.messages.push(botMessage);
             panel.webview.postMessage({
                 type: 'addBotMessage',
                 message: botMessage
@@ -185,7 +190,14 @@ async function handleThread(messageHandler, updatedThread, message, threadReposi
     };
 
     try {
-        await messageHandler.handleMessage(updatedThread, responseHandler);
+        const host_utils = {
+            convertToWebviewUri(absolutePath) {
+                const uri = vscode.Uri.file(absolutePath);
+                return panel.webview.asWebviewUri(uri).toString();
+            },
+            threadRepository
+        };
+        await messageHandler.handleMessage(updatedThread, responseHandler, host_utils);
     } catch (error) {
         console.error('Error in handleThread:', error);
         const errorMessage = {
