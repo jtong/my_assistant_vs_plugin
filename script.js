@@ -67,6 +67,9 @@ window.addEventListener('message', event => {
                 chatBox.removeChild(messages[i]);
             }
             break;
+        case 'updateTaskButtons':
+            displayTaskButtons(message.tasks);
+            break;    
     }
 });
 
@@ -221,6 +224,30 @@ function sendMessage(text, actionAttributes = null) {
     window.vscode.postMessage(message);
 }
 
+
+
+function displayTaskButtons(tasks) {
+    const taskButtonsContainer = document.getElementById('task-buttons');
+    taskButtonsContainer.innerHTML = ''; // 清除现有按钮
+
+    tasks.forEach(task => {
+        const button = document.createElement('button');
+        button.textContent = task.name;
+        button.addEventListener('click', () => executeTask(task));
+        taskButtonsContainer.appendChild(button);
+    });
+}
+
+function executeTask(task) {
+    const message = {
+        type: 'executeTask',
+        threadId: window.threadId,
+        taskName: task.name
+    };
+    window.vscode.postMessage(message);
+}
+
+
 function setupForms(container, messageId) {
     container.querySelectorAll('form').forEach(form => {
         form.addEventListener('submit', function (event) {
@@ -249,3 +276,4 @@ function setupForms(container, messageId) {
         });
     });
 }
+

@@ -75,3 +75,22 @@
     display: table;
     clear: both;
 }
+
+/* 在现有的 CSS 代码后添加 */
+#task-buttons {
+    margin-bottom: 10px;
+}
+
+#task-buttons button {
+    margin-right: 5px;
+    padding: 5px 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+#task-buttons button:hover {
+    background-color: #45a049;
+}

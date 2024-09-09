@@ -115,6 +115,15 @@ function activate(context) {
                             thread = chatProvider.getThread(message.threadId); // 重新获取更新后的线程
                             await handleThread(messageHandler, thread, message, threadRepository, panel);
                             break;
+                        case 'executeTask':
+                            const taskName = message.taskName;
+                            const agent = agentLoader.loadAgent(thread.agent);
+                            const task = agent.getTask(taskName);
+                            if (task) {
+                                const taskResponse = await agent.executeTask(task, thread);
+                                //await responseHandler(taskResponse, thread, panel); // 该功能未完成
+                            }
+                            break;    
                     }
                 });
 
@@ -131,6 +140,14 @@ function activate(context) {
 
 async function handleThread(messageHandler, updatedThread, message, threadRepository, panel) {
     const responseHandler = async (response, thread) => {
+        if (response.isPlanResponse()) {
+            const taskList = response.getTaskList();
+            // 发送任务列表到 webview 以更新任务按钮
+            panel.webview.postMessage({
+                type: 'updateTaskButtons',
+                tasks: taskList
+            });
+        }
         if (response.isStream()) {
             // 处理流式响应
             const botMessage = {

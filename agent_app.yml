@@ -1,0 +1,29 @@
+project:
+  base_path: ./ai_helper/agent/
+  filters:
+    - ignore:
+        - .git
+        - spike
+        - "**/.DS_Store"
+        - "package-lock.json"
+        - node_modules/@(.*)
+        - "node_modules/!(ai-agent-response|@jtong)"
+        - "node_modules/!(@jtong/knowledge_query)"
+        - "*.log"
+        - "./logs"
+        - "**/*.png"
+        - "**/output"
+    - filter_in:
+        - node_modules/**
+        - image_gen_app/**
+        - "*.js"
+        - package.json
+input:
+  instruction: |
+    ## 任务
+
+    我希望 roleplay_app 可以对记忆进行总结，每进行15轮对话，就对10轮对话进行总结，然后储存到knowledge space中，这样后面对话就可以只发送summary和最新的5轮对话，这样可以减少对话的长度，节省token。
+output:     
+  prompt:
+    path: ai_helper/prompt_builder/output/working
+    backup_path: ai_helper/prompt_builder/output/backup

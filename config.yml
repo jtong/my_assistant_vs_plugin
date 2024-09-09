@@ -1,9 +1,9 @@
 project:
   base_path: ./
-  ignore:
-    path:
+  filters:
+    - ignore:
       - target
-      - "*/.idea"
+      - ".idea"
       - .mvn
       - node_modules/@(.*)
       - node_modules/!(ai-agent-response)
@@ -21,7 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 ai-agent-response 可以设置meta数据，这样，后续Agent执行task的时候可以取出前序task的meta来处理后续task
+    我希望 chat-view.html 可以在输入框的上面再加一个栏目，用以显示一排按钮。这拍按钮由agent提供，每个按钮对应一个task，点击后可以触发agent执行对应的task。这样用户可以通过点击按钮来执行agent的task，而不是输入文字。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
