@@ -21,7 +21,8 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 chat-view.html 可以在输入框的上面再加一个栏目，用以显示一排按钮。这拍按钮由agent提供，每个按钮对应一个task，点击后可以触发agent执行对应的task。这样用户可以通过点击按钮来执行agent的task，而不是输入文字。
+    我希望 MessageHandler 添加一个handleTask函数，message只是一种特殊的task，handleMessage会直接调用handleTask，这样可以减少重复代码。
+    task要在ai-agent-response中实现。通过jsdoc标明现在的task都有哪些属性。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
