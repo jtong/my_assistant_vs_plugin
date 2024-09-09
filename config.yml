@@ -21,8 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 MessageHandler 添加一个handleTask函数，message只是一种特殊的task，handleMessage会直接调用handleTask，这样可以减少重复代码。
-    task要在ai-agent-response中实现。通过jsdoc标明现在的task都有哪些属性。
+    我希望 MessageHandler 只留下handleTask函数，handleMessage inline 回 extension。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

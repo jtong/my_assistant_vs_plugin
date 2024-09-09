@@ -8,21 +8,6 @@ class MessageHandler {
         this.agentLoader = agentLoader;
     }
 
-    async handleMessage(thread, responseHandler, host_utils) {
-        const messageTask = new Task({
-            name: 'Process Message',
-            type: Task.TYPE_MESSAGE,
-            message: thread.messages[thread.messages.length - 1].text,
-            meta: {
-                threadId: thread.id,
-                messageId: thread.messages[thread.messages.length - 1].id
-            },
-            host_utils: host_utils
-        });
-
-        this.handleTask(thread, messageTask, responseHandler);
-    }
-
     async handleTask(thread, task, responseHandler) {
         const agent = this.agentLoader.loadAgent(thread.agent);
         let initialResponse;

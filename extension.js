@@ -7,6 +7,7 @@ const MessageHandler = require('./messageHandler');
 const ThreadRepository = require('./threadRepository');
 const AgentLoader = require('./agentLoader');
 const AgentViewProvider = require('./agentViewProvider');
+const { Task } = require('ai-agent-response');
 
 
 // Object to store open chat panels
@@ -214,7 +215,16 @@ async function handleThread(messageHandler, updatedThread, message, threadReposi
             },
             threadRepository
         };
-        await messageHandler.handleMessage(updatedThread, responseHandler, host_utils);
+        const messageTask = new Task({
+            name: 'Process Message',
+            type: Task.TYPE_MESSAGE,
+            message: updatedThread.messages[updatedThread.messages.length - 1].text,
+            meta: {
+                message    
+            },
+            host_utils: host_utils
+        });
+        await messageHandler.handleTask(updatedThread, messageTask, responseHandler);
     } catch (error) {
         console.error('Error in handleThread:', error);
         const errorMessage = {
