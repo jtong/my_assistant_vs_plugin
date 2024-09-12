@@ -31,8 +31,8 @@ class MessageHandler {
                     host_utils: task.host_utils
                 });
 
-                const taskResponse = await this.handleTask(thread, subTask, responseHandler);
-                previousTaskMeta = taskResponse.meta || {};
+                await this.handleTask(thread, subTask, responseHandler);
+                previousTaskMeta = subTask.meta || {};
             }
         } else {
             await responseHandler(initialResponse, thread);

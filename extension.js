@@ -88,7 +88,13 @@ function activate(context) {
                 );
 
                 panel.webview.html = chatProvider.getWebviewContent(panel.webview, threadId);
-
+                const host_utils = {
+                    convertToWebviewUri(absolutePath) {
+                        const uri = vscode.Uri.file(absolutePath);
+                        return panel.webview.asWebviewUri(uri).toString();
+                    },
+                    threadRepository
+                };
                 panel.webview.onDidReceiveMessage(async message => {
                     let thread = chatProvider.getThread(message.threadId);
                     switch (message.type) {
@@ -103,7 +109,8 @@ function activate(context) {
                                 type: 'addUserMessage',
                                 message: userMessage
                             });
-                            await handleThread(messageHandler, updatedThread, message, threadRepository, panel);
+                            const messageTask = buildMessageTask(userMessage.text, updatedThread, host_utils);
+                            await handleThread(messageHandler, updatedThread, messageTask, threadRepository, panel);
                             break;
                         case 'retryMessage':
                             const removedMessages = threadRepository.removeMessagesAfterLastUser(message.threadId);
@@ -114,17 +121,19 @@ function activate(context) {
                                 });
                             }
                             thread = chatProvider.getThread(message.threadId); // 重新获取更新后的线程
-                            await handleThread(messageHandler, thread, message, threadRepository, panel);
+                            const lastUserMessage = thread.messages[thread.messages.length - 1].text;
+                            const retryTask = buildMessageTask(lastUserMessage, thread, host_utils);
+                            await handleThread(messageHandler, thread, retryTask, threadRepository, panel);
                             break;
                         case 'executeTask':
                             const taskName = message.taskName;
                             const agent = agentLoader.loadAgent(thread.agent);
                             const task = agent.getTask(taskName);
+                            task.host_utils = host_utils;
                             if (task) {
-                                const taskResponse = await agent.executeTask(task, thread);
-                                //await responseHandler(taskResponse, thread, panel); // 该功能未完成
+                                await handleThread(messageHandler, thread, task, threadRepository, panel);
                             }
-                            break;    
+                            break;
                     }
                 });
 
@@ -137,9 +146,21 @@ function activate(context) {
         })
     );
 }
-// extension.js
 
-async function handleThread(messageHandler, updatedThread, message, threadRepository, panel) {
+function buildMessageTask(message, thread, host_utils) {
+    return new Task({
+        name: 'Process Message',
+        type: Task.TYPE_MESSAGE,
+        message: message,
+        meta: {
+            threadId: thread.id,
+            timestamp: Date.now()
+        },
+        host_utils: host_utils
+    });
+}
+
+async function handleThread(messageHandler, updatedThread, task, threadRepository, panel) {
     const responseHandler = async (response, thread) => {
         if (response.isPlanResponse()) {
             const taskList = response.getTaskList();
@@ -208,35 +229,19 @@ async function handleThread(messageHandler, updatedThread, message, threadReposi
     };
 
     try {
-        const host_utils = {
-            convertToWebviewUri(absolutePath) {
-                const uri = vscode.Uri.file(absolutePath);
-                return panel.webview.asWebviewUri(uri).toString();
-            },
-            threadRepository
-        };
-        const messageTask = new Task({
-            name: 'Process Message',
-            type: Task.TYPE_MESSAGE,
-            message: updatedThread.messages[updatedThread.messages.length - 1].text,
-            meta: {
-                message    
-            },
-            host_utils: host_utils
-        });
-        await messageHandler.handleTask(updatedThread, messageTask, responseHandler);
+        await messageHandler.handleTask(updatedThread, task, responseHandler);
     } catch (error) {
         console.error('Error in handleThread:', error);
         const errorMessage = {
             id: 'error_' + Date.now(),
             sender: 'bot',
-            text: 'An unexpected error occurred while processing your message.',
+            text: 'An unexpected error occurred while processing your task.',
             isHtml: false,
             timestamp: Date.now(),
-            threadId: message.threadId,
+            threadId: updatedThread.id,
             formSubmitted: false
         };
-        threadRepository.addMessage(message.threadId, errorMessage);
+        threadRepository.addMessage(updatedThread.id, errorMessage);
         panel.webview.postMessage({
             type: 'addBotMessage',
             message: errorMessage

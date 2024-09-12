@@ -1,0 +1,30 @@
+project:
+  base_path: ./
+  filters:
+    - filter_in:
+      - "ai_helper/agent/*"
+      - "ai_helper/agent/node_modules/**"
+      - "node_modules/**"
+      - "*.*"
+    - ignore:
+      - node_modules/@(.*)
+      - node_modules/!(ai-agent-response)
+      - "ai_helper/agent/node_modules/!(ai-agent-response|@jtong)"
+      - "ai_helper/agent/node_modules/!(@jtong/knowledge_query)"
+      - config.yml
+      - "**/*.png"
+      - "**/.DS_Store"
+      - "**/LICENSE.txt"
+      - "**/package-lock.json"
+      - "*/test"
+      - "*.yml"
+      - "**/*.log"
+input:
+  git_clone_to_path: ai_helper/prompt_builder/git_repo
+  instruction: |
+    我希望 改造一下 ai-agent-response 加一个 AvailableTask ，用于表达Response告诉后续的客户端有哪些可用的Task可以发送给Agent，这个 AvailableTask 里面应该包着一个Task，当执行的时候把这个Task发送给Agent。而Response则可以提供一个接口得到有哪些 AvailableTask 。
+  skip_clone_if_folder_exist: true  
+output:     
+  prompt:
+    path: ai_helper/prompt_builder/output/working
+    backup_path: ai_helper/prompt_builder/output/backup

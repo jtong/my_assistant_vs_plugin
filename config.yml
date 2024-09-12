@@ -21,7 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 MessageHandler 只留下handleTask函数，handleMessage inline 回 extension。
+    我希望 ai-agent-response 里，要多一个AvailableTask，用于表达Response告诉后续的客户端有哪些可用的Task可以发送给Agent，这个AvailableTask里面应该包着一个Task，当执行的时候把这个Task发送给Agent。而Response则可以提供一个接口。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
