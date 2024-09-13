@@ -22,7 +22,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 ai_helper/agent/TestTaskButtonsAgent.js 返回的不是 Task 而是 AvailableTask 。然后在chat-view.html的task-buttons上显示这些AvailableTask对应的button。
+    我希望 增加一个新的html，如果agent里有个类型是job，那么就加载这个html，而不是chat-view.html。这个存到thread里，就不会存messages了，转为存job。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

@@ -133,6 +133,30 @@ class ThreadRepository {
         this.saveThread(thread);
         return removedMessages;
     }
+
+    getAllJobThreadsInfo() {
+        const index = this.loadIndex();
+        const jobThreads = {};
+        for (const [threadId, threadInfo] of Object.entries(index)) {
+            const thread = this.loadThread(threadId);
+            if (thread.type === 'job') {
+                jobThreads[threadId] = threadInfo;
+            }
+        }
+        return jobThreads;
+    }
+    
+    createJobThread(threadId, name, agentName) {
+        const newThread = {
+            id: threadId,
+            name: name,
+            agent: agentName,
+            type: 'job', // 标记为 job 类型
+            jobs: []
+        };
+        this.saveThread(newThread);
+        return newThread;
+    }
 }
 
 module.exports = ThreadRepository;

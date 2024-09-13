@@ -31,7 +31,12 @@
 				"command": "myAssistant.newChat",
 				"title": "New Chat",
 				"icon": "$(plus)"
-			}
+			},
+            {
+                "command": "myAssistant.newJob",
+                "title": "New Job",
+                "icon": "$(plus)"
+            }
 		],
 		"viewsContainers": {
 			"activitybar": [
@@ -48,7 +53,12 @@
 					"id": "chatList",
 					"name": "Chat List",
 					"type": "tree"
-				},
+				}, 
+                {
+                    "id": "jobList",
+                    "name": "Job List",
+                    "type": "tree"
+                },
 				{
 					"id": "agentList",
 					"name": "Available Agents",
@@ -62,7 +72,12 @@
 					"command": "myAssistant.newChat",
 					"when": "view == chatList",
 					"group": "navigation"
-				}
+				},
+                {
+                    "command": "myAssistant.newJob",
+                    "when": "view == jobList",
+                    "group": "navigation"
+                }
 			]
 		}
 	},
