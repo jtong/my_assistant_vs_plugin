@@ -6,3 +6,8 @@
   - [ ] 事实证明，人类只能接受一个前置agent的，如果一个agent不能处理完所有任务，人实在是等不起了
 - [ ] 加入生成时FacadeAgent对对话列表的影响
 - [ ] previouse meta处理有问题，之前一个任务的meta应该单独存储为一组数组，而不是跟当前的meta合并，避免发生覆盖，暂不处理，但这是个known issue。
+- [ ] 应该有三类available task
+  - [ ] capability，持续存在，对整个thread有意义。比如根据全文生成patch。
+    - [ ] 思考：重试是不是一种capability
+  - [ ] Response Action，对某一个response有意义，感觉应该显示在某个response下面，这个response不是最新的，那就把它隐藏起来。(或者下面有一个新的user message后，就隐藏。)
+  - [ ] job，点击就会消失，一次性，但有地方记录状态，可以重试。（感觉job）

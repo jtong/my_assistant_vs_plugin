@@ -67,7 +67,7 @@ window.addEventListener('message', event => {
                 chatBox.removeChild(messages[i]);
             }
             break;
-        case 'updateTaskButtons':
+        case 'updateAvailableTasks':
             displayTaskButtons(message.tasks);
             break;    
     }
@@ -223,8 +223,6 @@ function sendMessage(text, actionAttributes = null) {
 
     window.vscode.postMessage(message);
 }
-
-
 
 function displayTaskButtons(tasks) {
     const taskButtonsContainer = document.getElementById('task-buttons');

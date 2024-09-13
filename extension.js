@@ -162,12 +162,12 @@ function buildMessageTask(message, thread, host_utils) {
 
 async function handleThread(messageHandler, updatedThread, task, threadRepository, panel) {
     const responseHandler = async (response, thread) => {
-        if (response.isPlanResponse()) {
-            const taskList = response.getTaskList();
-            // 发送任务列表到 webview 以更新任务按钮
+        if (response.hasAvailableTasks()) {
+            const availableTasks = response.getAvailableTasks();
+            // 发送可用任务列表到 webview 以更新任务按钮
             panel.webview.postMessage({
-                type: 'updateTaskButtons',
-                tasks: taskList
+                type: 'updateAvailableTasks',
+                tasks: availableTasks.map(task => ({ name: task.getName() }))
             });
         }
         if (response.isStream()) {
