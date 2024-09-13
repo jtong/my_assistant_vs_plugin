@@ -2,7 +2,6 @@
 const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
-const ThreadRepository = require('./threadRepository');
 
 class ChatViewProvider {
     constructor(extensionUri, threadRepository) {
@@ -11,7 +10,7 @@ class ChatViewProvider {
     }
 
     getWebviewContent(webview, threadId) {
-        const htmlPath = path.join(this._extensionUri.fsPath, 'chat-view.html');
+        const htmlPath = path.join(this._extensionUri.fsPath, 'chat/chat-view.html');
         let htmlContent = fs.readFileSync(htmlPath, 'utf-8');
 
         const scriptUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'script.js')));

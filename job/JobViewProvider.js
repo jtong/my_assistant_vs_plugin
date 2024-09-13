@@ -10,7 +10,7 @@ class JobViewProvider {
     }
 
     getWebviewContent(webview, threadId) {
-        const htmlPath = path.join(this._extensionUri.fsPath, 'job-view.html');
+        const htmlPath = path.join(this._extensionUri.fsPath, 'job/job-view.html');
         let htmlContent = fs.readFileSync(htmlPath, 'utf-8');
 
         const scriptUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'jobScript.js')));
