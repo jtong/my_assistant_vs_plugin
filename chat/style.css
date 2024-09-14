@@ -96,11 +96,14 @@
 }
 
 .message-text {
+    width: 100%;
+    box-sizing: border-box;
     display: inline-block;
     word-break: break-word;
 }
 
 .edit-wrapper {
+    width: 100%;
     display: flex;
     flex-direction: column;
     margin-top: 5px;
@@ -108,16 +111,39 @@
 
 .edit-wrapper textarea {
     width: 100%;
-    margin-bottom: 5px;
+    resize: both;
+    overflow: hidden;
     min-height: 50px;
+    padding: 5px;
+    margin-bottom: 5px;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
 }
 
-.edit-wrapper button {
-    margin-right: 5px;
+.edit-wrapper .button-container {
+    display: flex;
+    justify-content: flex-end;
 }
 
-.edit-btn, .save-btn, .cancel-btn {
-    padding: 2px 5px;
+.edit-wrapper .button-container button {
+    margin-left: 5px;
+    padding: 3px 8px;
     font-size: 12px;
     cursor: pointer;
+    border: none;
+    border-radius: 3px;
+    color: white;
 }
+
+.edit-wrapper .button-container .save-btn {
+    background-color: #4CAF50;
+}
+
+.edit-wrapper .button-container .cancel-btn {
+    background-color: #f44336;
+}
+

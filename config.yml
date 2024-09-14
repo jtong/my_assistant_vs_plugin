@@ -21,9 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望，botResponseComplete的时候，遍历所有的消息，给每个加一个edit按钮，点击之后可以编辑这个消息，并保存到thread文件里。
-    但是目前的实现由bug，第一次点击edit按钮的时候save和cancel按钮不显示，导致无法保存或取消。
-    请修复这个bug。
+    我希望 编辑消息的时候，文本框的宽度跟显示的时候一样宽。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

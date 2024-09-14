@@ -55,20 +55,28 @@ function addEditButtons() {
                 textarea.value = originalText;
                 editWrapper.appendChild(textarea);
                 
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = 'button-container';
+                
                 const saveBtn = document.createElement('button');
                 saveBtn.textContent = 'Save';
                 saveBtn.className = 'save-btn';
-                editWrapper.appendChild(saveBtn);
+                buttonContainer.appendChild(saveBtn);
                 
                 const cancelBtn = document.createElement('button');
                 cancelBtn.textContent = 'Cancel';
                 cancelBtn.className = 'cancel-btn';
-                editWrapper.appendChild(cancelBtn);
+                buttonContainer.appendChild(cancelBtn);
+                
+                editWrapper.appendChild(buttonContainer);
                 
                 message.insertBefore(editWrapper, textContainer);
                 textContainer.style.display = 'none';
                 editBtn.style.display = 'none';
                 
+                autoResizeTextarea(textarea);
+
+
                 saveBtn.onclick = function() {
                     const newText = textarea.value;
                     textContainer.textContent = newText;
@@ -94,6 +102,17 @@ function addEditButtons() {
         }
     });
 }
+
+function autoResizeTextarea(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+    
+    textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+    });
+}
+
 
 window.addEventListener('message', event => {
     const message = event.data;
