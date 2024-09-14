@@ -147,3 +147,23 @@
     background-color: #f44336;
 }
 
+.message-container {
+    position: relative;
+}
+
+.edit-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    display: none;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 2px 5px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.message-container:hover .edit-btn {
+    display: block;
+}

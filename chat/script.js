@@ -39,12 +39,13 @@ function loadThread(threadId) {
 function addEditButtons() {
     const messages = document.querySelectorAll('#chat-box > div');
     messages.forEach(message => {
-        if (!message.querySelector('.edit-btn')) {
+        const container = message.querySelector('.message-container');
+        if (container && !container.querySelector('.edit-btn')) {
             const editBtn = document.createElement('button');
             editBtn.textContent = 'Edit';
             editBtn.className = 'edit-btn';
             editBtn.onclick = function() {
-                const textContainer = message.querySelector('.message-text');
+                const textContainer = container.querySelector('.message-text');
                 const messageId = message.getAttribute('data-message-id');
                 const originalText = textContainer.textContent;
                 
@@ -70,12 +71,11 @@ function addEditButtons() {
                 
                 editWrapper.appendChild(buttonContainer);
                 
-                message.insertBefore(editWrapper, textContainer);
+                container.insertBefore(editWrapper, textContainer);
                 textContainer.style.display = 'none';
                 editBtn.style.display = 'none';
                 
                 autoResizeTextarea(textarea);
-
 
                 saveBtn.onclick = function() {
                     const newText = textarea.value;
@@ -98,7 +98,8 @@ function addEditButtons() {
                     editBtn.style.display = '';
                 };
             };
-            message.appendChild(editBtn);
+            
+            container.appendChild(editBtn);
         }
     });
 }
@@ -163,31 +164,23 @@ function removeLastBotMessage() {
     }
 }
 
-// 修改 displayUserMessage 函数
 function displayUserMessage(message) {
     const chatBox = document.getElementById('chat-box');
     const messageElement = document.createElement('div');
     messageElement.classList.add(message.sender);
     messageElement.setAttribute('data-message-id', message.id);
 
+    const container = document.createElement('div');
+    container.className = 'message-container';
+
     const textContainer = document.createElement('span');
     textContainer.className = 'message-text';
     textContainer.textContent = message.text;
-    messageElement.appendChild(textContainer);
+    container.appendChild(textContainer);
 
+    messageElement.appendChild(container);
     chatBox.appendChild(messageElement);
     messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
-}
-
-function updateBotMessage(messageId, text) {
-    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-    if (messageElement) {
-        const textContainer = messageElement.querySelector('.message-text');
-        if (textContainer) {
-            textContainer.textContent += text;
-            messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }
-    }
 }
 
 function displayBotMessage(message, isStreaming = false) {
@@ -195,6 +188,9 @@ function displayBotMessage(message, isStreaming = false) {
     const messageElement = document.createElement('div');
     messageElement.classList.add(message.sender);
     messageElement.setAttribute('data-message-id', message.id);
+
+    const container = document.createElement('div');
+    container.className = 'message-container';
 
     const textContainer = document.createElement('span');
     textContainer.className = 'message-text';
@@ -211,15 +207,28 @@ function displayBotMessage(message, isStreaming = false) {
         }
     }
 
-    messageElement.appendChild(textContainer);
+    container.appendChild(textContainer);
+    messageElement.appendChild(container);
     chatBox.appendChild(messageElement);
-    // 自动滚动到底部
     messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
 
     if (message.isHtml) {
         setupForms(messageElement, message.id);
     }
 }
+
+
+function updateBotMessage(messageId, text) {
+    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (messageElement) {
+        const textContainer = messageElement.querySelector('.message-text');
+        if (textContainer) {
+            textContainer.textContent += text;
+            messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+    }
+}
+
 
 function displayThread(thread) {
     const chatBox = document.getElementById('chat-box');
