@@ -21,7 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 job 创建的时候列出所有的job agent供我选择，然后根据我选择的job agent来创建job的thread。
+    我希望 Generated Tasks 和 Executed Tasks 下面的框显示出边框来，而且不要用对话气泡显示每一项任务，且任务是可以选择的。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
