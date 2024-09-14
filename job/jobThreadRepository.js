@@ -92,6 +92,21 @@ class JobThreadRepository {
         delete index[threadId];
         this.saveIndex(index);
     }
+
+    renameJobThread(threadId, newName) {
+        const thread = this.loadThread(threadId);
+        if (thread) {
+            thread.name = newName;
+            this.saveThread(thread);
+    
+            // Update index
+            const index = this.loadIndex();
+            if (index[threadId]) {
+                index[threadId].name = newName;
+                this.saveIndex(index);
+            }
+        }
+    }
 }
 
 module.exports = JobThreadRepository;

@@ -79,7 +79,27 @@ function activateJobExtension(context, agentLoader) {
         })
     );
 
-
+    context.subscriptions.push(
+        vscode.commands.registerCommand('myAssistant.renameJob', async (item) => {
+            const newName = await vscode.window.showInputBox({
+                prompt: "Enter new name for the job",
+                value: item.name
+            });
+            if (newName && newName !== item.name) {
+                threadRepository.renameJobThread(item.id, newName);
+                jobListProvider.refresh();
+                vscode.window.showInformationMessage(`Job renamed to "${newName}"`);
+    
+                // 如果job面板已打开，更新其标题
+                if (openJobPanels[item.name]) {
+                    openJobPanels[item.name].title = newName;
+                    openJobPanels[newName] = openJobPanels[item.name];
+                    delete openJobPanels[item.name];
+                }
+            }
+        })
+    );
+    
     // 注册打开 Job 命令
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.openJob', (jobName, threadId) => {
@@ -114,7 +134,7 @@ function activateJobExtension(context, agentLoader) {
                     // ... 其他 case ...
                 }
             });
-            
+
             // 将新打开的面板添加到 openJobPanels 对象中
             openJobPanels[jobName] = panel;
 

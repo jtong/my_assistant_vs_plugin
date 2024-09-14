@@ -76,6 +76,27 @@ function activateChatExtension(context, agentLoader) {
     );
 
     context.subscriptions.push(
+        vscode.commands.registerCommand('myAssistant.renameChat', async (item) => {
+            const newName = await vscode.window.showInputBox({
+                prompt: "Enter new name for the chat",
+                value: item.name
+            });
+            if (newName && newName !== item.name) {
+                threadRepository.renameThread(item.id, newName);
+                listProvider.refresh();
+                vscode.window.showInformationMessage(`Chat renamed to "${newName}"`);
+    
+                // 如果当前打开的是被重命名的聊天，则更新其标题
+                if (openChatPanels[item.name]) {
+                    openChatPanels[item.name].title = newName;
+                    openChatPanels[newName] = openChatPanels[item.name];
+                    delete openChatPanels[item.name];
+                }
+            }
+        })
+    );
+    
+    context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.openChat', (chatName, threadId) => {
             if (openChatPanels[chatName]) {
                 openChatPanels[chatName].reveal(vscode.ViewColumn.One);
