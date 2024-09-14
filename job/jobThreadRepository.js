@@ -37,7 +37,7 @@ class JobThreadRepository {
         }
         return jobThreads;
     }
-    
+
     getThread(threadId) {
         return this.loadThread(threadId);
     }
@@ -79,6 +79,18 @@ class JobThreadRepository {
 
     getThreadFilePath(threadId) {
         return path.join(this.storagePath, threadId, 'thread.json');
+    }
+
+    deleteJobThread(threadId) {
+        const threadFolder = path.join(this.storagePath, threadId);
+        if (fs.existsSync(threadFolder)) {
+            fs.rmdirSync(threadFolder, { recursive: true });
+        }
+
+        // Update index
+        const index = this.loadIndex();
+        delete index[threadId];
+        this.saveIndex(index);
     }
 }
 

@@ -21,7 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望可以删除一个thread，然后在列表页上看到这个thread被删除了。
+    我希望可以删除一个job的thread，然后在列表页上看到这个thread被删除了。体验跟chat list一样。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

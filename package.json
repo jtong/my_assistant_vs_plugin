@@ -40,6 +40,10 @@
                 "command": "myAssistant.newJob",
                 "title": "New Job",
                 "icon": "$(plus)"
+            },
+            {
+                "command": "myAssistant.deleteJob",
+                "title": "Delete Job"
             }
         ],
         "viewsContainers": {
@@ -88,6 +92,11 @@
                   "command": "myAssistant.deleteChat",
                   "when": "view == chatList && viewItem == chat",
                   "group": "inline"
+                },
+                {
+                    "command": "myAssistant.deleteJob",
+                    "when": "view == jobList && viewItem == job",
+                    "group": "inline"
                 }
               ]
         }

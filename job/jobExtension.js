@@ -6,6 +6,9 @@ const JobViewProvider = require('./JobViewProvider');
 const JobMessageHandler = require('./jobMessageHandler');
 const JobThreadRepository = require('./jobThreadRepository');
 
+// 添加这个对象来跟踪打开的 job 面板
+const openJobPanels = {};
+
 function activateJobExtension(context, agentLoader) {
     const projectRoot = context.workspaceState.get('projectRoot');
     const threadRepository = new JobThreadRepository(path.join(projectRoot, 'ai_helper/agent/memory_repo/job_threads'));
@@ -54,6 +57,29 @@ function activateJobExtension(context, agentLoader) {
         })
     );
 
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('myAssistant.deleteJob', async (item) => {
+            const result = await vscode.window.showWarningMessage(
+                `Are you sure you want to delete the job "${item.name}"?`,
+                { modal: true },
+                "Yes",
+                "No"
+            );
+            if (result === "Yes") {
+                threadRepository.deleteJobThread(item.id);
+                jobListProvider.refresh();
+                vscode.window.showInformationMessage(`Job "${item.name}" deleted successfully`);
+
+                // 如果job面板已打开，关闭它
+                if (openJobPanels[item.name]) {
+                    openJobPanels[item.name].dispose();
+                }
+            }
+        })
+    );
+
+
     // 注册打开 Job 命令
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.openJob', (jobName, threadId) => {
@@ -87,6 +113,14 @@ function activateJobExtension(context, agentLoader) {
                         break;
                     // ... 其他 case ...
                 }
+            });
+            
+            // 将新打开的面板添加到 openJobPanels 对象中
+            openJobPanels[jobName] = panel;
+
+            // 当面板关闭时，从 openJobPanels 中移除
+            panel.onDidDispose(() => {
+                delete openJobPanels[jobName];
             });
         })
     );

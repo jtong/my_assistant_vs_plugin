@@ -9,15 +9,14 @@ class JobListViewProvider {
     }
 
     getTreeItem(element) {
-        return {
-            label: element.name,
-            collapsibleState: vscode.TreeItemCollapsibleState.None,
-            command: {
-                command: 'myAssistant.openJob',
-                title: 'Open Job',
-                arguments: [element.name, element.id]
-            }
+        const treeItem = new vscode.TreeItem(element.name, vscode.TreeItemCollapsibleState.None);
+        treeItem.command = {
+            command: 'myAssistant.openJob',
+            title: 'Open Job',
+            arguments: [element.name, element.id]
         };
+        treeItem.contextValue = 'job'; 
+        return treeItem;
     }
 
     getChildren() {
