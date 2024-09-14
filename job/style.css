@@ -75,21 +75,9 @@
     padding: 0;
 }
 
-#task-list li, #executed-list li {
-    padding: 10px;
-    margin-bottom: 5px;
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-}
-
-#task-list li:hover, #executed-list li:hover {
-    background-color: #f0f0f0;
-}
 
 .task-item {
-    padding: 10px;
-    margin-bottom: 5px;
+    margin-bottom: 5px; /* 保持任务项之间的间距 */
     background-color: #f9f9f9;
     border: 1px solid #ddd;
     border-radius: 3px;
@@ -109,6 +97,7 @@
 .task-label {
     flex-grow: 1;
     cursor: pointer;
+    padding: 10px 0 10px 0; /* 添加上下 padding */
 }
 
 h3 {

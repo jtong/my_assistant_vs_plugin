@@ -36,6 +36,7 @@ window.addEventListener('message', event => {
     }
 });
 
+window.global = {};
 
 function displayGeneratedJobs(jobs) {
     const taskList = document.getElementById('task-list');
@@ -58,12 +59,12 @@ function displayGeneratedJobs(jobs) {
         li.appendChild(label);
         taskList.appendChild(li);
 
-        // 添加点击事件监听器
-        li.addEventListener('click', function(event) {
-            // 如果点击的是 checkbox，不需要额外处理
-            if (event.target !== checkbox) {
-                checkbox.checked = !checkbox.checked;
-            }
+        // 为复选框添加单独的事件监听器
+        checkbox.addEventListener('change', function(event) {
+            // 在这里可以添加复选框状态改变时的逻辑
+            console.log(`Task ${index} checked: ${this.checked}`);
+            // 阻止事件冒泡
+            event.stopPropagation();
         });
     });
 }

@@ -21,7 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 Generated Tasks 和 Executed Tasks 下面的框显示出边框来，而且不要用对话气泡显示每一项任务，且任务是可以选择的。
+    我发现 Generated Tasks 的任务项有的时候点击了不能切换选中状态。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
