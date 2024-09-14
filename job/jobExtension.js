@@ -8,11 +8,11 @@ const JobThreadRepository = require('./jobThreadRepository');
 
 function activateJobExtension(context, agentLoader) {
     const projectRoot = context.workspaceState.get('projectRoot');
-    const jobThreadRepository = new JobThreadRepository(path.join(projectRoot, 'ai_helper/agent/memory_repo/job_threads'));
+    const threadRepository = new JobThreadRepository(path.join(projectRoot, 'ai_helper/agent/memory_repo/job_threads'));
     
-    const jobMessageHandler = new JobMessageHandler(jobThreadRepository, agentLoader);
-    const jobListProvider = new JobListViewProvider(jobThreadRepository);
-    const jobViewProvider = new JobViewProvider(context.extensionUri, jobThreadRepository);
+    const jobMessageHandler = new JobMessageHandler(threadRepository, agentLoader);
+    const jobListProvider = new JobListViewProvider(threadRepository);
+    const jobViewProvider = new JobViewProvider(context.extensionUri, threadRepository);
 
     context.subscriptions.push(
         vscode.window.registerTreeDataProvider('jobList', jobListProvider),
@@ -34,7 +34,7 @@ function activateJobExtension(context, agentLoader) {
             });
             if (jobName) {
                 const agents = agentLoader.getAgentsList();
-                const jobAgents = agents.filter(agent => agent.metadata.type === 'job');
+                const jobAgents = agents.filter(agent => agent.metadata && agent.metadata.type === 'job');
                 if (jobAgents.length === 0) {
                     vscode.window.showErrorMessage('No job type agents available.');
                     return;
@@ -84,7 +84,7 @@ function activateJobExtension(context, agentLoader) {
     return {
         jobListProvider,
         jobViewProvider,
-        jobThreadRepository,
+        jobThreadRepository: threadRepository,
         jobMessageHandler
     };
 }

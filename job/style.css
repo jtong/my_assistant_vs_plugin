@@ -1,0 +1,94 @@
+#job-container {
+    width: 99%;
+    margin: auto;
+    height: 100vh;
+    border: 1px solid #ddd;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+#file-input-section {
+    margin-bottom: 20px;
+}
+
+#file-path {
+    width: 70%;
+    padding: 10px;
+}
+
+#load-file-btn {
+    width: 25%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+#load-file-btn:hover {
+    background-color: #45a049;
+}
+
+#job-sections {
+    display: flex;
+    flex: 1;
+    border: 1px solid #ccc;
+}
+
+#generated-tasks, #executed-tasks {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+#control-buttons {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 10px;
+}
+
+#execute-selected-btn, #execute-all-btn {
+    margin: 5px;
+    padding: 10px;
+    background-color: #008CBA;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+#execute-selected-btn:hover, #execute-all-btn:hover {
+    background-color: #007B9A;
+}
+
+#task-list, #executed-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+#task-list li, #executed-list li {
+    max-width: 100%;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 20px;
+    font-family: -apple-system, system-ui, "system-ui", "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    font-size: 16px;
+    color: black;
+}
+
+#task-list li {
+    background-color: #DCF8C6;
+    border-bottom-right-radius: 0;
+}
+
+#executed-list li {
+    background-color: #E0E0E0;
+    border-bottom-left-radius: 0;
+}
+
+h3 {
+    color: #4a4a4a;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+}

@@ -21,7 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 job 和 chat 在extension中的代码可以分成两个文件，这样可以更好的维护代码。job和chat的其他代码可以分成两个文件夹，避免混乱。
+    我希望 job 创建的时候列出所有的job agent供我选择，然后根据我选择的job agent来创建job的thread。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

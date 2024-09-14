@@ -7,7 +7,24 @@
 </head>
 <body>
     <div id="job-container">
-        <!-- Job 相关的 UI 元素 -->
+        <div id="file-input-section">
+            <input type="text" id="file-path" placeholder="Enter file path">
+            <button id="load-file-btn">Load Context</button>
+        </div>
+        <div id="job-sections">
+            <div id="generated-tasks">
+                <h3>Generated Tasks</h3>
+                <ul id="task-list"></ul>
+            </div>
+            <div id="control-buttons">
+                <button id="execute-selected-btn">Execute Selected</button>
+                <button id="execute-all-btn">Execute All</button>
+            </div>
+            <div id="executed-tasks">
+                <h3>Executed Tasks</h3>
+                <ul id="executed-list"></ul>
+            </div>
+        </div>
     </div>
     <script>
         window.vscode = acquireVsCodeApi();

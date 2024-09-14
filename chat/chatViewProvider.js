@@ -13,8 +13,8 @@ class ChatViewProvider {
         const htmlPath = path.join(this._extensionUri.fsPath, 'chat/chat-view.html');
         let htmlContent = fs.readFileSync(htmlPath, 'utf-8');
 
-        const scriptUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'script.js')));
-        const styleUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'style.css')));
+        const scriptUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'chat/script.js')));
+        const styleUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'chat/style.css')));
 
         htmlContent = htmlContent.replace('${scriptUri}', scriptUri);
         htmlContent = htmlContent.replace('${styleUri}', styleUri);

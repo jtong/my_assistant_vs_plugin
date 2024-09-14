@@ -37,6 +37,14 @@ class JobThreadRepository {
         }
         return jobThreads;
     }
+
+    loadThread(threadId) {
+        const filePath = this.getThreadFilePath(threadId);
+        if (fs.existsSync(filePath)) {
+            return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        }
+        return null;
+    }
     
     createJobThread(threadId, name, agentName) {
         const newThread = {
@@ -48,6 +56,25 @@ class JobThreadRepository {
         };
         this.saveThread(newThread);
         return newThread;
+    }
+
+    saveThread(thread) {
+        const threadFolder = path.join(this.storagePath, thread.id);
+        if (!fs.existsSync(threadFolder)) {
+            fs.mkdirSync(threadFolder, { recursive: true });
+        }
+        const filePath = this.getThreadFilePath(thread.id);
+        fs.writeFileSync(filePath, JSON.stringify(thread, null, 2));
+
+        // Update index
+        const index = this.loadIndex();
+        index[thread.id] = { id:thread.id, name: thread.name, agent: thread.agent };
+        this.saveIndex(index);
+    }
+
+
+    getThreadFilePath(threadId) {
+        return path.join(this.storagePath, threadId, 'thread.json');
     }
 }
 

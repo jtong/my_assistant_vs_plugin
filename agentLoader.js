@@ -28,7 +28,8 @@ class AgentLoader {
     getAgentsList() {
         return this.config.agents.map(agent => ({
             name: agent.name,
-            path: agent.path
+            path: agent.path,
+            metadata: agent.metadata
         }));
     }
 
