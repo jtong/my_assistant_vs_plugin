@@ -21,7 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 chat-view.html 里，鼠标hover显示edit按钮的时候，在下一行显示，而不是在文本上显示。
+    我希望 在setting里设置各种key，可以添加gemini、openai等key，这样我们在初始化agent的时候可以把这些key放入meta里。这样虽然agent看起来没有区别，但是这样我们在配置文件里就看不到具体的key了。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

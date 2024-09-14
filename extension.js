@@ -16,8 +16,18 @@ function activate(context) {
     }
     const projectRoot = workspaceFolders[0].uri.fsPath;
     context.workspaceState.update('projectRoot', projectRoot);
+    const config = vscode.workspace.getConfiguration('myAssistant');
+    const settings = config.get('apiKey');
 
-    const agentLoader = new AgentLoader(path.join(projectRoot, 'ai_helper', 'agent', 'agents.json'));
+    const agentLoader = new AgentLoader(path.join(projectRoot, 'ai_helper', 'agent', 'agents.json'), settings);
+    // 监听设置变化
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
+        if (e.affectsConfiguration('myAssistant.apiKey')) {
+            const updatedSettings = vscode.workspace.getConfiguration('myAssistant').get('apiKey');
+            agentLoader.updateSettings(updatedSettings);
+        }
+    }));
+
     const agentViewProvider = new AgentViewProvider(agentLoader);
 
     context.subscriptions.push(

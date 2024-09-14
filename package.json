@@ -24,7 +24,20 @@
     "contributes": {
         "configuration": {
             "title": "My Assistant Configuration",
-            "properties": {}
+            "properties": {
+                "myAssistant.apiKey": {
+                    "type": "object",
+                    "default": {
+                        "openai": "",
+                        "gemini": "",
+                        "anthropic": ""
+                    },
+                    "description": "API keys for different services (e.g., OpenAI, Gemini)",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
         },
         "commands": [
             {
@@ -96,7 +109,6 @@
                 }
             ],
             "view/item/context": [
-
                 {
                     "command": "myAssistant.renameChat",
                     "when": "view == chatList && viewItem == chat",

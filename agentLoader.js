@@ -3,10 +3,11 @@ const fs = require('fs');
 const path = require('path');
 
 class AgentLoader {
-    constructor(configPath) {
+    constructor(configPath, settings) {
         this.configPath = configPath;
         this.config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
         this.loadedAgents = {};
+        this.settings = settings;
     }
 
     loadAgent(name) {
@@ -20,6 +21,7 @@ class AgentLoader {
         }
 
         const AgentClass = require(path.resolve(path.dirname(this.configPath), agentConfig.path));
+        agentConfig.metadata.settings = this.settings;
         const agent = new AgentClass(agentConfig.metadata);
         this.loadedAgents[name] = agent;
         return agent;
@@ -36,6 +38,10 @@ class AgentLoader {
     filterAgents(filterFn) {
         const filteredAgents = this.config.agents.filter(filterFn);
         return filteredAgents.map(agent => this.loadAgent(agent.name));
+    }
+
+    updateSettings(newSettings) {
+        this.settings = newSettings;
     }
 }
 
