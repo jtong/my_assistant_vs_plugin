@@ -54,6 +54,28 @@ function activateChatExtension(context, agentLoader) {
     );
 
     context.subscriptions.push(
+        vscode.commands.registerCommand('myAssistant.deleteChat', async (item) => {
+            const result = await vscode.window.showWarningMessage(
+                `Are you sure you want to delete the chat "${item.name}"?`,
+                { modal: true },
+                "Yes",
+                "No"
+            );
+            if (result === "Yes") {
+                threadRepository.deleteThread(item.id);
+                listProvider.refresh();
+                vscode.window.showInformationMessage(`Chat "${item.name}" deleted successfully`);
+                
+                // 如果当前打开的是被删除的聊天，则关闭它
+                if (openChatPanels[item.name]) {
+                    openChatPanels[item.name].dispose();
+                    delete openChatPanels[item.name];
+                }
+            }
+        })
+    );
+
+    context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.openChat', (chatName, threadId) => {
             if (openChatPanels[chatName]) {
                 openChatPanels[chatName].reveal(vscode.ViewColumn.One);

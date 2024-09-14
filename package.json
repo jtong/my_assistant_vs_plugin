@@ -1,99 +1,110 @@
 {
-	"name": "my_assistant",
-	"description": "plugin of teaching you everything in closed knowledge context with LLM.)",
-	"version": "0.0.1",
-	"publisher": "jtong",
-	"icon": "media/custom-explorer-icon.png",
-	"repository": "https://github.com/jtong/my_assistant_vs_plugin",
-	"engines": {
-		"vscode": "^1.74.0"
-	},
-	"activationEvents": [
-		"*"
-	],
-	"categories": [
-		"Machine Learning"
-	],
-	"main": "./extension.js",
-	"files": [
-		"extension.js",
-		"chatViewProvider.js",
-		"listViewProvider.js",
-		"chat-view.html"
-	],
-	"contributes": {
-		"configuration": {
-			"title": "My Assistant Configuration",
-			"properties": {}
-		},
-		"commands": [
-			{
-				"command": "myAssistant.newChat",
-				"title": "New Chat",
-				"icon": "$(plus)"
-			},
+    "name": "my_assistant",
+    "description": "plugin of teaching you everything in closed knowledge context with LLM.)",
+    "version": "0.0.1",
+    "publisher": "jtong",
+    "icon": "media/custom-explorer-icon.png",
+    "repository": "https://github.com/jtong/my_assistant_vs_plugin",
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "activationEvents": [
+        "*"
+    ],
+    "categories": [
+        "Machine Learning"
+    ],
+    "main": "./extension.js",
+    "files": [
+        "extension.js",
+        "chatViewProvider.js",
+        "listViewProvider.js",
+        "chat-view.html"
+    ],
+    "contributes": {
+        "configuration": {
+            "title": "My Assistant Configuration",
+            "properties": {}
+        },
+        "commands": [
+            {
+                "command": "myAssistant.newChat",
+                "title": "New Chat",
+                "icon": "$(plus)"
+            },
+            {
+                "command": "myAssistant.deleteChat",
+                "title": "Delete Chat"
+            },
             {
                 "command": "myAssistant.newJob",
                 "title": "New Job",
                 "icon": "$(plus)"
             }
-		],
-		"viewsContainers": {
-			"activitybar": [
-				{
-					"id": "chatSidebar",
-					"title": "Chat",
-					"icon": "media/chat-icon.png"
-				}
-			]
-		},
-		"views": {
-			"chatSidebar": [
-				{
-					"id": "chatList",
-					"name": "Chat List",
-					"type": "tree"
-				}, 
+        ],
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "chatSidebar",
+                    "title": "Chat",
+                    "icon": "media/chat-icon.png"
+                }
+            ]
+        },
+        "views": {
+            "chatSidebar": [
+                {
+                    "id": "chatList",
+                    "name": "Chat List",
+                    "type": "tree"
+                },
                 {
                     "id": "jobList",
                     "name": "Job List",
                     "type": "tree"
                 },
-				{
-					"id": "agentList",
-					"name": "Available Agents",
-					"type": "tree"
-				}
-			]
-		},
-		"menus": {
-			"view/title": [
-				{
-					"command": "myAssistant.newChat",
-					"when": "view == chatList",
-					"group": "navigation"
-				},
+                {
+                    "id": "agentList",
+                    "name": "Available Agents",
+                    "type": "tree"
+                }
+            ]
+        },
+        "menus": {
+            "view/title": [
+                {
+                    "command": "myAssistant.newChat",
+                    "when": "view == chatList",
+                    "group": "navigation"
+                },
                 {
                     "command": "myAssistant.newJob",
                     "when": "view == jobList",
                     "group": "navigation"
                 }
-			]
-		}
-	},
-	"scripts": {
-		"package": "webpack --mode development"
-	},
-	"devDependencies": {
-		"@types/vscode": "^1.73.0",
-		"webpack": "^5.89.0",
-		"webpack-cli": "^5.1.4"
-	},
-	"dependencies": {
-		"ai-agent-response": "^1.0.7",
-		"axios": "^1.6.8",
-		"handlebars": "^4.7.8",
-		"isomorphic-git": "^1.25.6",
-		"js-yaml": "^4.1.0"
-	}
+            ],
+            "view/item/context": [
+                {
+                  "command": "myAssistant.deleteChat",
+                  "when": "view == chatList && viewItem == chat",
+                  "group": "inline"
+                }
+              ]
+        }
+    },
+    "scripts": {
+        "package": "webpack --mode development"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.73.0",
+        "webpack": "^5.89.0",
+        "webpack-cli": "^5.1.4"
+    },
+    "dependencies": {
+        "ai-agent-response": "^1.0.7",
+        "axios": "^1.6.8",
+        "handlebars": "^4.7.8",
+        "isomorphic-git": "^1.25.6",
+        "js-yaml": "^4.1.0"
+    }
 }

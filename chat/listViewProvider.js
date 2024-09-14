@@ -12,15 +12,14 @@ class ListViewProvider {
     }
 
     getTreeItem(element) {
-        return {
-            label: element.name,
-            collapsibleState: vscode.TreeItemCollapsibleState.None,
-            command: {
-                command: 'myAssistant.openChat',
-                title: 'Open Chat',
-                arguments: [element.name, element.id]
-            }
+        const treeItem = new vscode.TreeItem(element.name, vscode.TreeItemCollapsibleState.None);
+        treeItem.command = {
+            command: 'myAssistant.openChat',
+            title: 'Open Chat',
+            arguments: [element.name, element.id]
         };
+        treeItem.contextValue = 'chat'; // 添加这行来支持上下文菜单
+        return treeItem;
     }
 
     getChildren() {

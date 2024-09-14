@@ -21,7 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我发现 Generated Tasks 的任务项有的时候点击了不能切换选中状态。
+    我希望可以删除一个thread，然后在列表页上看到这个thread被删除了。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
