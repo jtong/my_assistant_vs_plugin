@@ -149,12 +149,13 @@
 
 .message-container {
     position: relative;
+    padding-bottom: 25px; /* Add padding to make room for the edit button */
 }
 
 .edit-btn {
     position: absolute;
-    top: 5px;
-    right: 5px;
+    bottom: 0;
+    left: 0;
     display: none;
     background-color: #f0f0f0;
     border: 1px solid #ccc;

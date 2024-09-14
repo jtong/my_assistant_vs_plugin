@@ -21,7 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 chat-view.html 里的edit按钮，要鼠标hover才显示。
+    我希望 chat-view.html 里，鼠标hover显示edit按钮的时候，在下一行显示，而不是在文本上显示。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
