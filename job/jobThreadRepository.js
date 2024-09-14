@@ -37,6 +37,10 @@ class JobThreadRepository {
         }
         return jobThreads;
     }
+    
+    getThread(threadId) {
+        return this.loadThread(threadId);
+    }
 
     loadThread(threadId) {
         const filePath = this.getThreadFilePath(threadId);

@@ -24,6 +24,17 @@ class JobViewProvider {
     }
 
     // 其他与 job 相关的方法
+    async loadContext(threadId, filePath) {
+        const thread = this.threadRepository.getThread(threadId);
+        const agent = this.agentLoader.loadAgent(thread.agent);
+        const task = {
+            name: "Initialize Job",
+            type: "action",
+            message: `Load context from file: ${filePath}`
+        };
+        const response = await agent.executeTask(task, thread);
+        return response;
+    }
 }
 
 module.exports = JobViewProvider;

@@ -9,7 +9,7 @@ const JobThreadRepository = require('./jobThreadRepository');
 function activateJobExtension(context, agentLoader) {
     const projectRoot = context.workspaceState.get('projectRoot');
     const threadRepository = new JobThreadRepository(path.join(projectRoot, 'ai_helper/agent/memory_repo/job_threads'));
-    
+
     const jobMessageHandler = new JobMessageHandler(threadRepository, agentLoader);
     const jobListProvider = new JobListViewProvider(threadRepository);
     const jobViewProvider = new JobViewProvider(context.extensionUri, threadRepository);
@@ -76,7 +76,17 @@ function activateJobExtension(context, agentLoader) {
 
             // 处理与前端的消息通信
             panel.webview.onDidReceiveMessage(async message => {
-                // 在这里处理 job 类型的消息
+                switch (message.type) {
+                    case 'loadContext':
+                        const thread = threadRepository.getThread(message.threadId);
+                        const response = await jobMessageHandler.loadContext(thread, message.filePath);
+                        panel.webview.postMessage({
+                            type: 'contextLoaded',
+                            jobs: response.meta.generatedJobs
+                        });
+                        break;
+                    // ... 其他 case ...
+                }
             });
         })
     );

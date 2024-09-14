@@ -5,6 +5,8 @@ project:
       - "ai_helper/agent/*"
       - "ai_helper/agent/node_modules/**"
       - "node_modules/**"
+      - "chat/**"
+      - "job/**"
       - "*.*"
     - ignore:
       - node_modules/@(.*)
@@ -22,7 +24,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我想要一个testJobAgent来测试初始化一个thread来显示view
+    我想要点击Load Context时，TestJobAgent 会给我生成一系列的jobs，展示在页面的左侧。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

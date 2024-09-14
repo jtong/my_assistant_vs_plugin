@@ -14,15 +14,37 @@ function loadThread(threadId) {
     });
 }
 
+document.getElementById('load-file-btn').addEventListener('click', () => {
+    const filePath = document.getElementById('file-path').value;
+    window.vscode.postMessage({
+        type: 'loadContext',
+        threadId: window.threadId,
+        filePath: filePath
+    });
+});
+
 window.addEventListener('message', event => {
     const message = event.data;
     switch (message.type) {
         case 'loadThread':
             displayThread(message.thread);
             break;
-        // 处理其他与 job 相关的消息
+        case 'contextLoaded':
+            displayGeneratedJobs(message.jobs);
+            break;
+        // ... 其他 case ...
     }
 });
+
+function displayGeneratedJobs(jobs) {
+    const taskList = document.getElementById('task-list');
+    taskList.innerHTML = '';
+    jobs.forEach(job => {
+        const li = document.createElement('li');
+        li.textContent = `${job.name}: ${job.description}`;
+        taskList.appendChild(li);
+    });
+}
 
 function displayThread(thread) {
     // 渲染 job 列表或详情
