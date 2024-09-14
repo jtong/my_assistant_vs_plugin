@@ -21,7 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 编辑消息的时候，文本框的宽度跟显示的时候一样宽。
+    我希望 thread的删除在右键菜单里，而不要在item上。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

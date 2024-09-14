@@ -91,12 +91,12 @@
                 {
                   "command": "myAssistant.deleteChat",
                   "when": "view == chatList && viewItem == chat",
-                  "group": "inline"
+                  "group": "1_modification"
                 },
                 {
                     "command": "myAssistant.deleteJob",
                     "when": "view == jobList && viewItem == job",
-                    "group": "inline"
+                    "group": "1_modification"
                 }
               ]
         }
