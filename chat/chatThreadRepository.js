@@ -45,7 +45,7 @@ class ChatThreadRepository {
 
         // Update index
         const index = this.loadIndex();
-        index[thread.id] = { id:thread.id, name: thread.name, agent: thread.agent };
+        index[thread.id] = { id: thread.id, name: thread.name, agent: thread.agent };
         this.saveIndex(index);
     }
 
@@ -125,13 +125,25 @@ class ChatThreadRepository {
     removeMessagesAfterLastUser(threadId) {
         const thread = this.getThread(threadId);
         if (!thread) return [];
-    
+
         const lastUserIndex = thread.messages.findLastIndex(msg => msg.sender === 'user');
         if (lastUserIndex === -1) return [];
-    
+
         const removedMessages = thread.messages.splice(lastUserIndex + 1);
         this.saveThread(thread);
         return removedMessages;
+    }
+
+
+    updateMessage(threadId, messageId, updates) {
+        const thread = this.loadThread(threadId);
+        if (thread) {
+            const messageIndex = thread.messages.findIndex(m => m.id === messageId);
+            if (messageIndex !== -1) {
+                thread.messages[messageIndex] = { ...thread.messages[messageIndex], ...updates };
+                this.saveThread(thread);
+            }
+        }
     }
 }
 

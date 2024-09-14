@@ -65,7 +65,7 @@ function activateChatExtension(context, agentLoader) {
                 threadRepository.deleteThread(item.id);
                 listProvider.refresh();
                 vscode.window.showInformationMessage(`Chat "${item.name}" deleted successfully`);
-                
+
                 // 如果当前打开的是被删除的聊天，则关闭它
                 if (openChatPanels[item.name]) {
                     openChatPanels[item.name].dispose();
@@ -140,6 +140,9 @@ function activateChatExtension(context, agentLoader) {
                             if (task) {
                                 await handleThread(messageHandler, thread, task, threadRepository, panel);
                             }
+                            break;
+                        case 'editMessage':
+                            threadRepository.updateMessage(message.threadId, message.messageId, { text: message.newText });
                             break;
                     }
                 });

@@ -36,6 +36,65 @@ function loadThread(threadId) {
     });
 }
 
+function addEditButtons() {
+    const messages = document.querySelectorAll('#chat-box > div');
+    messages.forEach(message => {
+        if (!message.querySelector('.edit-btn')) {
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Edit';
+            editBtn.className = 'edit-btn';
+            editBtn.onclick = function() {
+                const textContainer = message.querySelector('.message-text');
+                const messageId = message.getAttribute('data-message-id');
+                const originalText = textContainer.textContent;
+                
+                const editWrapper = document.createElement('div');
+                editWrapper.className = 'edit-wrapper';
+                
+                const textarea = document.createElement('textarea');
+                textarea.value = originalText;
+                editWrapper.appendChild(textarea);
+                
+                const saveBtn = document.createElement('button');
+                saveBtn.textContent = 'Save';
+                saveBtn.className = 'save-btn';
+                editWrapper.appendChild(saveBtn);
+                
+                const cancelBtn = document.createElement('button');
+                cancelBtn.textContent = 'Cancel';
+                cancelBtn.className = 'cancel-btn';
+                editWrapper.appendChild(cancelBtn);
+                
+                message.insertBefore(editWrapper, textContainer);
+                textContainer.style.display = 'none';
+                editBtn.style.display = 'none';
+                
+                saveBtn.onclick = function() {
+                    const newText = textarea.value;
+                    textContainer.textContent = newText;
+                    textContainer.style.display = '';
+                    editWrapper.remove();
+                    editBtn.style.display = '';
+                    
+                    window.vscode.postMessage({
+                        type: 'editMessage',
+                        threadId: window.threadId,
+                        messageId: messageId,
+                        newText: newText
+                    });
+                };
+                
+                cancelBtn.onclick = function() {
+                    textContainer.style.display = '';
+                    editWrapper.remove();
+                    editBtn.style.display = '';
+                };
+            };
+            message.appendChild(editBtn);
+        }
+    });
+}
+
 window.addEventListener('message', event => {
     const message = event.data;
     switch (message.type) {
@@ -53,6 +112,7 @@ window.addEventListener('message', event => {
             break;
         case 'botResponseComplete':
             isBotResponding = false;  // 重置标志，表示 bot 回复完成
+            addEditButtons(); 
             break;
         case 'removeLastBotMessage':
             removeLastBotMessage();
@@ -89,19 +149,25 @@ function displayUserMessage(message) {
     const chatBox = document.getElementById('chat-box');
     const messageElement = document.createElement('div');
     messageElement.classList.add(message.sender);
-    messageElement.textContent = message.text;
     messageElement.setAttribute('data-message-id', message.id);
+
+    const textContainer = document.createElement('span');
+    textContainer.className = 'message-text';
+    textContainer.textContent = message.text;
+    messageElement.appendChild(textContainer);
+
     chatBox.appendChild(messageElement);
-    // 自动滚动到底部
     messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
-
 
 function updateBotMessage(messageId, text) {
     const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
     if (messageElement) {
-        messageElement.textContent += text; // 使用 += 来累加文本
-        messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        const textContainer = messageElement.querySelector('.message-text');
+        if (textContainer) {
+            textContainer.textContent += text;
+            messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
     }
 }
 
@@ -111,18 +177,22 @@ function displayBotMessage(message, isStreaming = false) {
     messageElement.classList.add(message.sender);
     messageElement.setAttribute('data-message-id', message.id);
 
+    const textContainer = document.createElement('span');
+    textContainer.className = 'message-text';
+
     if (isStreaming) {
         // 如果是流式消息，初始化为空
-        messageElement.textContent = '';
+        textContainer.textContent = '';
     } else {
         // 如果不是流式消息，使用原来的逻辑
         if (message.isHtml) {
-            messageElement.innerHTML = message.text;
+            textContainer.innerHTML = message.text;
         } else {
-            messageElement.textContent = message.text;
+            textContainer.textContent = message.text;
         }
     }
 
+    messageElement.appendChild(textContainer);
     chatBox.appendChild(messageElement);
     // 自动滚动到底部
     messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -142,50 +212,7 @@ function displayThread(thread) {
             displayBotMessage(message);
         }
     });
-}
-
-function displayUserMessage(message) {
-    const chatBox = document.getElementById('chat-box');
-    const messageElement = document.createElement('div');
-    messageElement.classList.add(message.sender);
-    messageElement.textContent = message.text;
-    messageElement.setAttribute('data-message-id', message.id);
-    chatBox.appendChild(messageElement);
-}
-
-function displayBotMessage(message) {
-    const chatBox = document.getElementById('chat-box');
-    const messageElement = document.createElement('div');
-    messageElement.classList.add(message.sender);
-
-    if (message.isHtml) {
-        messageElement.innerHTML = message.text;
-    } else {
-        messageElement.textContent = message.text;
-    }
-
-    if (message.additionalData && message.additionalData.buttons) {
-        Object.keys(message.additionalData.buttons).forEach(buttonName => {
-            const buttonElement = document.createElement('button');
-            buttonElement.textContent = buttonName;
-            buttonElement.disabled = message.additionalData.buttons[buttonName];
-            buttonElement.addEventListener('click', function () {
-                const actionAttributes = {
-                    action: buttonName,
-                    value: true
-                };
-                sendMessage(`动作执行: ${buttonName}`, actionAttributes);
-            });
-            messageElement.appendChild(buttonElement);
-        });
-    }
-
-    messageElement.setAttribute('data-message-id', message.id);
-    chatBox.appendChild(messageElement);
-
-    if (message.isHtml) {
-        setupForms(messageElement, message.id);
-    }
+    addEditButtons();   
 }
 
 function sendMessageHandler() {

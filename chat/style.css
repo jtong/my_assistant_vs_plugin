@@ -94,3 +94,30 @@
 #task-buttons button:hover {
     background-color: #45a049;
 }
+
+.message-text {
+    display: inline-block;
+    word-break: break-word;
+}
+
+.edit-wrapper {
+    display: flex;
+    flex-direction: column;
+    margin-top: 5px;
+}
+
+.edit-wrapper textarea {
+    width: 100%;
+    margin-bottom: 5px;
+    min-height: 50px;
+}
+
+.edit-wrapper button {
+    margin-right: 5px;
+}
+
+.edit-btn, .save-btn, .cancel-btn {
+    padding: 2px 5px;
+    font-size: 12px;
+    cursor: pointer;
+}
