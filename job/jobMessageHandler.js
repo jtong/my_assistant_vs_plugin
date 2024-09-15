@@ -8,7 +8,7 @@ class JobMessageHandler {
     }
 
     async handleJobTask(thread, task) {
-        const agent = this.agentLoader.loadAgent(thread.agent);
+        const agent = this.agentLoader.loadAgentForThread(thread);
         let response = await agent.executeTask(task, thread);
 
         if (response.meta && response.meta.generatedJobs) {
@@ -20,7 +20,7 @@ class JobMessageHandler {
     }
 
     async loadContext(thread, filePath) {
-        const agent = this.agentLoader.loadAgent(thread.agent);
+        const agent = this.agentLoader.loadAgentForThread(thread);
         const task = new Task({
             name: "Initialize Job",
             type: Task.TYPE_ACTION,

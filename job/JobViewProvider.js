@@ -26,7 +26,7 @@ class JobViewProvider {
     // 其他与 job 相关的方法
     async loadContext(threadId, filePath) {
         const thread = this.threadRepository.getThread(threadId);
-        const agent = this.agentLoader.loadAgent(thread.agent);
+        const agent = this.agentLoader.loadAgentForThread(thread);
         const task = {
             name: "Initialize Job",
             type: "action",

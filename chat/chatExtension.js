@@ -46,10 +46,11 @@ function activateChatExtension(context, agentLoader) {
 
                 if (agentName) {
                     const newThreadId = 'thread_' + Date.now();
-                    const agent = agentLoader.loadAgent(agentName);
-                    const agentMeta = agent.metadata || {};
-                    threadRepository.createThread(newThreadId, chatName, agentName);
+                    const newThread = threadRepository.createThread(newThreadId, chatName, agentName);
+                    const agent = agentLoader.loadAgentForThread(newThread);
+                    const agentMeta = agent.metadata;
                     threadRepository.updateThreadMeta(newThreadId, agentMeta);
+
                     listProvider.refresh();
                     vscode.commands.executeCommand('myAssistant.openChat', chatName, newThreadId);
                 }
@@ -159,7 +160,7 @@ function activateChatExtension(context, agentLoader) {
                             break;
                         case 'executeTask':
                             const taskName = message.taskName;
-                            const agent = agentLoader.loadAgent(thread.agent);
+                            const agent = agentLoader.loadAgentForThread(thread);
                             const task = agent.getTask(taskName);
                             task.host_utils = host_utils;
                             if (task) {
@@ -209,7 +210,7 @@ function activateChatExtension(context, agentLoader) {
                 if (!e || e.document.uri.toString() !== uri.toString()) {
                     // 保存文档
                     await metaEditorProvider.saveDocument(doc);
-
+                    
                     changeDisposable.dispose();
                     closeDisposable.dispose();
                 }

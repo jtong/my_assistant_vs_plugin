@@ -14,7 +14,7 @@ class MetaEditorProvider {
         if (meta === undefined) {
             const thread = this.threadRepository.getThread(threadId);
             if (thread && thread.agent) {
-                const agent = this.agentLoader.loadAgent(thread.agent);
+                const agent = this.agentLoader.loadAgentForThread(thread);
                 meta = agent.metadata || {};
                 // 更新thread的meta
                 this.threadRepository.updateThreadMeta(threadId, meta);
@@ -30,6 +30,8 @@ class MetaEditorProvider {
         const content = document.getText();
         const newMeta = yaml.load(content);
         this.threadRepository.updateThreadMeta(threadId, newMeta);
+        const thread = this.threadRepository.loadThread(threadId);
+        this.agentLoader.updateAgentForThread(thread);
     }
 }
 

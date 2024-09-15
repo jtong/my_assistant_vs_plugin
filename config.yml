@@ -18,10 +18,11 @@ project:
       - "**/package-lock.json"
       - media
       - "*/test"
+      - "*.log"
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 右键打开thread的meta editor 的时候，如果meta为空，就从agent的meta里读过来。
+    我希望 每个thread的agent是隔离的，这样的话，每个agent可以跟thread的meta来overwrite自己的meta，彼此不会混淆。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
