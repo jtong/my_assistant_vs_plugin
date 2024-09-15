@@ -21,7 +21,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 在setting里设置各种key，可以添加gemini、openai等key，这样我们在初始化agent的时候可以把这些key放入meta里。这样虽然agent看起来没有区别，但是这样我们在配置文件里就看不到具体的key了。
+    我希望 右键打开thread的meta editor 的时候，如果meta为空，就从agent的meta里读过来。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

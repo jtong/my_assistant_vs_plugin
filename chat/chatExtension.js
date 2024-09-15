@@ -6,6 +6,7 @@ const ListViewProvider = require('./ListViewProvider');
 const ChatMessageHandler = require('./chatMessageHandler');
 const ChatThreadRepository = require('./chatThreadRepository');
 const { Task } = require('ai-agent-response');
+const MetaEditorProvider = require('./metaEditorProvider');
 
 // Object to store open chat panels
 const openChatPanels = {};
@@ -45,7 +46,10 @@ function activateChatExtension(context, agentLoader) {
 
                 if (agentName) {
                     const newThreadId = 'thread_' + Date.now();
+                    const agent = agentLoader.loadAgent(agentName);
+                    const agentMeta = agent.metadata || {};
                     threadRepository.createThread(newThreadId, chatName, agentName);
+                    threadRepository.updateThreadMeta(newThreadId, agentMeta);
                     listProvider.refresh();
                     vscode.commands.executeCommand('myAssistant.openChat', chatName, newThreadId);
                 }
@@ -85,7 +89,7 @@ function activateChatExtension(context, agentLoader) {
                 threadRepository.renameThread(item.id, newName);
                 listProvider.refresh();
                 vscode.window.showInformationMessage(`Chat renamed to "${newName}"`);
-    
+
                 // 如果当前打开的是被重命名的聊天，则更新其标题
                 if (openChatPanels[item.name]) {
                     openChatPanels[item.name].title = newName;
@@ -95,7 +99,7 @@ function activateChatExtension(context, agentLoader) {
             }
         })
     );
-    
+
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.openChat', (chatName, threadId) => {
             if (openChatPanels[chatName]) {
@@ -174,6 +178,44 @@ function activateChatExtension(context, agentLoader) {
                     delete openChatPanels[chatName];
                 });
             }
+        })
+    );
+
+    const metaEditorProvider = new MetaEditorProvider(threadRepository, agentLoader);
+
+    context.subscriptions.push(
+        vscode.workspace.registerTextDocumentContentProvider('chat-meta', metaEditorProvider)
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('myAssistant.openMetaEditor', async (item) => {
+            const uri = vscode.Uri.parse(`chat-meta:/${item.id}`);
+            const doc = await vscode.workspace.openTextDocument(uri);
+            const editor = await vscode.window.showTextDocument(doc, { preview: false });
+
+            // 设置文档的语言模式为YAML
+            await vscode.languages.setTextDocumentLanguage(doc, 'yaml');
+
+
+            // 设置文档变更监听器
+            const changeDisposable = vscode.workspace.onDidChangeTextDocument(async (e) => {
+                if (e.document.uri.toString() === uri.toString()) {
+                    await metaEditorProvider.saveDocument(e.document);
+                }
+            });
+
+            // 当编辑器关闭时，移除监听器
+            const closeDisposable = vscode.window.onDidChangeActiveTextEditor(async (e) => {
+                if (!e || e.document.uri.toString() !== uri.toString()) {
+                    // 保存文档
+                    await metaEditorProvider.saveDocument(doc);
+
+                    changeDisposable.dispose();
+                    closeDisposable.dispose();
+                }
+            });
+            context.subscriptions.push(changeDisposable, closeDisposable);
+
         })
     );
 

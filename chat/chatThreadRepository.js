@@ -151,7 +151,7 @@ class ChatThreadRepository {
         if (thread) {
             thread.name = newName;
             this.saveThread(thread);
-    
+
             // Update index
             const index = this.loadIndex();
             if (index[threadId]) {
@@ -159,6 +159,17 @@ class ChatThreadRepository {
                 this.saveIndex(index);
             }
         }
+    }
+
+    getThreadMeta(threadId) {
+        const thread = this.loadThread(threadId);
+        return thread.meta;
+    }
+
+    updateThreadMeta(threadId, newMeta) {
+        const thread = this.loadThread(threadId);
+        thread.meta = newMeta;
+        this.saveThread(thread);
     }
 }
 

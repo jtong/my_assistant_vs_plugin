@@ -54,6 +54,10 @@
                 "title": "Rename Chat"
             },
             {
+                "command": "myAssistant.openMetaEditor",
+                "title": "Open Meta Editor"
+            },
+            {
                 "command": "myAssistant.newJob",
                 "title": "New Job",
                 "icon": "$(plus)"
@@ -117,6 +121,11 @@
                 {
                     "command": "myAssistant.renameJob",
                     "when": "view == jobList && viewItem == job",
+                    "group": "1_modification"
+                },
+                {
+                    "command": "myAssistant.openMetaEditor",
+                    "when": "view == chatList && viewItem == chat",
                     "group": "1_modification"
                 },
                 {
