@@ -1,5 +1,20 @@
 let isBotResponding = false;
 
+const md = window.markdownit({
+    highlight: function (str, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+            try {
+                return hljs.highlight(str, { language: lang }).value;
+            } catch (__) {}
+        }
+        return ''; // 使用外部默认转义
+    }
+});
+
+function renderMarkdown(text) {
+    return md.render(text);
+}
+
 document.getElementById('send-btn').addEventListener('click', sendMessageHandler);
 document.getElementById('user-input').addEventListener('keydown', function (event) {
     // 当用户按下回车键且没有按住Shift键时发送消息
@@ -175,7 +190,7 @@ function displayUserMessage(message) {
 
     const textContainer = document.createElement('span');
     textContainer.className = 'message-text';
-    textContainer.textContent = message.text;
+    textContainer.innerHTML = renderMarkdown(message.text);
     container.appendChild(textContainer);
 
     messageElement.appendChild(container);
@@ -199,12 +214,7 @@ function displayBotMessage(message, isStreaming = false) {
         // 如果是流式消息，初始化为空
         textContainer.textContent = '';
     } else {
-        // 如果不是流式消息，使用原来的逻辑
-        if (message.isHtml) {
-            textContainer.innerHTML = message.text;
-        } else {
-            textContainer.textContent = message.text;
-        }
+        textContainer.innerHTML = renderMarkdown(message.text);
     }
 
     container.appendChild(textContainer);
@@ -223,7 +233,7 @@ function updateBotMessage(messageId, text) {
     if (messageElement) {
         const textContainer = messageElement.querySelector('.message-text');
         if (textContainer) {
-            textContainer.textContent += text;
+            textContainer.innerHTML += renderMarkdown(text);
             messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }
     }

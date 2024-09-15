@@ -15,9 +15,15 @@ class ChatViewProvider {
 
         const scriptUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'chat/script.js')));
         const styleUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'chat/style.css')));
+        const markdownItUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'chat', 'lib', 'markdown-it.min.js')));
+        const highlightJsUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'chat', 'lib', 'highlight.min.js')));
+        const highlightCssUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'chat', 'lib', 'highlight.default.min.css')));
 
         htmlContent = htmlContent.replace('${scriptUri}', scriptUri);
         htmlContent = htmlContent.replace('${styleUri}', styleUri);
+        htmlContent = htmlContent.replace('${markdownItUri}', markdownItUri);
+        htmlContent = htmlContent.replace('${highlightJsUri}', highlightJsUri);
+        htmlContent = htmlContent.replace('${highlightCssUri}', highlightCssUri);
         htmlContent = htmlContent.replace('${threadId}', threadId);
 
         return htmlContent;
