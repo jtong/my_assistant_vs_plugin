@@ -15,7 +15,7 @@ class SettingsEditorProvider {
             if (thread && thread.agent) {
                 const agent = this.agentLoader.loadAgentForThread(thread);
                 settings = agent.settings || {};
-                this.threadRepository.update(threadId, settings);
+                this.threadRepository.updateThreadSettings(threadId, settings);
             }
         }
         return yaml.dump(settings || {});

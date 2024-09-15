@@ -187,7 +187,7 @@ function activateChatExtension(context, agentLoader) {
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.openSettingsEditor', async (item) => {
             const uri = vscode.Uri.parse(`chat-settings:/${item.id}`);
-            const doc = await vscode.workspace.openTextDocument(uri);
+            let doc = await vscode.workspace.openTextDocument(uri);
             const editor = await vscode.window.showTextDocument(doc, { preview: false });
 
             // 设置文档的语言模式为YAML
