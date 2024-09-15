@@ -168,6 +168,11 @@ function activateChatExtension(context, agentLoader) {
                         case 'editMessage':
                             threadRepository.updateMessage(message.threadId, message.messageId, { text: message.newText });
                             break;
+                        case 'copyToClipboard':
+                            vscode.env.clipboard.writeText(message.text).then(() => {
+                                vscode.window.showInformationMessage('Text copied to clipboard');
+                            });
+                            break;
                     }
                 });
 

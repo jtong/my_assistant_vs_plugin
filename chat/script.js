@@ -5,7 +5,7 @@ const md = window.markdownit({
         if (lang && hljs.getLanguage(lang)) {
             try {
                 return hljs.highlight(str, { language: lang }).value;
-            } catch (__) {}
+            } catch (__) { }
         }
         return ''; // 使用外部默认转义
     }
@@ -56,50 +56,61 @@ function addEditButtons() {
     messages.forEach(message => {
         const container = message.querySelector('.message-container');
         if (container && !container.querySelector('.edit-btn')) {
+            // Add copy button
+            const copyBtn = document.createElement('button');
+            copyBtn.textContent = 'Copy';
+            copyBtn.className = 'copy-btn';
+            copyBtn.onclick = function () {
+                const originalText = message.getAttribute('data-original-text');
+                copyToClipboard(originalText);
+            };
+            container.appendChild(copyBtn);
+
+            // Existing edit button code
             const editBtn = document.createElement('button');
             editBtn.textContent = 'Edit';
             editBtn.className = 'edit-btn';
-            editBtn.onclick = function() {
+            editBtn.onclick = function () {
                 const textContainer = container.querySelector('.message-text');
                 const messageId = message.getAttribute('data-message-id');
                 const originalText = message.getAttribute('data-original-text'); // 使用存储的原始文本
-                
+
                 const editWrapper = document.createElement('div');
                 editWrapper.className = 'edit-wrapper';
-                
+
                 const textarea = document.createElement('textarea');
                 textarea.value = originalText; // 使用原始文本
                 editWrapper.appendChild(textarea);
-                
+
                 const buttonContainer = document.createElement('div');
                 buttonContainer.className = 'button-container';
-                
+
                 const saveBtn = document.createElement('button');
                 saveBtn.textContent = 'Save';
                 saveBtn.className = 'save-btn';
                 buttonContainer.appendChild(saveBtn);
-                
+
                 const cancelBtn = document.createElement('button');
                 cancelBtn.textContent = 'Cancel';
                 cancelBtn.className = 'cancel-btn';
                 buttonContainer.appendChild(cancelBtn);
-                
+
                 editWrapper.appendChild(buttonContainer);
-                
+
                 container.insertBefore(editWrapper, textContainer);
                 textContainer.style.display = 'none';
                 editBtn.style.display = 'none';
-                
+
                 autoResizeTextarea(textarea);
 
-                saveBtn.onclick = function() {
+                saveBtn.onclick = function () {
                     const newText = textarea.value;
                     message.setAttribute('data-original-text', newText); // 更新存储的原始文本
                     textContainer.innerHTML = renderMarkdown(newText); // 重新渲染 Markdown
                     textContainer.style.display = '';
                     editWrapper.remove();
                     editBtn.style.display = '';
-                    
+
                     window.vscode.postMessage({
                         type: 'editMessage',
                         threadId: window.threadId,
@@ -107,24 +118,33 @@ function addEditButtons() {
                         newText: newText
                     });
                 };
-                
-                cancelBtn.onclick = function() {
+
+                cancelBtn.onclick = function () {
                     textContainer.style.display = '';
                     editWrapper.remove();
                     editBtn.style.display = '';
                 };
             };
-            
+
             container.appendChild(editBtn);
         }
+    });
+}
+
+function copyToClipboard(text) {
+    // Send a message to the extension to copy the text
+    window.vscode.postMessage({
+        type: 'copyToClipboard',
+        text: text,
+        threadId: window.threadId
     });
 }
 
 function autoResizeTextarea(textarea) {
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';
-    
-    textarea.addEventListener('input', function() {
+
+    textarea.addEventListener('input', function () {
         this.style.height = 'auto';
         this.style.height = this.scrollHeight + 'px';
     });
@@ -139,20 +159,20 @@ window.addEventListener('message', event => {
             break;
         case 'addUserMessage':
             displayUserMessage(message.message);
-            break;    
+            break;
         case 'addBotMessage':
             displayBotMessage(message.message, message.isStreaming);
-            break;    
+            break;
         case 'updateBotMessage':
             updateBotMessage(message.messageId, message.text);
             break;
         case 'botResponseComplete':
             isBotResponding = false;  // 重置标志，表示 bot 回复完成
-            addEditButtons(); 
+            addEditButtons();
             break;
         case 'removeLastBotMessage':
             removeLastBotMessage();
-            break;    
+            break;
         case 'removeMessagesAfterLastUser':
             const chatBox = document.getElementById('chat-box');
             const messages = chatBox.children;
@@ -165,7 +185,7 @@ window.addEventListener('message', event => {
             break;
         case 'updateAvailableTasks':
             displayTaskButtons(message.tasks);
-            break;    
+            break;
     }
 });
 
@@ -253,7 +273,7 @@ function displayThread(thread) {
             displayBotMessage(message);
         }
     });
-    addEditButtons();   
+    addEditButtons();
 }
 
 function sendMessageHandler() {

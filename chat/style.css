@@ -145,10 +145,9 @@
     padding-bottom: 25px; /* Add padding to make room for the edit button */
 }
 
-.edit-btn {
+.copy-btn, .edit-btn {
     position: absolute;
     bottom: 0;
-    left: 0;
     display: none;
     background-color: #f0f0f0;
     border: 1px solid #ccc;
@@ -158,6 +157,16 @@
     cursor: pointer;
 }
 
+
+.copy-btn {
+    left: 0;
+}
+
+.edit-btn {
+    left: 50px; /* Adjust this value to position the edit button next to the copy button */
+}
+
+.message-container:hover .copy-btn,
 .message-container:hover .edit-btn {
     display: block;
 }

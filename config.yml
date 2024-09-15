@@ -19,10 +19,11 @@ project:
       - media
       - "*/test"
       - "*.log"
+      - "chat/lib"
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 chat-view的message 点击edit的时候，显示的是thread里面的message的text属性值，而不是html的textContent
+    我希望 chat-view的message 的edit按钮的前面增加一个copy按钮，点击后可以复制message的origin内容到剪贴板
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
