@@ -10,28 +10,42 @@ class SettingsEditorProvider {
     async provideTextDocumentContent(uri) {
         const threadId = uri.path.split('/').pop();
         let settings = this.threadRepository.getThreadSettings(threadId);
-        // 如果meta为undefined，从agent读取meta
         if (settings === undefined) {
             const thread = this.threadRepository.getThread(threadId);
             if (thread && thread.agent) {
                 const agent = this.agentLoader.loadAgentForThread(thread);
                 settings = agent.settings || {};
-                // 更新thread的meta
                 this.threadRepository.update(threadId, settings);
             }
         }
-
-        // 如果meta仍然是undefined，使用空对象
         return yaml.dump(settings || {});
     }
 
     async saveDocument(document) {
         const threadId = document.uri.path.split('/').pop();
         const content = document.getText();
-        const newSettings = yaml.load(content);
-        this.threadRepository.updateThreadSettings(threadId, newSettings);
-        const thread = this.threadRepository.loadThread(threadId);
-        this.agentLoader.updateAgentForThread(thread);
+        
+        try {
+            // 尝试解析 YAML
+            const newSettings = yaml.load(content);
+            
+            // 如果解析成功，进行保存操作
+            this.threadRepository.updateThreadSettings(threadId, newSettings);
+            const thread = this.threadRepository.loadThread(threadId);
+            this.agentLoader.updateAgentForThread(thread);
+            
+            // 显示成功消息
+            vscode.window.showInformationMessage('Settings saved successfully.');
+        } catch (error) {
+            // 如果解析失败，显示错误消息
+            vscode.window.showErrorMessage(`Invalid YAML format: ${error.message}`);
+            
+            // 可选：将光标移动到错误位置
+            if (error.mark) {
+                const position = new vscode.Position(error.mark.line, error.mark.column);
+                vscode.window.activeTextEditor.selection = new vscode.Selection(position, position);
+            }
+        }
     }
 }
 
