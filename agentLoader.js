@@ -3,11 +3,11 @@ const fs = require('fs');
 const path = require('path');
 
 class AgentLoader {
-    constructor(configPath, settings) {
+    constructor(configPath, globalSettings) {
         this.configPath = configPath;
         this.config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
         this.loadedAgents = {};
-        this.settings = settings;
+        this.globalSettings = globalSettings;
         this.threadAgents = {};
     }
 
@@ -22,9 +22,13 @@ class AgentLoader {
         }
 
         const AgentClass = require(path.resolve(path.dirname(this.configPath), agentConfig.path));
-        const agent = new AgentClass(agentConfig.metadata, this.settings);
+        const agent = new AgentClass(agentConfig.meta, this.mergeSettings(agentConfig.settings, this.globalSettings));
         this.loadedAgents[name] = agent;
         return agent;
+    }
+
+    mergeSettings(agentSettings, globalSettings) {
+        return { ...agentSettings, ...globalSettings };
     }
 
     getAgentsList() {
@@ -59,8 +63,12 @@ class AgentLoader {
         }
 
         const AgentClass = require(path.resolve(path.dirname(this.configPath), agentConfig.path));
-        const agentMetadata = { ...agentConfig.metadata, ...thread.meta };
-        const agent = new AgentClass(agentMetadata, this.settings);
+        const mergedSettings = this.mergeSettings(agentConfig.settings, this.globalSettings);
+        
+        // 只有当 thread 有 settings 时才合并
+        const finalSettings = thread.settings ? { ...mergedSettings, ...thread.settings } : mergedSettings;
+        
+        const agent = new AgentClass(agentConfig.meta, finalSettings);
         
         this.threadAgents[key] = agent;
         return agent;

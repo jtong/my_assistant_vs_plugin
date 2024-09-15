@@ -161,16 +161,19 @@ class ChatThreadRepository {
         }
     }
 
-    getThreadMeta(threadId) {
+    getThreadSettings(threadId) {
         const thread = this.loadThread(threadId);
-        return thread.meta;
+        return thread.settings || {};
     }
 
-    updateThreadMeta(threadId, newMeta) {
+    updateThreadSettings(threadId, newSettings) {
         const thread = this.loadThread(threadId);
-        thread.meta = newMeta;
-        this.saveThread(thread);
+        if (thread) {
+            thread.settings = newSettings;
+            this.saveThread(thread);
+        }
     }
+    
 }
 
 module.exports = ChatThreadRepository;

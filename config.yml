@@ -22,7 +22,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 每个thread的agent是隔离的，这样的话，每个agent可以跟thread的meta来overwrite自己的meta，彼此不会混淆。
+    我希望 agents的配置分为两部分，一部分是meta，一部分是settings，setting是用户可以改的，meta是用户不能改的。而我们Open meta Editor的时候，其实改的是settings。我们在vscode里配置的settings也是agent settings的一种，只是它会跟thread的settings merge 后给agent使用。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

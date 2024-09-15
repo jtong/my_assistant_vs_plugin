@@ -6,7 +6,7 @@ const ListViewProvider = require('./ListViewProvider');
 const ChatMessageHandler = require('./chatMessageHandler');
 const ChatThreadRepository = require('./chatThreadRepository');
 const { Task } = require('ai-agent-response');
-const MetaEditorProvider = require('./metaEditorProvider');
+const SettingsEditorProvider = require('./settingsEditorProvider');
 
 // Object to store open chat panels
 const openChatPanels = {};
@@ -47,10 +47,6 @@ function activateChatExtension(context, agentLoader) {
                 if (agentName) {
                     const newThreadId = 'thread_' + Date.now();
                     const newThread = threadRepository.createThread(newThreadId, chatName, agentName);
-                    const agent = agentLoader.loadAgentForThread(newThread);
-                    const agentMeta = agent.metadata;
-                    threadRepository.updateThreadMeta(newThreadId, agentMeta);
-
                     listProvider.refresh();
                     vscode.commands.executeCommand('myAssistant.openChat', chatName, newThreadId);
                 }
@@ -182,15 +178,15 @@ function activateChatExtension(context, agentLoader) {
         })
     );
 
-    const metaEditorProvider = new MetaEditorProvider(threadRepository, agentLoader);
+    const settingsEditorProvider = new SettingsEditorProvider(threadRepository, agentLoader);
 
     context.subscriptions.push(
-        vscode.workspace.registerTextDocumentContentProvider('chat-meta', metaEditorProvider)
+        vscode.workspace.registerTextDocumentContentProvider('chat-settings', settingsEditorProvider)
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('myAssistant.openMetaEditor', async (item) => {
-            const uri = vscode.Uri.parse(`chat-meta:/${item.id}`);
+        vscode.commands.registerCommand('myAssistant.openSettingsEditor', async (item) => {
+            const uri = vscode.Uri.parse(`chat-settings:/${item.id}`);
             const doc = await vscode.workspace.openTextDocument(uri);
             const editor = await vscode.window.showTextDocument(doc, { preview: false });
 
@@ -201,7 +197,7 @@ function activateChatExtension(context, agentLoader) {
             // 设置文档变更监听器
             const changeDisposable = vscode.workspace.onDidChangeTextDocument(async (e) => {
                 if (e.document.uri.toString() === uri.toString()) {
-                    await metaEditorProvider.saveDocument(e.document);
+                    await settingsEditorProvider.saveDocument(e.document);
                 }
             });
 
@@ -209,7 +205,7 @@ function activateChatExtension(context, agentLoader) {
             const closeDisposable = vscode.window.onDidChangeActiveTextEditor(async (e) => {
                 if (!e || e.document.uri.toString() !== uri.toString()) {
                     // 保存文档
-                    await metaEditorProvider.saveDocument(doc);
+                    await settingsEditorProvider.saveDocument(doc);
                     
                     changeDisposable.dispose();
                     closeDisposable.dispose();
