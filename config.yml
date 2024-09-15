@@ -22,7 +22,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 thread settings editor 保存的时候，如果yaml格式不对，就不保存。因为我们保存的是json。
+    我希望 thread settings editor 是可编辑的，目前是界面上是不可编辑的，输入会显示"Cannot edit in read-only editor"。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

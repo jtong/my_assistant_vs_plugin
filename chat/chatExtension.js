@@ -7,6 +7,8 @@ const ChatMessageHandler = require('./chatMessageHandler');
 const ChatThreadRepository = require('./chatThreadRepository');
 const { Task } = require('ai-agent-response');
 const SettingsEditorProvider = require('./settingsEditorProvider');
+const fs = require('fs');
+const yaml = require('js-yaml');
 
 // Object to store open chat panels
 const openChatPanels = {};
@@ -186,33 +188,56 @@ function activateChatExtension(context, agentLoader) {
 
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.openSettingsEditor', async (item) => {
-            const uri = vscode.Uri.parse(`chat-settings:/${item.id}`);
-            let doc = await vscode.workspace.openTextDocument(uri);
-            const editor = await vscode.window.showTextDocument(doc, { preview: false });
+            const threadId = item.id;
+            const thread = threadRepository.getThread(threadId);
+
+            // 创建一个临时文件来存储设置
+            const tempDir = path.join(context.extensionPath, 'temp');
+            if (!fs.existsSync(tempDir)) {
+                fs.mkdirSync(tempDir);
+            }
+            const tempFilePath = path.join(tempDir, `${threadId}_settings.yaml`);
+
+            // 获取当前设置并写入临时文件
+            let settings = threadRepository.getThreadSettings(threadId);
+            if (!settings) {
+                if (thread && thread.agent) {
+                    const agentConfig = agentLoader.getAgentConfig(thread.agent);
+                    settings = agentConfig.settings || {};
+                } else {
+                    settings = {};
+                }
+            }
+            fs.writeFileSync(tempFilePath, yaml.dump(settings));
+
+            // 打开临时文件进行编辑
+            const document = await vscode.workspace.openTextDocument(tempFilePath);
+            const editor = await vscode.window.showTextDocument(document);
 
             // 设置文档的语言模式为YAML
-            await vscode.languages.setTextDocumentLanguage(doc, 'yaml');
+            await vscode.languages.setTextDocumentLanguage(document, 'yaml');
 
-
-            // 设置文档变更监听器
-            const changeDisposable = vscode.workspace.onDidChangeTextDocument(async (e) => {
-                if (e.document.uri.toString() === uri.toString()) {
-                    await settingsEditorProvider.saveDocument(e.document);
-                }
-            });
-
-            // 当编辑器关闭时，移除监听器
+            // 当编辑器关闭时保存设置
             const closeDisposable = vscode.window.onDidChangeActiveTextEditor(async (e) => {
-                if (!e || e.document.uri.toString() !== uri.toString()) {
-                    // 保存文档
-                    await settingsEditorProvider.saveDocument(doc);
-                    
-                    changeDisposable.dispose();
-                    closeDisposable.dispose();
+                if (!e || e.document.uri.fsPath !== tempFilePath) {
+                    try {
+                        const content = fs.readFileSync(tempFilePath, 'utf8');
+                        const newSettings = yaml.load(content);
+                        threadRepository.updateThreadSettings(threadId, newSettings);
+                        const updatedThread = threadRepository.loadThread(threadId);
+                        agentLoader.updateAgentForThread(updatedThread);
+                        vscode.window.showInformationMessage('Settings saved successfully.');
+                    } catch (error) {
+                        vscode.window.showErrorMessage(`Error saving settings: ${error.message}`);
+                    } finally {
+                        // 清理临时文件
+                        fs.unlinkSync(tempFilePath);
+                        closeDisposable.dispose();
+                    }
                 }
             });
-            context.subscriptions.push(changeDisposable, closeDisposable);
 
+            context.subscriptions.push(closeDisposable);
         })
     );
 
