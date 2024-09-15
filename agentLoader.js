@@ -11,6 +11,10 @@ class AgentLoader {
         this.threadAgents = {};
     }
 
+    getAgentConfig(name){
+        return this.config.agents.find(a => a.name === name);
+    }
+    
     loadAgent(name) {
         if (this.loadedAgents[name]) {
             return this.loadedAgents[name];
@@ -68,7 +72,7 @@ class AgentLoader {
         // 只有当 thread 有 settings 时才合并
         const finalSettings = thread.settings ? { ...mergedSettings, ...thread.settings } : mergedSettings;
         
-        const agent = new AgentClass(agentConfig.meta, finalSettings);
+        const agent = new AgentClass(agentConfig.metadata, finalSettings);
         
         this.threadAgents[key] = agent;
         return agent;
