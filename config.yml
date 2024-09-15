@@ -22,7 +22,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 chat-view的message能按markdown格式显示
+    我希望 chat-view的message 点击edit的时候，显示的是thread里面的message的text属性值，而不是html的textContent
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

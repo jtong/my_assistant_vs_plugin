@@ -62,13 +62,13 @@ function addEditButtons() {
             editBtn.onclick = function() {
                 const textContainer = container.querySelector('.message-text');
                 const messageId = message.getAttribute('data-message-id');
-                const originalText = textContainer.textContent;
+                const originalText = message.getAttribute('data-original-text'); // 使用存储的原始文本
                 
                 const editWrapper = document.createElement('div');
                 editWrapper.className = 'edit-wrapper';
                 
                 const textarea = document.createElement('textarea');
-                textarea.value = originalText;
+                textarea.value = originalText; // 使用原始文本
                 editWrapper.appendChild(textarea);
                 
                 const buttonContainer = document.createElement('div');
@@ -94,7 +94,8 @@ function addEditButtons() {
 
                 saveBtn.onclick = function() {
                     const newText = textarea.value;
-                    textContainer.textContent = newText;
+                    message.setAttribute('data-original-text', newText); // 更新存储的原始文本
+                    textContainer.innerHTML = renderMarkdown(newText); // 重新渲染 Markdown
                     textContainer.style.display = '';
                     editWrapper.remove();
                     editBtn.style.display = '';
@@ -184,6 +185,7 @@ function displayUserMessage(message) {
     const messageElement = document.createElement('div');
     messageElement.classList.add(message.sender);
     messageElement.setAttribute('data-message-id', message.id);
+    messageElement.setAttribute('data-original-text', message.text); // 存储原始文本
 
     const container = document.createElement('div');
     container.className = 'message-container';
@@ -203,6 +205,7 @@ function displayBotMessage(message, isStreaming = false) {
     const messageElement = document.createElement('div');
     messageElement.classList.add(message.sender);
     messageElement.setAttribute('data-message-id', message.id);
+    messageElement.setAttribute('data-original-text', message.text); // 存储原始文本
 
     const container = document.createElement('div');
     container.className = 'message-container';
