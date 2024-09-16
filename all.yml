@@ -24,10 +24,11 @@ project:
       - "*.log"
       - "chat/lib"
       - "**/*.vsix"
+      - doc
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我想要点击Load Context时，TestJobAgent 会给我生成一系列的jobs，展示在页面的左侧。
+    我希望结合ai_helper/agent和chat，写一个README.md。介绍如何使用这个插件。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

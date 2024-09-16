@@ -24,6 +24,7 @@ project:
       - "**/*.vsix"
       - dist
       - temp
+      - doc
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
