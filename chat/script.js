@@ -256,8 +256,11 @@ function updateBotMessage(messageId, text) {
     if (messageElement) {
         const textContainer = messageElement.querySelector('.message-text');
         if (textContainer) {
-            textContainer.innerHTML += renderMarkdown(text);
-            messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            // 更新存储的原始文本
+            messageElement.setAttribute('data-original-text', messageElement.getAttribute('data-original-text') + text);
+
+            // 重新渲染整个消息内容
+            textContainer.innerHTML = renderMarkdown(messageElement.getAttribute('data-original-text')); messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }
     }
 }

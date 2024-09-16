@@ -23,6 +23,7 @@ project:
       - "**/*.log"
       - "*.log"
       - "chat/lib"
+      - "**/*.vsix"
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
