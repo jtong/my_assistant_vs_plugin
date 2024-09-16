@@ -27,7 +27,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 markdown 的内容显示的时候，会撑大气泡，目前刚加载的是大的，但是生成的时候会一个词一换行，这就不好了。
+    我希望 copy 和 edit 按钮右对齐，而不是左对齐。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

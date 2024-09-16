@@ -159,11 +159,11 @@
 
 
 .copy-btn {
-    left: 0;
+    right: 50px;
 }
 
 .edit-btn {
-    left: 50px; /* Adjust this value to position the edit button next to the copy button */
+    right: 0px; /* Adjust this value to position the edit button next to the copy button */
 }
 
 .message-container:hover .copy-btn,
