@@ -1,14 +1,30 @@
 // agentLoader.js
 const fs = require('fs');
 const path = require('path');
+const vscode = require('vscode');
 
 class AgentLoader {
     constructor(configPath, globalSettings) {
         this.configPath = configPath;
-        this.config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
         this.loadedAgents = {};
         this.globalSettings = globalSettings;
         this.threadAgents = {};
+        this.config = this.loadConfig();
+
+    }
+
+    loadConfig() {
+        try {
+            if (fs.existsSync(this.configPath)) {
+                return JSON.parse(fs.readFileSync(this.configPath, 'utf8'));
+            } else {
+                vscode.window.showErrorMessage(`Configuration file not found: ${this.configPath}`);
+                return { agents: [] };
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Error loading configuration: ${error.message}`);
+            return { agents: [] };
+        }
     }
 
     getAgentConfig(name){

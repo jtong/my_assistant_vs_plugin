@@ -27,7 +27,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 copy 和 edit 按钮右对齐，而不是左对齐。
+    我希望 没有 ai_helper/agent/agents.json 文件，报错的时候要弹出提示。而不是直接抛出异常。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
