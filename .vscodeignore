@@ -1,9 +1,7 @@
 ai_helper
-node_modules
 .DS_Store
 .git
 .idea
-config.yml
-extension.js
+*.yml
 webpack.config.js
 

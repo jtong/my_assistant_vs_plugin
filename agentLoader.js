@@ -26,7 +26,7 @@ class AgentLoader {
         }
 
         const AgentClass = require(path.resolve(path.dirname(this.configPath), agentConfig.path));
-        const agent = new AgentClass(agentConfig.meta, this.mergeSettings(agentConfig.settings, this.globalSettings));
+        const agent = new AgentClass(agentConfig.metadata, this.mergeSettings(agentConfig.settings, this.globalSettings));
         this.loadedAgents[name] = agent;
         return agent;
     }

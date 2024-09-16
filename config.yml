@@ -20,10 +20,11 @@ project:
       - "*/test"
       - "*.log"
       - "chat/lib"
+      - "*.yml"
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 chat-view的message 的edit按钮的前面增加一个copy按钮，点击后可以复制message的origin内容到剪贴板
+    我希望 把所有相关文件都放入package json中，这样打包才能访问。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

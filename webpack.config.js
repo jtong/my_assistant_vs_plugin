@@ -1,26 +1,52 @@
 const path = require('path');
+const TerserPlugin = require('terser-webpack-plugin');
 
-/**@type {import('webpack').Configuration}*/
-const config = {
-    target: 'node', // vscode extensions run in a Node.js-context 📖 -> https://webpack.js.org/configuration/node/
-
-    entry: './extension.js', // the entry point of this extension, 📖 -> https://webpack.js.org/configuration/entry-context/
-    output: { // the bundle is stored in the 'dist' folder (check package.json), 📖 -> https://webpack.js.org/configuration/output/
+module.exports = {
+    target: 'node',
+    mode: 'production', // 使用生产模式进行优化
+    entry: './extension.js',
+    output: {
         path: path.resolve(__dirname, 'dist'),
         filename: 'extension.js',
         libraryTarget: "commonjs2",
         devtoolModuleFilenameTemplate: "../[resource-path]",
     },
-    devtool: 'source-map',
     externals: {
-        vscode: "commonjs vscode" // the vscode-module is created on-the-fly and must be excluded. Add other modules that cannot be webpack'ed, 📖 -> https://webpack.js.org/configuration/externals/
+        vscode: "commonjs vscode"
     },
-    resolve: { // support reading TypeScript and JavaScript files, 📖 -> https://github.com/TypeStrong/ts-loader
+    resolve: {
         extensions: ['.js']
     },
     module: {
-        rules: []
+        rules: [
+            {
+                test: /\.js$/,
+                exclude: /node_modules/,
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        presets: ['@babel/preset-env']
+                    }
+                }
+            }
+        ]
     },
-}
-
-module.exports = config;
+    optimization: {
+        minimizer: [new TerserPlugin({
+            terserOptions: {
+                keep_classnames: true,
+                keep_fnames: true
+            }
+        })],
+    },
+    plugins: [
+        // 如果需要复制其他资源文件，可以使用 CopyWebpackPlugin
+        // new CopyWebpackPlugin({
+        //   patterns: [
+        //     { from: 'chat', to: 'chat' },
+        //     { from: 'job', to: 'job' },
+        //     { from: 'media', to: 'media' },
+        //   ],
+        // }),
+    ]
+};
