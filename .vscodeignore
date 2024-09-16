@@ -6,3 +6,4 @@ ai_helper
 webpack.config.js
 dist
 temp
+*.vsix
