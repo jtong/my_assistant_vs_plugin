@@ -26,6 +26,15 @@ class AgentLoader {
             return { agents: [] };
         }
     }
+    
+    reloadConfig() {
+        this.config = this.loadConfig();
+    }
+
+    clearLoadedAgents() {
+        this.loadedAgents = {};
+        this.threadAgents = {};
+    }
 
     getAgentConfig(name){
         return this.config.agents.find(a => a.name === name);

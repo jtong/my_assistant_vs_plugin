@@ -22,6 +22,21 @@ function activateChatExtension(context, agentLoader) {
 
 
     context.subscriptions.push(
+        vscode.commands.registerCommand('myAssistant.refreshChatList', async () => {
+            // 重新加载代理配置
+            agentLoader.reloadConfig();
+            
+            // 清空所有缓存的代理
+            agentLoader.clearLoadedAgents();
+            
+            // 刷新聊天列表视图
+            listProvider.refresh();
+            
+            vscode.window.showInformationMessage('Chat list and agents refreshed successfully.');
+        })
+    );
+
+    context.subscriptions.push(
         vscode.window.registerTreeDataProvider('chatList', listProvider),
     );
 

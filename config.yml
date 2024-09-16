@@ -27,7 +27,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 没有 ai_helper/agent/agents.json 文件，报错的时候要弹出提示。而不是直接抛出异常。
+    我希望 chat list 提供一个刷新按钮，可以刷新agentLoader，重新加载agentConfig，并清空所有缓存的agent，同时重新加载所有的chat。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

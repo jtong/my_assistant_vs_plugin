@@ -58,6 +58,11 @@
                 "title": "Rename Chat"
             },
             {
+                "command": "myAssistant.refreshChatList",
+                "title": "Refresh Chat List",
+                "icon": "$(refresh)"
+            },
+            {
                 "command": "myAssistant.openSettingsEditor",
                 "title": "Edit Settings"
             },
@@ -113,6 +118,11 @@
                 {
                     "command": "myAssistant.newJob",
                     "when": "view == jobList",
+                    "group": "navigation"
+                },
+                {
+                    "command": "myAssistant.refreshChatList",
+                    "when": "view == chatList",
                     "group": "navigation"
                 }
             ],
