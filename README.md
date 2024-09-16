@@ -77,11 +77,7 @@
 
 #### 体验样例 Agent
 
-Here's a polished version of the "体验样例 Agent" section:
-
-#### 体验样例 Agent
-
-要快速体验预设的 Agent，请按以下步骤操作：
+要快速体验样例 Agent （仓库地址： [https://github.com/jtong/my_assistant_agent_examples](https://github.com/jtong/my_assistant_agent_examples)），请按以下步骤操作：
 
 1. 在任意目录中打开 Visual Studio Code。
 
