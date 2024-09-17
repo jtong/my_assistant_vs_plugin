@@ -36,7 +36,6 @@ function retryMessageHandler() {
     window.vscode.postMessage(message);
 }
 
-
 window.onload = function () {
     const threadId = window.threadId;
     if (threadId) {
@@ -56,7 +55,7 @@ function addEditButtons() {
     messages.forEach(message => {
         const container = message.querySelector('.message-container');
         if (container && !container.querySelector('.edit-btn')) {
-            // Add copy button
+            // 添加复制按钮
             const copyBtn = document.createElement('button');
             copyBtn.textContent = 'Copy';
             copyBtn.className = 'copy-btn';
@@ -66,7 +65,7 @@ function addEditButtons() {
             };
             container.appendChild(copyBtn);
 
-            // Existing edit button code
+            // 添加编辑按钮
             const editBtn = document.createElement('button');
             editBtn.textContent = 'Edit';
             editBtn.className = 'edit-btn';
@@ -74,6 +73,7 @@ function addEditButtons() {
                 const textContainer = container.querySelector('.message-text');
                 const messageId = message.getAttribute('data-message-id');
                 const originalText = message.getAttribute('data-original-text'); // 使用存储的原始文本
+                const isHtml = message.getAttribute('data-is-html') === 'true'; // 获取 isHtml 属性
 
                 const editWrapper = document.createElement('div');
                 editWrapper.className = 'edit-wrapper';
@@ -106,7 +106,13 @@ function addEditButtons() {
                 saveBtn.onclick = function () {
                     const newText = textarea.value;
                     message.setAttribute('data-original-text', newText); // 更新存储的原始文本
-                    textContainer.innerHTML = renderMarkdown(newText); // 重新渲染 Markdown
+
+                    if (isHtml) {
+                        textContainer.innerHTML = newText;
+                    } else {
+                        textContainer.innerHTML = renderMarkdown(newText); // 重新渲染 Markdown
+                    }
+
                     textContainer.style.display = '';
                     editWrapper.remove();
                     editBtn.style.display = '';
@@ -132,7 +138,7 @@ function addEditButtons() {
 }
 
 function copyToClipboard(text) {
-    // Send a message to the extension to copy the text
+    // 发送消息到扩展程序进行复制操作
     window.vscode.postMessage({
         type: 'copyToClipboard',
         text: text,
@@ -149,7 +155,6 @@ function autoResizeTextarea(textarea) {
         this.style.height = this.scrollHeight + 'px';
     });
 }
-
 
 window.addEventListener('message', event => {
     const message = event.data;
@@ -200,22 +205,34 @@ function removeLastBotMessage() {
     }
 }
 
-function displayUserMessage(message) {
-    const chatBox = document.getElementById('chat-box');
+function createMessageElement(message) {
     const messageElement = document.createElement('div');
     messageElement.classList.add(message.sender);
     messageElement.setAttribute('data-message-id', message.id);
-    messageElement.setAttribute('data-original-text', message.text); // 存储原始文本
+    messageElement.setAttribute('data-original-text', message.text);
+    messageElement.setAttribute('data-is-html', message.isHtml);
 
     const container = document.createElement('div');
     container.className = 'message-container';
 
     const textContainer = document.createElement('span');
     textContainer.className = 'message-text';
-    textContainer.innerHTML = renderMarkdown(message.text);
-    container.appendChild(textContainer);
 
+    if (message.isHtml) {
+        textContainer.innerHTML = message.text;
+    } else {
+        textContainer.innerHTML = renderMarkdown(message.text);
+    }
+
+    container.appendChild(textContainer);
     messageElement.appendChild(container);
+
+    return messageElement;
+}
+
+function displayUserMessage(message) {
+    const chatBox = document.getElementById('chat-box');
+    const messageElement = createMessageElement(message);
     chatBox.appendChild(messageElement);
     messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
@@ -225,7 +242,8 @@ function displayBotMessage(message, isStreaming = false) {
     const messageElement = document.createElement('div');
     messageElement.classList.add(message.sender);
     messageElement.setAttribute('data-message-id', message.id);
-    messageElement.setAttribute('data-original-text', message.text); // 存储原始文本
+    messageElement.setAttribute('data-original-text', message.text);
+    messageElement.setAttribute('data-is-html', message.isHtml);
 
     const container = document.createElement('div');
     container.className = 'message-container';
@@ -237,19 +255,18 @@ function displayBotMessage(message, isStreaming = false) {
         // 如果是流式消息，初始化为空
         textContainer.textContent = '';
     } else {
-        textContainer.innerHTML = renderMarkdown(message.text);
+        if (message.isHtml) {
+            textContainer.innerHTML = message.text;
+        } else {
+            textContainer.innerHTML = renderMarkdown(message.text);
+        }
     }
 
     container.appendChild(textContainer);
     messageElement.appendChild(container);
     chatBox.appendChild(messageElement);
     messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
-
-    if (message.isHtml) {
-        setupForms(messageElement, message.id);
-    }
 }
-
 
 function updateBotMessage(messageId, text) {
     const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
@@ -259,12 +276,18 @@ function updateBotMessage(messageId, text) {
             // 更新存储的原始文本
             messageElement.setAttribute('data-original-text', messageElement.getAttribute('data-original-text') + text);
 
-            // 重新渲染整个消息内容
-            textContainer.innerHTML = renderMarkdown(messageElement.getAttribute('data-original-text')); messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            const isHtml = messageElement.getAttribute('data-is-html') === 'true';
+
+            if (isHtml) {
+                textContainer.innerHTML = messageElement.getAttribute('data-original-text');
+            } else {
+                textContainer.innerHTML = renderMarkdown(messageElement.getAttribute('data-original-text'));
+            }
+
+            messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }
     }
 }
-
 
 function displayThread(thread) {
     const chatBox = document.getElementById('chat-box');
@@ -301,7 +324,6 @@ function sendMessageHandler() {
     }
 }
 
-
 function sendMessage(text, actionAttributes = null) {
     const messageId = 'msg_' + Math.random().toString(36).substr(2, 9);
     const message = {
@@ -335,34 +357,3 @@ function executeTask(task) {
     };
     window.vscode.postMessage(message);
 }
-
-
-function setupForms(container, messageId) {
-    container.querySelectorAll('form').forEach(form => {
-        form.addEventListener('submit', function (event) {
-            event.preventDefault();
-            const formData = new FormData(form);
-            // 处理表单提交
-            window.vscode.postMessage({
-                type: 'updateMessage',
-                threadId: window.threadId,
-                messageId: messageId,
-                updates: { formSubmitted: true }
-            });
-            form.querySelector('input[type="submit"]').style.display = 'none';
-            form.querySelector('.cancel-btn').style.display = 'none';
-        });
-
-        form.querySelector('.cancel-btn').addEventListener('click', function () {
-            form.querySelector('input[type="submit"]').style.display = 'none';
-            this.style.display = 'none';
-            window.vscode.postMessage({
-                type: 'updateMessage',
-                threadId: window.threadId,
-                messageId: messageId,
-                updates: { formSubmitted: true }
-            });
-        });
-    });
-}
-

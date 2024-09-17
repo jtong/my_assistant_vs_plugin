@@ -12,7 +12,7 @@ class ChatMessageHandler {
         let response;
 
         if (task.isMessageTask()) {
-            response = await agent.generateReply(thread, task.message);
+            response = await agent.generateReply(thread, task.host_utils);
         } else {
             response = await agent.executeTask(task, thread);
         }
