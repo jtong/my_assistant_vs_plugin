@@ -26,7 +26,7 @@ class AgentLoader {
             return { agents: [] };
         }
     }
-    
+
     reloadConfig() {
         this.config = this.loadConfig();
     }
@@ -74,9 +74,8 @@ class AgentLoader {
     }
 
     updateSettings(newSettings) {
-        this.settings = newSettings;
-        this.loadedAgents = {};
-        this.clearThreadAgents();
+        this.globalSettings = newSettings;
+        this.clearLoadedAgents();
     }
 
     loadAgentForThread(thread) {

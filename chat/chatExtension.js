@@ -29,6 +29,9 @@ function activateChatExtension(context, agentLoader) {
             // 清空所有缓存的代理
             agentLoader.clearLoadedAgents();
             
+            // 重新构建所有线程基础文件，用于第一次安装完插件时或其他情况下路径没有初始化成功。
+            threadRepository.buildThreadsIfNotExists();
+
             // 刷新聊天列表视图
             listProvider.refresh();
             

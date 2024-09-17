@@ -1,7 +1,7 @@
 {
     "name": "my-assistant",
     "description": "plugin of chat assistant and job management client",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "publisher": "jtong",
     "icon": "media/chat-icon.png",
     "repository": "https://github.com/jtong/my_assistant_vs_plugin",
@@ -99,11 +99,6 @@
                 {
                     "id": "jobList",
                     "name": "Job List",
-                    "type": "tree"
-                },
-                {
-                    "id": "agentList",
-                    "name": "Available Agents",
                     "type": "tree"
                 }
             ]

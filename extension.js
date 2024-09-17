@@ -28,11 +28,11 @@ function activate(context) {
         }
     }));
 
-    const agentViewProvider = new AgentViewProvider(agentLoader);
+    // const agentViewProvider = new AgentViewProvider(agentLoader);
 
-    context.subscriptions.push(
-        vscode.window.registerTreeDataProvider('agentList', agentViewProvider)
-    );
+    // context.subscriptions.push(
+    //     vscode.window.registerTreeDataProvider('agentList', agentViewProvider)
+    // );
 
     const chatExtension = activateChatExtension(context, agentLoader);
     const jobExtension = activateJobExtension(context, agentLoader);

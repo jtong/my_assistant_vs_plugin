@@ -8,7 +8,7 @@ class ChatMessageHandler {
     }
 
     async handleTask(thread, task, responseHandler) {
-        const agent = this.agentLoader.loadAgent(thread.agent);
+        const agent = this.agentLoader.loadAgentForThread(thread);
         let response;
 
         if (task.isMessageTask()) {

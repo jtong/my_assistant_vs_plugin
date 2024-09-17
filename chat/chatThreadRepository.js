@@ -6,6 +6,10 @@ class ChatThreadRepository {
     constructor(storagePath) {
         this.storagePath = storagePath;
         this.indexPath = path.join(this.storagePath, 'threads.json');
+        this.buildThreadsIfNotExists();
+    }
+
+    buildThreadsIfNotExists() {
         if (!fs.existsSync(this.storagePath)) {
             fs.mkdirSync(this.storagePath, { recursive: true });
         }
