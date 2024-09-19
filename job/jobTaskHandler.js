@@ -1,7 +1,7 @@
 // job/jobMessageHandler.js
 const { Response, Task } = require('ai-agent-response');
 
-class JobMessageHandler {
+class JobTaskHandler {
     constructor(threadRepository, agentLoader) {
         this.threadRepository = threadRepository;
         this.agentLoader = agentLoader;
@@ -44,4 +44,4 @@ class JobMessageHandler {
     }
 }
 
-module.exports = JobMessageHandler;
+module.exports = JobTaskHandler;

@@ -3,7 +3,7 @@ const vscode = require('vscode');
 const path = require('path');
 const JobListViewProvider = require('./JobListViewProvider');
 const JobViewProvider = require('./JobViewProvider');
-const JobMessageHandler = require('./jobMessageHandler');
+const JobTaskHandler = require('./jobTaskHandler');
 const JobThreadRepository = require('./jobThreadRepository');
 
 // 添加这个对象来跟踪打开的 job 面板
@@ -13,7 +13,7 @@ function activateJobExtension(context, agentLoader) {
     const projectRoot = context.workspaceState.get('projectRoot');
     const threadRepository = new JobThreadRepository(path.join(projectRoot, 'ai_helper/agent/memory_repo/job_threads'));
 
-    const jobMessageHandler = new JobMessageHandler(threadRepository, agentLoader);
+    const jobTaskHandler = new JobTaskHandler(threadRepository, agentLoader);
     const jobListProvider = new JobListViewProvider(threadRepository);
     const jobViewProvider = new JobViewProvider(context.extensionUri, threadRepository);
 
@@ -125,7 +125,7 @@ function activateJobExtension(context, agentLoader) {
                 switch (message.type) {
                     case 'loadContext':
                         const thread = threadRepository.getThread(message.threadId);
-                        const response = await jobMessageHandler.loadContext(thread, message.filePath);
+                        const response = await jobTaskHandler.loadContext(thread, message.filePath);
                         panel.webview.postMessage({
                             type: 'contextLoaded',
                             jobs: response.meta.generatedJobs
@@ -149,7 +149,7 @@ function activateJobExtension(context, agentLoader) {
         jobListProvider,
         jobViewProvider,
         jobThreadRepository: threadRepository,
-        jobMessageHandler
+        jobTaskHandler
     };
 }
 

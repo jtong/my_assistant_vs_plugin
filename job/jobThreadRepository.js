@@ -72,7 +72,7 @@ class JobThreadRepository {
 
         // Update index
         const index = this.loadIndex();
-        index[thread.id] = { id:thread.id, name: thread.name, agent: thread.agent };
+        index[thread.id] = { id: thread.id, name: thread.name, agent: thread.agent };
         this.saveIndex(index);
     }
 
