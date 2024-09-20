@@ -10,38 +10,44 @@ class JobTaskHandler {
     async handleJobTask(thread, task) {
         const agent = this.agentLoader.loadAgentForThread(thread);
         let response = await agent.executeTask(task, thread);
+        return response;
+    }
 
-        if (response.meta && response.meta.generatedJobs) {
-            thread.jobs = response.meta.generatedJobs;
-            this.threadRepository.saveThread(thread);
+    async sendTaskToAgent(threadId, task) {
+        const thread = this.threadRepository.getThread(threadId);
+        if (thread) {
+            return await this.handleJobTask(thread, task);
+        } else {
+            throw new Error(`Thread with id ${threadId} not found.`);
         }
-
-        return response;
     }
 
-    async loadContext(thread, filePath) {
-        const agent = this.agentLoader.loadAgentForThread(thread);
-        const task = new Task({
-            name: "Initialize Job",
-            type: Task.TYPE_ACTION,
-            message: `Load context from file: ${filePath}`
-        });
+    async executeJob(threadId, jobIndex) {
+        const thread = this.threadRepository.getThread(threadId);
+        if (thread) {
+            const job = thread.jobs.find(j => j.index === jobIndex);
+            if (job) {
+                const agent = this.agentLoader.loadAgentForThread(thread);
 
-        const response = await this.handleJobTask(thread, task);
-        return response;
+                // 从 job 的 AvailableTask 获取 Task
+                const task = job.availableTask.task;
+
+                // 执行任务
+                const response = await agent.executeTask(task, thread);
+
+                // 更新 AvailableTask 的状态
+                job.availableTask.status = 'completed';
+                this.threadRepository.saveThread(thread);
+
+                return response;
+            } else {
+                throw new Error(`Job with index ${jobIndex} not found.`);
+            }
+        } else {
+            throw new Error(`Thread with id ${threadId} not found.`);
+        }
     }
 
-    addJobToThread(thread, jobDetails) {
-        const newJob = {
-            id: 'job_' + Date.now(),
-            ...jobDetails,
-            timestamp: Date.now(),
-            threadId: thread.id,
-            status: 'pending'
-        };
-        this.threadRepository.addJob(thread.id, newJob);
-        return this.threadRepository.getThread(thread.id);
-    }
 }
 
 module.exports = JobTaskHandler;

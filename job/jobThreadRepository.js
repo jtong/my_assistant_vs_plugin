@@ -107,6 +107,21 @@ class JobThreadRepository {
             }
         }
     }
+
+    addJobToThread(threadId, availableTask) {
+        const thread = this.getThread(threadId);
+        if (thread) {
+            const newJob = {
+                index: thread.jobs.length, // 根据 jobs 数组长度设置索引
+                availableTask: availableTask // 存储 AvailableTask 对象
+            };
+            thread.jobs.push(newJob);
+            this.saveThread(thread);
+            return newJob;
+        } else {
+            throw new Error(`Thread with id ${threadId} not found.`);
+        }
+    }
 }
 
 module.exports = JobThreadRepository;

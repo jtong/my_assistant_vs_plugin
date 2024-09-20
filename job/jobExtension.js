@@ -15,7 +15,7 @@ function activateJobExtension(context, agentLoader) {
 
     const jobTaskHandler = new JobTaskHandler(threadRepository, agentLoader);
     const jobListProvider = new JobListViewProvider(threadRepository);
-    const jobViewProvider = new JobViewProvider(context.extensionUri, threadRepository);
+    const jobViewProvider = new JobViewProvider(context.extensionUri, threadRepository, jobTaskHandler);
 
     context.subscriptions.push(
         vscode.window.registerTreeDataProvider('jobList', jobListProvider),
@@ -120,20 +120,7 @@ function activateJobExtension(context, agentLoader) {
 
             panel.webview.html = jobViewProvider.getWebviewContent(panel.webview, threadId);
 
-            // 处理与前端的消息通信
-            panel.webview.onDidReceiveMessage(async message => {
-                switch (message.type) {
-                    case 'loadContext':
-                        const thread = threadRepository.getThread(message.threadId);
-                        const response = await jobTaskHandler.loadContext(thread, message.filePath);
-                        panel.webview.postMessage({
-                            type: 'contextLoaded',
-                            jobs: response.meta.generatedJobs
-                        });
-                        break;
-                    // ... 其他 case ...
-                }
-            });
+            jobViewProvider.resolveWebviewPanel(panel);
 
             // 将新打开的面板添加到 openJobPanels 对象中
             openJobPanels[jobName] = panel;
