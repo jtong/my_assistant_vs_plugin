@@ -191,8 +191,69 @@ window.addEventListener('message', event => {
         case 'updateAvailableTasks':
             displayTaskButtons(message.tasks);
             break;
+        case 'loadOperations':
+            window.currentSettings = message.currentSettings || {};
+            displayOperations(message.operations);
+            break;
+        // ...其他 case    
     }
 });
+
+
+// 定义显示操作项的函数
+function displayOperations(operations) {
+    const container = document.getElementById('operations-container');
+    container.innerHTML = ''; // 清除现有内容
+
+    operations.forEach(operation => {
+        if (operation.type === 'setting' && operation.control === 'select') {
+            // 创建下拉框
+            const select = document.createElement('select');
+            select.id = `operation-${operation.settingKey}`;
+
+            // 创建选项
+            operation.options.forEach(optionValue => {
+                const option = document.createElement('option');
+                option.value = optionValue;
+                option.textContent = optionValue;
+                select.appendChild(option);
+            });
+
+            // 设置默认值
+            const currentValue = window.currentSettings[operation.settingKey] || operation.default || operation.options[0];
+            select.value = currentValue;
+
+            // 监听选择变化事件
+            select.addEventListener('change', function () {
+                const selectedValue = this.value;
+                // 发送消息给扩展后端，通知更新设置
+                window.vscode.postMessage({
+                    type: 'updateSetting',
+                    threadId: window.threadId,
+                    settingKey: operation.settingKey,
+                    value: selectedValue
+                });
+            });
+
+            // 创建一个标签显示设置名称
+            const label = document.createElement('label');
+            label.textContent = `${operation.name}：`;
+            label.htmlFor = select.id;
+
+            // 将标签和下拉框添加到容器
+            container.appendChild(label);
+            container.appendChild(select);
+            container.appendChild(document.createElement('br'));
+
+        } else if (operation.type === 'action' && operation.control === 'button') {
+            // 创建按钮
+            const button = document.createElement('button');
+            button.textContent = operation.name;
+            button.addEventListener('click', () => executeTask(operation.taskName));
+            container.appendChild(button);
+        }
+    });
+}
 
 function removeLastBotMessage() {
     const chatBox = document.getElementById('chat-box');

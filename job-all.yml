@@ -26,9 +26,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 TestJobAgent.js这一类job类的 agent 生成job要有状态和index，可以按照Thread中job的数组长度设置index，这样我可以按照index来排序，并且可以知道job的状态。
-    我希望建立一个机制，可以统一的发送任务给job类的agent并处理他们的响应。
-    job是plugin这边thread里的概念，而在Agent那边一个job对应着一个AvailableTask。
+    我希望 job-view.html 点开的时候，要加载所有的job。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

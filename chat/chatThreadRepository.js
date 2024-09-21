@@ -167,7 +167,7 @@ class ChatThreadRepository {
 
     getThreadSettings(threadId) {
         const thread = this.loadThread(threadId);
-        return thread.settings || {};
+        return thread.settings;
     }
 
     updateThreadSettings(threadId, newSettings) {

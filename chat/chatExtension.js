@@ -25,16 +25,16 @@ function activateChatExtension(context, agentLoader) {
         vscode.commands.registerCommand('myAssistant.refreshChatList', async () => {
             // 重新加载代理配置
             agentLoader.reloadConfig();
-            
+
             // 清空所有缓存的代理
             agentLoader.clearLoadedAgents();
-            
+
             // 重新构建所有线程基础文件，用于第一次安装完插件时或其他情况下路径没有初始化成功。
             threadRepository.buildThreadsIfNotExists();
 
             // 刷新聊天列表视图
             listProvider.refresh();
-            
+
             vscode.window.showInformationMessage('Chat list and agents refreshed successfully.');
         })
     );
@@ -191,10 +191,49 @@ function activateChatExtension(context, agentLoader) {
                                 vscode.window.showInformationMessage('Text copied to clipboard');
                             });
                             break;
+                        case 'updateSetting':
+                            {
+                                const { threadId, settingKey, value } = message;
+                                // 获取当前线程的设置
+                                const currentSettings = threadRepository.getThreadSettings(threadId) || {};
+                                // 更新对应的设置键值
+                                const newSettings = {
+                                    ...currentSettings,
+                                    [settingKey]: value
+                                };
+                                // 保存更新后的设置
+                                threadRepository.updateThreadSettings(threadId, newSettings);
+
+                                // 重新加载代理，以应用新的设置
+                                const updatedThread = threadRepository.loadThread(threadId);
+                                agentLoader.updateAgentForThread(updatedThread);
+
+                                // 可选：向前端发送确认消息
+                                // panel.webview.postMessage({ type: 'settingUpdated', settingKey, value });
+                            }
+                            break;
                     }
                 });
 
                 openChatPanels[chatName] = panel;
+
+                // 获取线程和代理信息
+                const thread = chatProvider.getThread(threadId);
+                const agentConfig = agentLoader.getAgentConfig(thread.agent);
+
+                // 获取代理的 operations
+                const operations = agentConfig.operations || [];
+
+                // 获取当前线程的设置
+                const currentSettings = threadRepository.getThreadSettings(threadId) || {};
+
+                // 发送 operations 和当前设置到前端
+                panel.webview.postMessage({
+                    type: 'loadOperations',
+                    operations: operations,
+                    currentSettings: currentSettings
+                });
+
 
                 panel.onDidDispose(() => {
                     delete openChatPanels[chatName];

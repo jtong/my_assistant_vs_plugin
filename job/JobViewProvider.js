@@ -37,6 +37,13 @@ class JobViewProvider {
             const threadId = message.threadId;
 
             switch (message.type) {
+                case 'getJobs':
+                    const thread = this.threadRepository.getThread(threadId);
+                    panel.webview.postMessage({
+                        type: 'loadJobs',
+                        jobs: thread.jobs
+                    });
+                    break;
                 case 'loadContext':
                     {
                         const filePath = message.filePath;

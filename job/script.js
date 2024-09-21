@@ -5,6 +5,15 @@ window.onload = function () {
     if (threadId) {
         loadThread(threadId);
     }
+
+    document.getElementById('load-file-btn').addEventListener('click', () => {
+        const filePath = document.getElementById('file-path').value;
+        window.vscode.postMessage({
+            type: 'loadContext',
+            threadId: window.threadId,
+            filePath: filePath
+        });
+    });
 };
 
 function loadThread(threadId) {
@@ -14,20 +23,13 @@ function loadThread(threadId) {
     });
 }
 
-document.getElementById('load-file-btn').addEventListener('click', () => {
-    const filePath = document.getElementById('file-path').value;
-    window.vscode.postMessage({
-        type: 'loadContext',
-        threadId: window.threadId,
-        filePath: filePath
-    });
-});
+
 
 window.addEventListener('message', event => {
     const message = event.data;
     switch (message.type) {
-        case 'loadThread':
-            displayThread(message.thread);
+        case 'loadJobs':
+            displayGeneratedJobs(message.jobs);
             break;
         case 'contextLoaded':
             displayGeneratedJobs(message.jobs);
@@ -80,8 +82,4 @@ function displayGeneratedJobs(jobs) {
             event.stopPropagation();
         });
     });
-}
-
-function displayThread(thread) {
-    // 渲染 job 列表或详情
 }

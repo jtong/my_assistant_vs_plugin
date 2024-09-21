@@ -3,10 +3,10 @@ project:
   filters:
     - filter_in:
       - "ai_helper/agent/*"
-      - "ai_helper/agent/node_modules/**"
+      # - "ai_helper/agent/node_modules/**"
       - "node_modules/**"
       - "chat/**"
-      - "job/**"
+      # - "job/**"
       - "*.*"
     - ignore:
       - node_modules/@(.*)
@@ -25,10 +25,12 @@ project:
       - "chat/lib"
       - "**/*.vsix"
       - doc
+      - README.md
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望TestJobAgent.js 生成Task的时候也会更新thread的job，这样就可以在thread里面看到job的信息。下次进来的时候会看到上次的job信息。
+    我希望 能提供一种Available Setting的选项配置，可以通过下拉框选择某个值，然后在下次发送的时候更新thread的settings中某个key的值。
+    这个功能可以通过 TestTaskButtonsAgent 来测试。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

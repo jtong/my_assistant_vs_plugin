@@ -221,3 +221,30 @@
     background: #f0f0f0;
     border-radius: 3px;
 }
+
+#operations-container {
+    margin-bottom: 10px;
+}
+
+#operations-container select {
+    margin-right: 5px;
+    padding: 5px;
+}
+
+#operations-container label {
+    margin-right: 5px;
+}
+
+#operations-container button {
+    margin-right: 5px;
+    padding: 5px 10px;
+    background-color: #007ACC;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+#operations-container button:hover {
+    background-color: #005A9E;
+}
