@@ -270,6 +270,12 @@ function createMessageElement(message) {
     const messageElement = document.createElement('div');
     messageElement.classList.add(message.sender);
     messageElement.setAttribute('data-message-id', message.id);
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'message-checkbox';
+    messageElement.appendChild(checkbox);
+
     messageElement.setAttribute('data-original-text', message.text);
     messageElement.setAttribute('data-is-html', message.isHtml);
 
@@ -300,9 +306,16 @@ function displayUserMessage(message) {
 
 function displayBotMessage(message, isStreaming = false) {
     const chatBox = document.getElementById('chat-box');
+
     const messageElement = document.createElement('div');
     messageElement.classList.add(message.sender);
     messageElement.setAttribute('data-message-id', message.id);
+    
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'message-checkbox';
+    messageElement.appendChild(checkbox);
+    
     messageElement.setAttribute('data-original-text', message.text);
     messageElement.setAttribute('data-is-html', message.isHtml);
 

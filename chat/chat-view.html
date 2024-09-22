@@ -7,9 +7,50 @@
     <link rel="stylesheet" href="${highlightCssUri}">
     <script src="${markdownItUri}"></script>
     <script src="${highlightJsUri}"></script>
+    <style>
+        /* 添加新的样式 */
+        #chat-header {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+        #chat-header button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .edit-mode .message-checkbox {
+            display: inline-block;
+        }
+        .message-checkbox {
+            display: none;
+            margin-right: 5px;
+        }
+        #delete-selected-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        .edit-mode #user-input, .edit-mode #send-btn, .edit-mode #retry-btn {
+            display: none;
+        }
+        #done-btn, #delete-selected-btn {
+            display: none;
+        }
+        .edit-mode #done-btn, .edit-mode #delete-selected-btn {
+            display: inline-block;
+        }
+        .edit-mode #edit-btn {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <div id="chat-container">
+        <div id="chat-header">
+            <button id="edit-btn">编辑</button>
+            <button id="delete-selected-btn">删除选中</button>
+            <button id="done-btn" style="display:none;">退出</button>
+        </div>
         <div id="chat-box"></div>
         <!-- <div id="task-buttons"></div> -->
         <div id="operations-container"></div>
@@ -20,6 +61,35 @@
     <script>
         window.vscode = acquireVsCodeApi();
         window.threadId = '${threadId}';
+    </script>
+    <script>
+        // ... 现有的脚本 ...
+
+        // 添加新的 JavaScript 函数
+        function toggleEditMode() {
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.classList.toggle('edit-mode');
+            document.getElementById('edit-btn').style.display = chatContainer.classList.contains('edit-mode') ? 'none' : 'block';
+            document.getElementById('done-btn').style.display = chatContainer.classList.contains('edit-mode') ? 'block' : 'none';
+            document.getElementById('delete-selected-btn').style.display = chatContainer.classList.contains('edit-mode') ? 'block' : 'none';
+            
+            // 显示或隐藏复选框
+            const checkboxes = document.querySelectorAll('.message-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.style.display = chatContainer.classList.contains('edit-mode') ? 'inline-block' : 'none';
+            });
+        }
+
+        function deleteSelectedMessages() {
+            const selectedMessages = document.querySelectorAll('.message-checkbox:checked');
+            selectedMessages.forEach(checkbox => {
+                checkbox.closest('.message-container').remove();
+            });
+        }
+
+        document.getElementById('edit-btn').addEventListener('click', toggleEditMode);
+        document.getElementById('done-btn').addEventListener('click', toggleEditMode);
+        document.getElementById('delete-selected-btn').addEventListener('click', deleteSelectedMessages);
     </script>
     <script src="${scriptUri}"></script>
 </body>

@@ -29,7 +29,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 点击message上的按钮的时候，会先生成一个user的message，再执行任务。
+    我希望 在现有的chat-view.html中，支持打开删除操作，可以multi-select 然后delete。先给我设计一下界面。
     
   skip_clone_if_folder_exist: true  
 output:     
