@@ -15,6 +15,33 @@ function renderMarkdown(text) {
     return md.render(text);
 }
 
+// 添加新的 JavaScript 函数
+function toggleEditMode() {
+    const chatContainer = document.getElementById('chat-container');
+    chatContainer.classList.toggle('edit-mode');
+    document.getElementById('edit-btn').style.display = chatContainer.classList.contains('edit-mode') ? 'none' : 'block';
+    document.getElementById('done-btn').style.display = chatContainer.classList.contains('edit-mode') ? 'block' : 'none';
+    document.getElementById('delete-selected-btn').style.display = chatContainer.classList.contains('edit-mode') ? 'block' : 'none';
+    
+    // 显示或隐藏复选框
+    const checkboxes = document.querySelectorAll('.message-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.style.display = chatContainer.classList.contains('edit-mode') ? 'inline-block' : 'none';
+    });
+}
+
+function deleteSelectedMessages() {
+    const selectedMessages = document.querySelectorAll('.message-checkbox:checked');
+    selectedMessages.forEach(checkbox => {
+        checkbox.closest('.message-container').remove();
+    });
+}
+
+document.getElementById('edit-btn').addEventListener('click', toggleEditMode);
+document.getElementById('done-btn').addEventListener('click', toggleEditMode);
+document.getElementById('delete-selected-btn').addEventListener('click', deleteSelectedMessages);
+
+
 document.getElementById('send-btn').addEventListener('click', sendMessageHandler);
 document.getElementById('user-input').addEventListener('keydown', function (event) {
     // 当用户按下回车键且没有按住Shift键时发送消息
@@ -306,57 +333,33 @@ function displayUserMessage(message) {
 
 function displayBotMessage(message, isStreaming = false) {
     const chatBox = document.getElementById('chat-box');
-
-    const messageElement = document.createElement('div');
-    messageElement.classList.add(message.sender);
-    messageElement.setAttribute('data-message-id', message.id);
+    const messageElement = createMessageElement(message);
     
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.className = 'message-checkbox';
-    messageElement.appendChild(checkbox);
-    
-    messageElement.setAttribute('data-original-text', message.text);
-    messageElement.setAttribute('data-is-html', message.isHtml);
-
-    const container = document.createElement('div');
-    container.className = 'message-container';
-
-    const textContainer = document.createElement('span');
-    textContainer.className = 'message-text';
-
     if (isStreaming) {
-        // 如果是流式消息，初始化为空
-        textContainer.textContent = '';
-    } else {
-        if (message.isHtml) {
-            textContainer.innerHTML = message.text;
-        } else {
-            textContainer.innerHTML = renderMarkdown(message.text);
-        }
+        messageElement.querySelector('.message-text').textContent = '';
     }
 
-    container.appendChild(textContainer);
-
-    // 判断是否为最后一个bot消息，并且是否有availableTasks
     if (isLastBotMessage() && message.availableTasks && message.availableTasks.length > 0) {
-        const taskContainer = document.createElement('div');
-        taskContainer.className = 'task-buttons-container';
-
-        message.availableTasks.forEach(availableTask => {
-            const button = document.createElement('button');
-            button.textContent = availableTask.name;
-            button.className = 'task-button';
-            button.addEventListener('click', () => executeTask(availableTask.task));
-            taskContainer.appendChild(button);
-        });
-
-        container.appendChild(taskContainer);
+        addTaskButtons(messageElement, message.availableTasks);
     }
 
-    messageElement.appendChild(container);
     chatBox.appendChild(messageElement);
     messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+function addTaskButtons(container, availableTasks) {
+    const taskContainer = document.createElement('div');
+    taskContainer.className = 'task-buttons-container';
+
+    availableTasks.forEach(availableTask => {
+        const button = document.createElement('button');
+        button.textContent = availableTask.name;
+        button.className = 'task-button';
+        button.addEventListener('click', () => executeTask(availableTask.task));
+        taskContainer.appendChild(button);
+    });
+
+    container.querySelector('.message-container').appendChild(taskContainer);
 }
 
 // 判断是否为最后一个bot消息
