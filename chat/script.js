@@ -22,7 +22,7 @@ function toggleEditMode() {
     document.getElementById('edit-btn').style.display = chatContainer.classList.contains('edit-mode') ? 'none' : 'block';
     document.getElementById('done-btn').style.display = chatContainer.classList.contains('edit-mode') ? 'block' : 'none';
     document.getElementById('delete-selected-btn').style.display = chatContainer.classList.contains('edit-mode') ? 'block' : 'none';
-    
+
     // 显示或隐藏复选框
     const checkboxes = document.querySelectorAll('.message-checkbox');
     checkboxes.forEach(checkbox => {
@@ -78,6 +78,7 @@ function loadThread(threadId) {
 }
 
 function addEditButtons() {
+    const chatBox = document.getElementById('chat-box');
     const messages = document.querySelectorAll('#chat-box > div');
     messages.forEach(message => {
         const container = message.querySelector('.message-container');
@@ -105,8 +106,13 @@ function addEditButtons() {
                 const editWrapper = document.createElement('div');
                 editWrapper.className = 'edit-wrapper';
 
+                // 计算 chat-box 的宽度
+                const chatBoxWidth = chatBox.offsetWidth;
+                const textareaWidth = Math.floor(chatBoxWidth * 0.8); // 80% 的宽度
+
                 const textarea = document.createElement('textarea');
-                textarea.value = originalText; // 使用原始文本
+                textarea.value = originalText;
+                textarea.style.width = `${textareaWidth}px`; // 设置精确的像素宽度
                 editWrapper.appendChild(textarea);
 
                 const buttonContainer = document.createElement('div');
@@ -334,7 +340,7 @@ function displayUserMessage(message) {
 function displayBotMessage(message, isStreaming = false) {
     const chatBox = document.getElementById('chat-box');
     const messageElement = createMessageElement(message);
-    
+
     if (isStreaming) {
         messageElement.querySelector('.message-text').textContent = '';
     }
