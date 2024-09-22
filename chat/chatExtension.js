@@ -202,14 +202,17 @@ function activateChatExtension(context, agentLoader) {
                             {
                                 const { threadId, settingKey, value } = message;
                                 // 获取当前线程的设置
-                                const currentSettings = threadRepository.getThreadSettings(threadId) || {};
-                                // 更新对应的设置键值
-                                const newSettings = {
-                                    ...currentSettings,
-                                    [settingKey]: value
-                                };
-                                // 保存更新后的设置
-                                threadRepository.updateThreadSettings(threadId, newSettings);
+                                let currentSettings = threadRepository.getThreadSettings(threadId) || {};
+
+                                // 如果当前设置为空，从 agents.json 复制设置
+                                if (Object.keys(currentSettings).length === 0) {
+                                    const agentConfig = agentLoader.getAgentConfig(thread.agent);
+                                    currentSettings = { ...agentConfig.settings };
+                                }
+
+                                // 更新设置
+                                currentSettings[settingKey] = value;
+                                threadRepository.updateThreadSettings(threadId, currentSettings);
 
                                 // 重新加载代理，以应用新的设置
                                 const updatedThread = threadRepository.loadThread(threadId);

@@ -31,12 +31,11 @@ input:
   instruction: |
     ## 任务约束
     
-    - 修改webview的时候，js只能写在script.js里。不允许写在html里。
-    - 如果其他文件不需要修改，就不要生成了。
+    - 无
 
     ## 任务
-    我希望 chat-view.html 里，message 如果 isHTML为true的话，那么直接使用text，否则才renderMarkdown。
-    你要考虑有哪些地方都渲染了Markdown，都要注意。
+
+    我希望 operation 修改 setting的时候,如果发现thread setting为空,则先把agents.json里的setting复制过来，再修改相应的值。
     
   skip_clone_if_folder_exist: true  
 output:     
