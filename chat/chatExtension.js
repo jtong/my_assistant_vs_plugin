@@ -175,12 +175,19 @@ function activateChatExtension(context, agentLoader) {
                             await handleThread(messageHandler, thread, retryTask, threadRepository, panel);
                             break;
                         case 'executeTask':
-                            const taskName = message.taskName;
-                            const agent = agentLoader.loadAgentForThread(thread);
-                            const task = agent.getTask(taskName);
-                            task.host_utils = host_utils;
-                            if (task) {
-                                await handleThread(messageHandler, thread, task, threadRepository, panel);
+                            {
+                                const taskName = message.taskName;
+                                const userMessage = message.message;
+
+                                // 添加用户消息到线程
+                                messageHandler.addUserMessageToThread(thread, userMessage);
+
+                                const agent = agentLoader.loadAgentForThread(thread);
+                                const task = agent.getTask(taskName);
+                                task.host_utils = host_utils;
+                                if (task) {
+                                    await handleThread(messageHandler, thread, task, threadRepository, panel);
+                                }
                             }
                             break;
                         case 'updateMessage':

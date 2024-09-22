@@ -29,8 +29,8 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 修正isLastBotMessage的逻辑，现在报错：
-    Uncaught ReferenceError: messageElement is not defined
+    我希望 点击message上的按钮的时候，会先生成一个user的message，再执行任务。
+    
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

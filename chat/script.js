@@ -330,11 +330,11 @@ function displayBotMessage(message, isStreaming = false) {
         const taskContainer = document.createElement('div');
         taskContainer.className = 'task-buttons-container';
 
-        message.availableTasks.forEach(task => {
+        message.availableTasks.forEach(availableTask => {
             const button = document.createElement('button');
-            button.textContent = task.name;
+            button.textContent = availableTask.name;
             button.className = 'task-button';
-            button.addEventListener('click', () => executeTask(task));
+            button.addEventListener('click', () => executeTask(availableTask.task));
             taskContainer.appendChild(button);
         });
 
@@ -453,10 +453,20 @@ function displayTaskButtons(tasks) {
 }
 
 function executeTask(task) {
+    const userMessage = task.message;
+    displayUserMessage({
+        id: 'user_' + Date.now(),
+        sender: 'user',
+        text: userMessage,
+        timestamp: Date.now(),
+        threadId: window.threadId
+    });
+
     const message = {
         type: 'executeTask',
         threadId: window.threadId,
-        taskName: task.name
+        taskName: task.name,
+        message: task.message
     };
     window.vscode.postMessage(message);
 }
