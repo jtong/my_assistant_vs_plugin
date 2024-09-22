@@ -118,7 +118,7 @@ function addEditButtons() {
                     editBtn.style.display = '';
 
                     window.vscode.postMessage({
-                        type: 'editMessage',
+                        type: 'updateMessage',
                         threadId: window.threadId,
                         messageId: messageId,
                         newText: newText
@@ -169,7 +169,7 @@ window.addEventListener('message', event => {
             displayBotMessage(message.message, message.isStreaming);
             break;
         case 'updateBotMessage':
-            updateBotMessage(message.messageId, message.text);
+            updateBotMessage(message.messageId, message.text, message.availableTasks);
             break;
         case 'botResponseComplete':
             isBotResponding = false;  // 重置标志，表示 bot 回复完成
@@ -324,29 +324,71 @@ function displayBotMessage(message, isStreaming = false) {
     }
 
     container.appendChild(textContainer);
+
+    // 判断是否为最后一个bot消息，并且是否有availableTasks
+    if (isLastBotMessage() && message.availableTasks && message.availableTasks.length > 0) {
+        const taskContainer = document.createElement('div');
+        taskContainer.className = 'task-buttons-container';
+
+        message.availableTasks.forEach(task => {
+            const button = document.createElement('button');
+            button.textContent = task.name;
+            button.className = 'task-button';
+            button.addEventListener('click', () => executeTask(task));
+            taskContainer.appendChild(button);
+        });
+
+        container.appendChild(taskContainer);
+    }
+
     messageElement.appendChild(container);
     chatBox.appendChild(messageElement);
     messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
 
-function updateBotMessage(messageId, text) {
+// 判断是否为最后一个bot消息
+function isLastBotMessage() {
+    const chatBox = document.getElementById('chat-box');
+    const messages = chatBox.getElementsByClassName('bot');
+    return messages.length === 0 || messages[messages.length - 1] === messageElement;
+}
+
+function updateBotMessage(messageId, text, availableTasks) {
     const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
     if (messageElement) {
         const textContainer = messageElement.querySelector('.message-text');
-        if (textContainer) {
+        if (textContainer && text !== undefined && text !== null) {
             // 更新存储的原始文本
             messageElement.setAttribute('data-original-text', messageElement.getAttribute('data-original-text') + text);
 
             const isHtml = messageElement.getAttribute('data-is-html') === 'true';
-
             if (isHtml) {
                 textContainer.innerHTML = messageElement.getAttribute('data-original-text');
             } else {
                 textContainer.innerHTML = renderMarkdown(messageElement.getAttribute('data-original-text'));
             }
-
-            messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }
+
+        const container = messageElement.querySelector('.message-container');
+        // 移除旧的任务按钮容器（如果存在）
+        const oldTaskContainer = container.querySelector('.task-buttons-container');
+        if (oldTaskContainer) {
+            container.removeChild(oldTaskContainer);
+        }
+        // 添加新的任务按钮
+        if (availableTasks && availableTasks.length > 0) {
+            const taskContainer = document.createElement('div');
+            taskContainer.className = 'task-buttons-container';
+            availableTasks.forEach(task => {
+                const button = document.createElement('button');
+                button.textContent = task.name;
+                button.className = 'task-button';
+                button.addEventListener('click', () => executeTask(task));
+                taskContainer.appendChild(button);
+            });
+            container.appendChild(taskContainer);
+        }
+        messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
 }
 

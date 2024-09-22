@@ -47,7 +47,7 @@ class ChatMessageHandler {
             threadId: thread.id,
             formSubmitted: false
         };
-        this.threadRepository.addMessage(thread.id, newMessage);
+        this.threadRepository.addMessage(thread, newMessage);
         return this.threadRepository.getThread(thread.id);
     }
 }

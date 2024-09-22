@@ -29,8 +29,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 能提供一种Available Setting的选项配置，可以通过下拉框选择某个值，然后在下次发送的时候更新thread的settings中某个key的值。
-    这个功能可以通过 TestTaskButtonsAgent 来测试。
+    我希望 执行task的时候，每个task如果修改了thread，全局的thread应该有所变化，所以请修改thread的时候，我希望ThreadRepository的添加message不应该基于threadId，而是应该基于thread对象。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

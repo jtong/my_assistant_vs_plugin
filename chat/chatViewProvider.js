@@ -37,13 +37,6 @@ class ChatViewProvider {
         return this.threadRepository.getThreadMessages(threadId);
     }
 
-    addMessage(threadId, message) {
-        this.threadRepository.addMessage(threadId, message);
-    }
-
-    updateMessage(threadId, messageId, updates) {
-        this.threadRepository.updateMessage(threadId, messageId, updates);
-    }
 }
 
 module.exports = ChatViewProvider;

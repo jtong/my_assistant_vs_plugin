@@ -183,8 +183,8 @@ function activateChatExtension(context, agentLoader) {
                                 await handleThread(messageHandler, thread, task, threadRepository, panel);
                             }
                             break;
-                        case 'editMessage':
-                            threadRepository.updateMessage(message.threadId, message.messageId, { text: message.newText });
+                        case 'updateMessage':
+                            threadRepository.updateMessage(thread, message.messageId, { text: message.newText });
                             break;
                         case 'copyToClipboard':
                             vscode.env.clipboard.writeText(message.text).then(() => {
@@ -324,71 +324,92 @@ function buildMessageTask(message, thread, host_utils) {
     });
 }
 
-async function handleThread(messageHandler, updatedThread, task, threadRepository, panel) {
-    const responseHandler = async (response, thread) => {
-        if (response.hasAvailableTasks()) {
-            const availableTasks = response.getAvailableTasks();
-            // 发送可用任务列表到 webview 以更新任务按钮
-            panel.webview.postMessage({
-                type: 'updateAvailableTasks',
-                tasks: availableTasks.map(task => ({ name: task.getName() }))
-            });
-        }
-        if (response.isStream()) {
-            // 处理流式响应
-            const botMessage = {
-                id: 'bot_' + Date.now(),
-                sender: 'bot',
-                text: '',
-                isHtml: response.isHtml(),
-                timestamp: Date.now(),
-                threadId: thread.id,
-                formSubmitted: false
-            };
-            threadRepository.addMessage(thread.id, botMessage);
-            panel.webview.postMessage({
-                type: 'addBotMessage',
-                message: botMessage
-            });
+async function addNewBotMessage(response, thread, threadRepository, panel) {
+    if (response.isStream()) {
+        // 处理流式响应
+        const botMessage = {
+            id: 'bot_' + Date.now(),
+            sender: 'bot',
+            text: '',
+            isHtml: response.isHtml(),
+            timestamp: Date.now(),
+            threadId: thread.id,
+            formSubmitted: false
+        };
+        threadRepository.addMessage(thread, botMessage);
+        panel.webview.postMessage({
+            type: 'addBotMessage',
+            message: botMessage
+        });
 
-            try {
-                for await (const chunk of response.getStream()) {
-                    botMessage.text += chunk;
-                    panel.webview.postMessage({
-                        type: 'updateBotMessage',
-                        messageId: botMessage.id,
-                        text: chunk
-                    });
-                }
-            } catch (streamError) {
-                console.error('Error in stream processing:', streamError);
-                botMessage.text += ' An error occurred during processing.';
+        try {
+            for await (const chunk of response.getStream()) {
+                botMessage.text += chunk;
                 panel.webview.postMessage({
                     type: 'updateBotMessage',
                     messageId: botMessage.id,
-                    text: ' An error occurred during processing.'
+                    text: chunk
                 });
             }
-
-            threadRepository.updateMessage(thread.id, botMessage.id, { text: botMessage.text, meta: response.meta });
-        } else {
-            // 处理非流式响应
-            const botMessage = {
-                id: 'bot_' + Date.now(),
-                sender: 'bot',
-                text: response.getFullMessage(),
-                isHtml: response.isHtml(),
-                timestamp: Date.now(),
-                threadId: thread.id,
-                formSubmitted: false,
-                meta: response.meta
-            };
-            threadRepository.addMessage(thread.id, botMessage);
-            thread.messages.push(botMessage);
+        } catch (streamError) {
+            console.error('Error in stream processing:', streamError);
+            botMessage.text += ' An error occurred during processing.';
             panel.webview.postMessage({
-                type: 'addBotMessage',
-                message: botMessage
+                type: 'updateBotMessage',
+                messageId: botMessage.id,
+                text: ' An error occurred during processing.'
             });
+        }
+
+        threadRepository.updateMessage(thread, botMessage.id, {
+            text: botMessage.text,
+            meta: response.meta,
+            availableTasks: response.availableTasks // 添加这一行
+        });
+    } else {
+        // 非流式响应
+        const botMessage = {
+            id: 'bot_' + Date.now(),
+            sender: 'bot',
+            text: response.getFullMessage(),
+            isHtml: response.isHtml(),
+            timestamp: Date.now(),
+            threadId: thread.id,
+            formSubmitted: false,
+            meta: response.meta
+        };
+        if (response.hasAvailableTasks()) {
+            botMessage.availableTasks = response.getAvailableTasks();
+        }
+        threadRepository.addMessage(thread, botMessage);
+        panel.webview.postMessage({
+            type: 'addBotMessage',
+            message: botMessage
+        });
+    }
+}
+
+async function handleThread(messageHandler, updatedThread, task, threadRepository, panel) {
+    const responseHandler = async (response, thread) => {
+        if (response.shouldUpdateLastMessage()) {
+            const lastBotMessageIndex = [...thread.messages].reverse().findIndex(msg => msg.sender === 'bot');
+            if (lastBotMessageIndex !== -1 && response.hasAvailableTasks()) {
+                const index = thread.messages.length - 1 - lastBotMessageIndex;
+                const lastBotMessage = thread.messages[index];
+                // 发送可用任务列表到 webview 以更新任务按钮
+                lastBotMessage.availableTasks = response.getAvailableTasks();
+                threadRepository.updateMessage(thread, lastBotMessage.id, {
+                    text: lastBotMessage.text,
+                    availableTasks: lastBotMessage.availableTasks
+                });
+                panel.webview.postMessage({
+                    type: 'updateBotMessage',
+                    messageId: lastBotMessage.id,
+                    availableTasks: lastBotMessage.availableTasks.map(task => ({ name: task.getName() }))
+                });
+            }
+        } else {
+            addNewBotMessage(response, thread, threadRepository, panel);
         }
     };
 
@@ -405,7 +426,7 @@ async function handleThread(messageHandler, updatedThread, task, threadRepositor
             threadId: updatedThread.id,
             formSubmitted: false
         };
-        threadRepository.addMessage(updatedThread.id, errorMessage);
+        threadRepository.addMessage(updatedThread, errorMessage);
         panel.webview.postMessage({
             type: 'addBotMessage',
             message: errorMessage

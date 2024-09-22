@@ -142,7 +142,7 @@
 
 .message-container {
     position: relative;
-    padding-bottom: 25px; /* Add padding to make room for the edit button */
+    padding-bottom: 25px; /* 为底部的按钮留出空间 */
 }
 
 .copy-btn, .edit-btn {
@@ -157,18 +157,40 @@
     cursor: pointer;
 }
 
-
 .copy-btn {
     right: 50px;
 }
 
 .edit-btn {
-    right: 0px; /* Adjust this value to position the edit button next to the copy button */
+    right: 0px;
 }
 
 .message-container:hover .copy-btn,
 .message-container:hover .edit-btn {
     display: block;
+}
+
+/* 任务按钮容器样式 */
+.task-buttons-container {
+    position: absolute;
+    bottom: 0;
+    left: 0; /* 左对齐 */
+    display: flex;
+}
+
+.task-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 3px;
+    padding: 2px 5px;
+    font-size: 12px;
+    margin-right: 5px;
+}
+
+.task-button:hover {
+    background-color: #45a049;
 }
 
 .message-text {

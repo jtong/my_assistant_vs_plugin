@@ -73,27 +73,22 @@ class ChatThreadRepository {
         return thread ? thread.messages : [];
     }
 
-    addMessage(threadId, message) {
-        let thread = this.loadThread(threadId);
+    addMessage(thread, message) {
         if (!thread) {
-            thread = {
-                id: threadId,
-                agent: 'botAgent', // 默认代理
-                messages: []
-            };
+            throw new Error('Thread object is required');
         }
         thread.messages.push(message);
         this.saveThread(thread);
     }
 
-    updateMessage(threadId, messageId, updates) {
-        const thread = this.loadThread(threadId);
-        if (thread) {
-            const messageIndex = thread.messages.findIndex(m => m.id === messageId);
-            if (messageIndex !== -1) {
-                thread.messages[messageIndex] = { ...thread.messages[messageIndex], ...updates };
-                this.saveThread(thread);
-            }
+    updateMessage(thread, messageId, updates) {
+        if (!thread) {
+            throw new Error('Thread object is required');
+        }
+        const messageIndex = thread.messages.findIndex(m => m.id === messageId);
+        if (messageIndex !== -1) {
+            thread.messages[messageIndex] = { ...thread.messages[messageIndex], ...updates };
+            this.saveThread(thread);
         }
     }
 
@@ -136,18 +131,6 @@ class ChatThreadRepository {
         const removedMessages = thread.messages.splice(lastUserIndex + 1);
         this.saveThread(thread);
         return removedMessages;
-    }
-
-
-    updateMessage(threadId, messageId, updates) {
-        const thread = this.loadThread(threadId);
-        if (thread) {
-            const messageIndex = thread.messages.findIndex(m => m.id === messageId);
-            if (messageIndex !== -1) {
-                thread.messages[messageIndex] = { ...thread.messages[messageIndex], ...updates };
-                this.saveThread(thread);
-            }
-        }
     }
 
     renameThread(threadId, newName) {
