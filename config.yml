@@ -35,7 +35,7 @@ input:
 
     ## 任务
 
-    我希望 点击edit按钮进行编辑的时候，初始编辑框的宽度是chat-box的宽度的80%
+    我希望 真实支持批量删除功能。
     
   skip_clone_if_folder_exist: true  
 output:     

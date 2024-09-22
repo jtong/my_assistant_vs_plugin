@@ -161,6 +161,18 @@ class ChatThreadRepository {
         }
     }
     
+    deleteMessages(threadId, messageIds) {
+        const thread = this.getThread(threadId);
+        if (thread) {
+            const initialLength = thread.messages.length;
+            thread.messages = thread.messages.filter(msg => !messageIds.includes(msg.id));
+            if (thread.messages.length < initialLength) {
+                this.saveThread(thread);
+                return messageIds;
+            }
+        }
+        return [];
+    }
 }
 
 module.exports = ChatThreadRepository;

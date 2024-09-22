@@ -30,11 +30,27 @@ function toggleEditMode() {
     });
 }
 
+
 function deleteSelectedMessages() {
     const selectedMessages = document.querySelectorAll('.message-checkbox:checked');
-    selectedMessages.forEach(checkbox => {
-        checkbox.closest('.message-container').remove();
-    });
+    const messageIds = Array.from(selectedMessages).map(checkbox => {
+        // 从复选框开始，向上遍历 DOM 树，直到找到带有 data-message-id 属性的元素
+        let element = checkbox;
+        while (element && !element.dataset.messageId) {
+            element = element.parentElement;
+        }
+        return element ? element.dataset.messageId : null;
+    }).filter(id => id !== null);
+
+    if (messageIds.length > 0) {
+        window.vscode.postMessage({
+            type: 'deleteMessages',
+            threadId: window.threadId,
+            messageIds: messageIds
+        });
+    }
+
+    toggleEditMode();
 }
 
 document.getElementById('edit-btn').addEventListener('click', toggleEditMode);
@@ -228,6 +244,14 @@ window.addEventListener('message', event => {
             window.currentSettings = message.currentSettings || {};
             displayOperations(message.operations);
             break;
+        case 'messagesDeleted':
+            message.messageIds.forEach(id => {
+                const messageElement = document.querySelector(`[data-message-id="${id}"]`);
+                if (messageElement) {
+                    messageElement.remove();
+                }
+            });
+            break;    
         // ...其他 case    
     }
 });
@@ -477,7 +501,7 @@ function displayTaskButtons(tasks) {
 function executeTask(task) {
     const userMessage = task.message;
     displayUserMessage({
-        id: 'user_' + Date.now(),
+        id: 'msg_' + Date.now(),
         sender: 'user',
         text: userMessage,
         timestamp: Date.now(),

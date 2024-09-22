@@ -222,6 +222,13 @@ function activateChatExtension(context, agentLoader) {
                                 // panel.webview.postMessage({ type: 'settingUpdated', settingKey, value });
                             }
                             break;
+                        case 'deleteMessages':
+                            const deletedIds = threadRepository.deleteMessages(message.threadId, message.messageIds);
+                            panel.webview.postMessage({
+                                type: 'messagesDeleted',
+                                messageIds: deletedIds
+                            });
+                            break;
                     }
                 });
 
@@ -338,7 +345,7 @@ async function addNewBotMessage(response, thread, threadRepository, panel) {
     if (response.isStream()) {
         // 处理流式响应
         const botMessage = {
-            id: 'bot_' + Date.now(),
+            id: 'msg_' + Date.now(),
             sender: 'bot',
             text: '',
             isHtml: response.isHtml(),
@@ -379,7 +386,7 @@ async function addNewBotMessage(response, thread, threadRepository, panel) {
     } else {
         // 非流式响应
         const botMessage = {
-            id: 'bot_' + Date.now(),
+            id: 'msg_' + Date.now(),
             sender: 'bot',
             text: response.getFullMessage(),
             isHtml: response.isHtml(),
