@@ -29,7 +29,8 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 执行task的时候，每个task如果修改了thread，全局的thread应该有所变化，所以请修改thread的时候，我希望ThreadRepository的添加message不应该基于threadId，而是应该基于thread对象。
+    我希望 修正isLastBotMessage的逻辑，现在报错：
+    Uncaught ReferenceError: messageElement is not defined
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

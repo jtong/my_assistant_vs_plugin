@@ -350,7 +350,7 @@ function displayBotMessage(message, isStreaming = false) {
 function isLastBotMessage() {
     const chatBox = document.getElementById('chat-box');
     const messages = chatBox.getElementsByClassName('bot');
-    return messages.length === 0 || messages[messages.length - 1] === messageElement;
+    return messages.length === 0 || messages[messages.length - 1] === chatBox.lastElementChild;
 }
 
 function updateBotMessage(messageId, text, availableTasks) {
