@@ -243,13 +243,13 @@ function displayOperations(operations) {
             // 将标签和下拉框添加到容器
             container.appendChild(label);
             container.appendChild(select);
-            container.appendChild(document.createElement('br'));
+            // container.appendChild(document.createElement('br'));
 
         } else if (operation.type === 'action' && operation.control === 'button') {
             // 创建按钮
             const button = document.createElement('button');
             button.textContent = operation.name;
-            button.addEventListener('click', () => executeTask(operation.taskName));
+            button.addEventListener('click', () => executeTask(operation.task));
             container.appendChild(button);
         }
     });
@@ -379,11 +379,11 @@ function updateBotMessage(messageId, text, availableTasks) {
         if (availableTasks && availableTasks.length > 0) {
             const taskContainer = document.createElement('div');
             taskContainer.className = 'task-buttons-container';
-            availableTasks.forEach(task => {
+            availableTasks.forEach(availableTask => {
                 const button = document.createElement('button');
-                button.textContent = task.name;
+                button.textContent = availableTask.name;
                 button.className = 'task-button';
-                button.addEventListener('click', () => executeTask(task));
+                button.addEventListener('click', () => executeTask(availableTask.task));
                 taskContainer.appendChild(button);
             });
             container.appendChild(taskContainer);

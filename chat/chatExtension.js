@@ -415,7 +415,7 @@ async function handleThread(messageHandler, updatedThread, task, threadRepositor
                 panel.webview.postMessage({
                     type: 'updateBotMessage',
                     messageId: lastBotMessage.id,
-                    availableTasks: lastBotMessage.availableTasks.map(task => ({ name: task.getName() }))
+                    availableTasks: lastBotMessage.availableTasks
                 });
             }
         } else {
