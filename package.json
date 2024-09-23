@@ -40,6 +40,11 @@
                     "additionalProperties": {
                         "type": "string"
                     }
+                },
+                "myAssistant.pluginRepositoryUrl": {
+                    "type": "string",
+                    "default": "https://raw.githubusercontent.com/your-repo/plugins/main/plugin-list.json",
+                    "description": "URL or local path to the plugin repository JSON file"
                 }
             }
         },
@@ -78,6 +83,15 @@
             {
                 "command": "myAssistant.renameJob",
                 "title": "Rename Job"
+            },
+            {
+                "command": "myAssistant.refreshPluginMarketplace",
+                "title": "Refresh Plugin Marketplace",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "myAssistant.installPlugin",
+                "title": "Install Plugin"
             }
         ],
         "viewsContainers": {
@@ -100,6 +114,11 @@
                     "id": "jobList",
                     "name": "Job List",
                     "type": "tree"
+                },
+                {
+                    "id": "pluginMarketplace",
+                    "name": "Plugin Marketplace",
+                    "type": "webview"
                 }
             ]
         },
@@ -162,6 +181,7 @@
         "ai-agent-response": "^1.0.8",
         "axios": "^1.6.8",
         "handlebars": "^4.7.8",
-        "js-yaml": "^4.1.0"
+        "js-yaml": "^4.1.0",
+        "adm-zip": "^0.5.9"
     }
 }
