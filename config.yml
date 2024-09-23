@@ -26,6 +26,7 @@ project:
       - temp
       - doc
       - README.md
+      - job
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
@@ -35,7 +36,8 @@ input:
 
     ## 任务
 
-    我希望 真实支持批量删除功能。
+    我希望 支持一个新的operation，就是可以添加文件作为初始上下文。
+    这个文件是添加到thread的存储文件夹下，会挂载在第一个message里，message里会带有这个文件的路径作为属性，文件按路径为相对于thread reop的相对路径。
     
   skip_clone_if_folder_exist: true  
 output:     

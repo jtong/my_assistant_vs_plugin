@@ -38,7 +38,7 @@ class ChatMessageHandler {
         }
     }
 
-    addUserMessageToThread(thread, userMessage) {
+    addUserMessageToThread(thread, userMessage, filePath = null) {
         const newMessage = {
             id: 'msg_' + Date.now(),
             sender: 'user',
@@ -47,6 +47,11 @@ class ChatMessageHandler {
             threadId: thread.id,
             formSubmitted: false
         };
+    
+        if (filePath) {
+            newMessage.filePath = filePath;
+        }
+    
         this.threadRepository.addMessage(thread, newMessage);
         return this.threadRepository.getThread(thread.id);
     }

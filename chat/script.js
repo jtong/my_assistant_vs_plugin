@@ -205,6 +205,34 @@ function autoResizeTextarea(textarea) {
     });
 }
 
+let selectedFilePath = null; // 用于暂存选中的文件路径
+
+document.getElementById('add-initial-file-btn').addEventListener('click', addInitialFileHandler);
+
+function addInitialFileHandler() {
+    // 发送消息到后端，让后端处理文件选择
+    window.vscode.postMessage({
+        type: 'selectInitialFile',
+        threadId: window.threadId
+    });
+}
+
+
+function showFileSelectedHint(fileName) {
+    // 在界面上显示已选中的文件名，您可以自定义样式和位置
+    const hintElement = document.getElementById('file-selected-hint');
+    if (!hintElement) {
+        const newHintElement = document.createElement('div');
+        newHintElement.id = 'file-selected-hint';
+        newHintElement.textContent = `已选文件：${fileName}`;
+        // 将提示添加到输入框下方
+        const userInput = document.getElementById('user-input');
+        userInput.parentNode.insertBefore(newHintElement, userInput.nextSibling);
+    } else {
+        hintElement.textContent = `已选文件：${fileName}`;
+    }
+}
+
 window.addEventListener('message', event => {
     const message = event.data;
     switch (message.type) {
@@ -251,7 +279,12 @@ window.addEventListener('message', event => {
                     messageElement.remove();
                 }
             });
-            break;    
+            break;  
+        case 'fileSelected':
+            selectedFilePath = message.filePath; // 暂存文件路径
+            // 在界面上显示已选中的文件名
+            showFileSelectedHint(message.fileName);
+            break;      
         // ...其他 case    
     }
 });
@@ -346,6 +379,22 @@ function createMessageElement(message) {
         textContainer.innerHTML = message.text;
     } else {
         textContainer.innerHTML = renderMarkdown(message.text);
+    }
+
+    if (message.filePath) {
+        const fileLink = document.createElement('a');
+        fileLink.href = '#';
+        fileLink.textContent = '查看附件';
+        fileLink.addEventListener('click', () => {
+            // 发送消息到后端，打开文件
+            window.vscode.postMessage({
+                type: 'openAttachedFile',
+                threadId: window.threadId,
+                filePath: message.filePath
+            });
+        });
+        textContainer.appendChild(fileLink);
+        textContainer.appendChild(document.createElement('br')); // 换行
     }
 
     container.appendChild(textContainer);
@@ -466,7 +515,17 @@ function sendMessageHandler() {
             messageId: messageId,
             message: userInput_value
         };
-        console.log(message);
+
+        if (selectedFilePath) {
+            message.filePath = selectedFilePath;
+            selectedFilePath = null; // 发送后清除暂存的文件路径
+
+            // 移除界面上的提示
+            const hintElement = document.getElementById('file-selected-hint');
+            if (hintElement) {
+                hintElement.remove();
+            }
+        }
         window.vscode.postMessage(message);
 
         userInput.value = '';
@@ -516,3 +575,5 @@ function executeTask(task) {
     };
     window.vscode.postMessage(message);
 }
+
+

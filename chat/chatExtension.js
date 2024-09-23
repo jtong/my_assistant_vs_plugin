@@ -151,8 +151,31 @@ function activateChatExtension(context, agentLoader) {
                             const postedMessages = { type: 'loadThread', thread }
                             panel.webview.postMessage(postedMessages);
                             break;
+                        case 'selectInitialFile':
+                            await handleSelectInitialFile(message.threadId, panel);
+                            break;    
                         case 'sendMessage':
-                            const updatedThread = messageHandler.addUserMessageToThread(thread, message.message)
+                            if (message.filePath) {
+                                // 用户在发送消息时附带了文件路径
+                                const selectedFileUri = message.filePath;
+                                const fileName = path.basename(selectedFileUri);
+                        
+                                // 复制文件到线程的存储文件夹下
+                                const threadFolder = path.join(threadRepository.storagePath, thread.id);
+                                if (!fs.existsSync(threadFolder)) {
+                                    fs.mkdirSync(threadFolder, { recursive: true });
+                                }
+                                const destPath = path.join(threadFolder, fileName);
+                                fs.copyFileSync(selectedFileUri, destPath);
+                        
+                                // 计算相对路径
+                                const relativeFilePath = path.relative(threadRepository.storagePath, destPath);
+                        
+                                // 在消息对象中添加 filePath 属性，使用相对路径
+                                message.filePath = relativeFilePath;
+                            }
+
+                            const updatedThread = messageHandler.addUserMessageToThread(thread, message.message, message.filePath)
                             const userMessage = updatedThread.messages[updatedThread.messages.length - 1];
                             panel.webview.postMessage({
                                 type: 'addUserMessage',
@@ -229,6 +252,17 @@ function activateChatExtension(context, agentLoader) {
                                 messageIds: deletedIds
                             });
                             break;
+                        case 'openAttachedFile':
+                            {
+                                const { filePath } = message;
+                                const absoluteFilePath = path.join(threadRepository.storagePath, filePath);
+                                if (fs.existsSync(absoluteFilePath)) {
+                                    vscode.window.showTextDocument(vscode.Uri.file(absoluteFilePath));
+                                } else {
+                                    vscode.window.showErrorMessage('文件不存在或已被删除。');
+                                }
+                            }
+                            break;    
                     }
                 });
 
@@ -326,7 +360,25 @@ function activateChatExtension(context, agentLoader) {
     };
 }
 
+async function handleSelectInitialFile(threadId, panel) {
+    const options = {
+        canSelectMany: false,
+        openLabel: '选择要添加的初始文件',
+        filters: { '所有文件': ['*'] }
+    };
+    const fileUri = await vscode.window.showOpenDialog(options);
+    if (fileUri && fileUri[0]) {
+        const selectedFileUri = fileUri[0];
+        const fileName = path.basename(selectedFileUri.fsPath);
 
+        // 将文件路径发送回前端，暂存起来
+        panel.webview.postMessage({
+            type: 'fileSelected',
+            filePath: selectedFileUri.fsPath,
+            fileName: fileName
+        });
+    }
+}
 
 function buildMessageTask(message, thread, host_utils) {
     return new Task({
@@ -454,4 +506,5 @@ async function handleThread(messageHandler, updatedThread, task, threadRepositor
         });
     }
 }
+
 module.exports = activateChatExtension;

@@ -306,3 +306,9 @@
 .edit-mode #edit-btn {
     display: none;
 }
+
+#add-initial-file-btn {
+    padding: 5px 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
