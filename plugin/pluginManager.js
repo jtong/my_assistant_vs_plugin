@@ -29,7 +29,7 @@ class PluginManager {
                 if (plugin) {
                     const success = await this.pluginMarketplace.installPlugin(plugin);
                     if (success) {
-                        vscode.window.showInformationMessage(`Plugin ${plugin.name} installed successfully!`);
+                        vscode.window.showInformationMessage(`Plugin ${plugin.name} installed successfully! Please reload the window to activate the plugin.`);
                         this.pluginMarketplaceViewProvider.refresh();
                     } else {
                         vscode.window.showErrorMessage(`Failed to install plugin ${plugin.name}.`);
@@ -37,6 +37,14 @@ class PluginManager {
                 }
             })
         );
+
+        // 监听设置变化
+        vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration('myAssistant.pluginRepositoryUrl')) {
+                this.pluginMarketplace.updatePluginListUrl();
+                this.pluginMarketplaceViewProvider.refresh();
+            }
+        });
     }
 }
 
