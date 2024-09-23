@@ -1,3 +1,4 @@
+// agent/agentMarketplace.js
 const vscode = require('vscode');
 const axios = require('axios');
 const fs = require('fs');
@@ -7,30 +8,30 @@ const { promisify } = require('util');
 const streamPipeline = promisify(pipeline);
 const AdmZip = require('adm-zip');
 
-class PluginMarketplace {
+class AgentMarketplace {
     constructor(context) {
         this.context = context;
-        this.pluginDir = path.join(this.context.extensionPath, 'plugins');
-        this.updatePluginListUrl();
+        this.agentDir = path.join(this.context.extensionPath, 'agents');
+        this.updateAgentListUrl();
     }
 
-    updatePluginListUrl() {
+    updateAgentListUrl() {
         const config = vscode.workspace.getConfiguration('myAssistant');
-        this.pluginListUrl = config.get('pluginRepositoryUrl');
+        this.agentListUrl = config.get('agentRepositoryUrl');
     }
 
-    async getPluginList() {
-        this.updatePluginListUrl(); // 每次获取插件列表时更新 URL
+    async getAgentList() {
+        this.updateAgentListUrl(); // 每次获取代理列表时更新 URL
 
-        if (this.pluginListUrl.startsWith('http')) {
+        if (this.agentListUrl.startsWith('http')) {
             // 如果是 URL，使用 axios 获取
-            const response = await axios.get(this.pluginListUrl);
+            const response = await axios.get(this.agentListUrl);
             return response.data;
         } else {
             // 如果是本地路径，直接读取文件
-            const localPath = path.isAbsolute(this.pluginListUrl) 
-                ? this.pluginListUrl 
-                : path.join(this.context.extensionPath, this.pluginListUrl);
+            const localPath = path.isAbsolute(this.agentListUrl) 
+                ? this.agentListUrl 
+                : path.join(this.context.extensionPath, this.agentListUrl);
             
             return new Promise((resolve, reject) => {
                 fs.readFile(localPath, 'utf8', (err, data) => {
@@ -49,29 +50,29 @@ class PluginMarketplace {
         }
     }
 
-    async installPlugin(plugin) {
+    async installAgent(agent) {
         let zipPath;
-        if (plugin.downloadUrl.startsWith('http')) {
+        if (agent.downloadUrl.startsWith('http')) {
             // 如果是 URL，下载到临时目录
-            zipPath = path.join(this.context.extensionPath, 'temp', `${plugin.name}.zip`);
+            zipPath = path.join(this.context.extensionPath, 'temp', `${agent.name}.zip`);
             const response = await axios({
                 method: 'get',
-                url: plugin.downloadUrl,
+                url: agent.downloadUrl,
                 responseType: 'stream'
             });
             await streamPipeline(response.data, fs.createWriteStream(zipPath));
         } else {
             // 如果是本地路径，直接使用
-            zipPath = path.isAbsolute(plugin.downloadUrl) 
-                ? plugin.downloadUrl 
-                : path.join(path.dirname(this.pluginListUrl), plugin.downloadUrl);
+            zipPath = path.isAbsolute(agent.downloadUrl) 
+                ? agent.downloadUrl 
+                : path.join(path.dirname(this.agentListUrl), agent.downloadUrl);
         }
 
         const zip = new AdmZip(zipPath);
-        zip.extractAllTo(this.pluginDir, true);
+        zip.extractAllTo(this.agentDir, true);
 
         // 如果是临时下载的文件，删除它
-        if (plugin.downloadUrl.startsWith('http')) {
+        if (agent.downloadUrl.startsWith('http')) {
             fs.unlinkSync(zipPath);
         }
 
@@ -79,4 +80,4 @@ class PluginMarketplace {
     }
 }
 
-module.exports = PluginMarketplace;
+module.exports = AgentMarketplace;

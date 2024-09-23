@@ -36,8 +36,7 @@ input:
 
     ## 任务
 
-    我希望 设计一个插件安装功能，可以从远程下载插件并安装到本地。服务端我希望只是一个文件服务器，不需要做任何逻辑处理。比如我可以直接从github下载。
-    界面上我没有思路，有什么建议吗？
+    我希望 重构一下，plugin模块不要叫plugin了，叫agent，plugin marketplace叫agent marketplace
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

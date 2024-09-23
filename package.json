@@ -41,10 +41,10 @@
                         "type": "string"
                     }
                 },
-                "myAssistant.pluginRepositoryUrl": {
+                "myAssistant.agentRepositoryUrl": {
                     "type": "string",
-                    "default": "https://raw.githubusercontent.com/your-repo/plugins/main/plugin-list.json",
-                    "description": "URL or local path to the plugin repository JSON file"
+                    "default": "https://raw.githubusercontent.com/your-repo/agents/main/agent-list.json",
+                    "description": "URL or local path to the agent repository JSON file"
                 }
             }
         },
@@ -85,13 +85,13 @@
                 "title": "Rename Job"
             },
             {
-                "command": "myAssistant.refreshPluginMarketplace",
-                "title": "Refresh Plugin Marketplace",
+                "command": "myAssistant.refreshAgentMarketplace",
+                "title": "Refresh Agent Marketplace",
                 "icon": "$(refresh)"
             },
             {
-                "command": "myAssistant.installPlugin",
-                "title": "Install Plugin"
+                "command": "myAssistant.installAgent",
+                "title": "Install Agent"
             }
         ],
         "viewsContainers": {
@@ -116,8 +116,8 @@
                     "type": "tree"
                 },
                 {
-                    "id": "pluginMarketplace",
-                    "name": "Plugin Marketplace",
+                    "id": "agentMarketplace",
+                    "name": "Agent Marketplace",
                     "type": "webview"
                 }
             ]

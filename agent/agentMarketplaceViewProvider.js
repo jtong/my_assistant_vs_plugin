@@ -1,9 +1,10 @@
+// agent/agentMarketplaceViewProvider.js
 const vscode = require('vscode');
 
-class PluginMarketplaceViewProvider {
-    constructor(pluginMarketplace) {
+class AgentMarketplaceViewProvider {
+    constructor(agentMarketplace) {
         this._view = null;
-        this.pluginMarketplace = pluginMarketplace;
+        this.agentMarketplace = agentMarketplace;
     }
 
     resolveWebviewView(webviewView) {
@@ -14,8 +15,8 @@ class PluginMarketplaceViewProvider {
         // 处理来自 WebView 的消息
         webviewView.webview.onDidReceiveMessage(message => {
             switch (message.command) {
-                case 'installPlugin':
-                    vscode.commands.executeCommand('myAssistant.installPlugin', message.pluginName);
+                case 'installAgent':
+                    vscode.commands.executeCommand('myAssistant.installAgent', message.agentName);
                     break;
             }
         });
@@ -23,19 +24,19 @@ class PluginMarketplaceViewProvider {
 
     async updateContent() {
         if (this._view) {
-            const plugins = await this.pluginMarketplace.getPluginList();
-            this._view.webview.html = this.getHtmlForWebview(plugins);
+            const agents = await this.agentMarketplace.getAgentList();
+            this._view.webview.html = this.getHtmlForWebview(agents);
         }
     }
 
-    getHtmlForWebview(plugins) {
+    getHtmlForWebview(agents) {
         return `
             <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Plugin Marketplace</title>
+                <title>Agent Marketplace</title>
                 <style>
                     body {
                         font-family: Arial, sans-serif;
@@ -46,12 +47,12 @@ class PluginMarketplaceViewProvider {
                         padding: 5px;
                         margin-bottom: 10px;
                     }
-                    .plugin-item {
+                    .agent-item {
                         border: 1px solid #ccc;
                         padding: 10px;
                         margin-bottom: 10px;
                     }
-                    .plugin-item h3 {
+                    .agent-item h3 {
                         margin-top: 0;
                     }
                     .install-btn {
@@ -64,32 +65,32 @@ class PluginMarketplaceViewProvider {
                 </style>
             </head>
             <body>
-                <h1>Plugin Marketplace</h1>
-                <input type="text" id="searchBar" placeholder="Search plugins...">
-                <div id="pluginList">
-                    ${plugins.map(plugin => `
-                        <div class="plugin-item" data-name="${plugin.name.toLowerCase()}">
-                            <h3>${plugin.name} (v${plugin.version})</h3>
-                            <p>${plugin.description}</p>
-                            <button class="install-btn" onclick="installPlugin('${plugin.name}')">Install</button>
+                <h1>Agent Marketplace</h1>
+                <input type="text" id="searchBar" placeholder="Search agents...">
+                <div id="agentList">
+                    ${agents.map(agent => `
+                        <div class="agent-item" data-name="${agent.name.toLowerCase()}">
+                            <h3>${agent.name} (v${agent.version})</h3>
+                            <p>${agent.description}</p>
+                            <button class="install-btn" onclick="installAgent('${agent.name}')">Install</button>
                         </div>
                     `).join('')}
                 </div>
                 <script>
                     const vscode = acquireVsCodeApi();
-                    function installPlugin(pluginName) {
-                        vscode.postMessage({ command: 'installPlugin', pluginName: pluginName });
+                    function installAgent(agentName) {
+                        vscode.postMessage({ command: 'installAgent', agentName: agentName });
                     }
 
                     // 搜索功能
                     const searchBar = document.getElementById('searchBar');
-                    const pluginItems = document.querySelectorAll('.plugin-item');
+                    const agentItems = document.querySelectorAll('.agent-item');
 
                     searchBar.addEventListener('input', function() {
                         const searchTerm = this.value.toLowerCase();
-                        pluginItems.forEach(item => {
-                            const pluginName = item.getAttribute('data-name');
-                            if (pluginName.includes(searchTerm)) {
+                        agentItems.forEach(item => {
+                            const agentName = item.getAttribute('data-name');
+                            if (agentName.includes(searchTerm)) {
                                 item.style.display = 'block';
                             } else {
                                 item.style.display = 'none';
@@ -107,4 +108,4 @@ class PluginMarketplaceViewProvider {
     }
 }
 
-module.exports = PluginMarketplaceViewProvider;
+module.exports = AgentMarketplaceViewProvider;
