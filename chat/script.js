@@ -226,7 +226,7 @@ function showFileSelectedHint(fileName) {
         newHintElement.id = 'file-selected-hint';
         newHintElement.textContent = `已选文件：${fileName}`;
         // 将提示添加到输入框下方
-        const userInput = document.getElementById('user-input');
+        const userInput = document.getElementById('add-initial-file-btn');
         userInput.parentNode.insertBefore(newHintElement, userInput.nextSibling);
     } else {
         hintElement.textContent = `已选文件：${fileName}`;
@@ -295,6 +295,8 @@ function displayOperations(operations) {
     const container = document.getElementById('operations-container');
     container.innerHTML = ''; // 清除现有内容
 
+    let hasFileUploadOperation = false;
+
     operations.forEach(operation => {
         if (operation.type === 'setting' && operation.control === 'select') {
             // 创建下拉框
@@ -342,7 +344,16 @@ function displayOperations(operations) {
             button.addEventListener('click', () => executeTask(operation.task));
             container.appendChild(button);
         }
+
+
+        if (operation.type === 'file_upload') {
+            hasFileUploadOperation = true;
+        }
     });
+
+    // 更新文件上传按钮的可见性
+    const addInitialFileBtn = document.getElementById('add-initial-file-btn');
+    addInitialFileBtn.style.display = hasFileUploadOperation ? 'block' : 'none';
 }
 
 function removeLastBotMessage() {

@@ -36,9 +36,7 @@ input:
 
     ## 任务
 
-    我希望 支持一个新的operation，就是可以添加文件作为初始上下文。
-    这个文件是添加到thread的存储文件夹下，会挂载在第一个message里，message里会带有这个文件的路径作为属性，文件按路径为相对于thread reop的相对路径。
-    
+    我希望 add-initial-file-btn 这个button的显示跟agent的operation有关，如果有一个上传文件的operation，那么这个button就显示，否则就隐藏。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
