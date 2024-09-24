@@ -49,7 +49,7 @@ input:
 
     ## 任务
 
-    我希望 agent marketplace的安装位置是当前目录下的ai_helper/prompt_builder/agent，而不是插件位置。
+    我希望 agent marketplace里的html、css和js独立变成文件，而不是现在这样作为字符串嵌入，这样可以更好的维护和管理。
     ```
   skip_clone_if_folder_exist: true  
 output:     

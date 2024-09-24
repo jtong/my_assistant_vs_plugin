@@ -1,5 +1,6 @@
-// agent/agentMarketplaceViewProvider.js
 const vscode = require('vscode');
+const fs = require('fs');
+const path = require('path');
 
 class AgentMarketplaceViewProvider {
     constructor(agentMarketplace) {
@@ -18,89 +19,40 @@ class AgentMarketplaceViewProvider {
                 case 'installAgent':
                     vscode.commands.executeCommand('myAssistant.installAgent', message.agentName);
                     break;
+                case 'getAgentList':
+                    this.sendAgentListToWebview();
+                    break;
             }
         });
     }
 
     async updateContent() {
         if (this._view) {
-            const agents = await this.agentMarketplace.getAgentList();
-            this._view.webview.html = this.getHtmlForWebview(agents);
+            this._view.webview.html = await this.getHtmlForWebview(this._view.webview);
         }
     }
 
-    getHtmlForWebview(agents) {
-        return `
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Agent Marketplace</title>
-                <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        padding: 10px;
-                    }
-                    #searchBar {
-                        width: 97%;
-                        padding: 5px;
-                        margin-bottom: 10px;
-                    }
-                    .agent-item {
-                        border: 1px solid #ccc;
-                        padding: 10px;
-                        margin-bottom: 10px;
-                    }
-                    .agent-item h3 {
-                        margin-top: 0;
-                    }
-                    .install-btn {
-                        background-color: #007acc;
-                        color: white;
-                        border: none;
-                        padding: 5px 10px;
-                        cursor: pointer;
-                    }
-                </style>
-            </head>
-            <body>
-                <h1>Agent Marketplace</h1>
-                <input type="text" id="searchBar" placeholder="Search agents...">
-                <div id="agentList">
-                    ${agents.map(agent => `
-                        <div class="agent-item" data-name="${agent.name.toLowerCase()}">
-                            <h3>${agent.name} (v${agent.version})</h3>
-                            <p>${agent.description}</p>
-                            <button class="install-btn" onclick="installAgent('${agent.name}')">Install</button>
-                        </div>
-                    `).join('')}
-                </div>
-                <script>
-                    const vscode = acquireVsCodeApi();
-                    function installAgent(agentName) {
-                        vscode.postMessage({ command: 'installAgent', agentName: agentName });
-                    }
+    async getHtmlForWebview(webview) {
+        const htmlPath = path.join(__dirname, 'marketplace.html');
+        const cssPath = path.join(__dirname, 'marketplace.css');
+        const jsPath = path.join(__dirname, 'marketplace.js');
 
-                    // 搜索功能
-                    const searchBar = document.getElementById('searchBar');
-                    const agentItems = document.querySelectorAll('.agent-item');
+        let htmlContent = await fs.promises.readFile(htmlPath, 'utf-8');
+        const cssContent = await fs.promises.readFile(cssPath, 'utf-8');
+        const jsContent = await fs.promises.readFile(jsPath, 'utf-8');
 
-                    searchBar.addEventListener('input', function() {
-                        const searchTerm = this.value.toLowerCase();
-                        agentItems.forEach(item => {
-                            const agentName = item.getAttribute('data-name');
-                            if (agentName.includes(searchTerm)) {
-                                item.style.display = 'block';
-                            } else {
-                                item.style.display = 'none';
-                            }
-                        });
-                    });
-                </script>
-            </body>
-            </html>
-        `;
+        const styleUri = webview.asWebviewUri(vscode.Uri.file(cssPath));
+        const scriptUri = webview.asWebviewUri(vscode.Uri.file(jsPath));
+
+        htmlContent = htmlContent.replace('${styleUri}', styleUri);
+        htmlContent = htmlContent.replace('${scriptUri}', scriptUri);
+
+        return htmlContent;
+    }
+
+    async sendAgentListToWebview() {
+        const agents = await this.agentMarketplace.getAgentList();
+        this._view.webview.postMessage({ type: 'updateAgentList', agents: agents });
     }
 
     refresh() {
