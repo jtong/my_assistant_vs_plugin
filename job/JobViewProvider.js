@@ -12,11 +12,11 @@ class JobViewProvider {
     }
 
     getWebviewContent(webview, threadId) {
-        const htmlPath = path.join(this._extensionUri.fsPath, 'job/job-view.html');
+        const htmlPath = path.join(this._extensionUri.fsPath, 'job/webview/job-view.html');
         let htmlContent = fs.readFileSync(htmlPath, 'utf-8');
 
-        const scriptUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'job/script.js')));
-        const styleUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'job/style.css')));
+        const scriptUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'job/webview/script.js')));
+        const styleUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'job/webview/style.css')));
 
         htmlContent = htmlContent.replace('${scriptUri}', scriptUri);
         htmlContent = htmlContent.replace('${styleUri}', styleUri);

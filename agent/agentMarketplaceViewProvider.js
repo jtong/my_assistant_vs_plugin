@@ -33,9 +33,9 @@ class AgentMarketplaceViewProvider {
     }
 
     async getHtmlForWebview(webview) {
-        const htmlPath = path.join(__dirname, 'marketplace.html');
-        const cssPath = path.join(__dirname, 'marketplace.css');
-        const jsPath = path.join(__dirname, 'marketplace.js');
+        const htmlPath = path.join(__dirname, 'webview', 'marketplace.html');
+        const cssPath = path.join(__dirname, 'webview', 'marketplace.css');
+        const jsPath = path.join(__dirname, 'webview', 'marketplace.js');
 
         let htmlContent = await fs.promises.readFile(htmlPath, 'utf-8');
         const cssContent = await fs.promises.readFile(cssPath, 'utf-8');

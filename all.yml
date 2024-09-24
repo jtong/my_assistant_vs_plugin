@@ -22,7 +22,7 @@ project:
       - "*.yml"
       - "**/*.log"
       - "*.log"
-      - "chat/lib"
+      - "chat/webview/lib"
       - "**/*.vsix"
       - doc
       - README.md

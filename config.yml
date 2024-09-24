@@ -19,7 +19,7 @@ project:
       - media
       - "*/test"
       - "*.log"
-      - "chat/lib"
+      - "chat/webview/lib"
       - "*.yml"
       - "**/*.vsix"
       - dist
@@ -49,7 +49,7 @@ input:
 
     ## 任务
 
-    我希望 agent marketplace里的html、css和js独立变成文件，而不是现在这样作为字符串嵌入，这样可以更好的维护和管理。
+    我希望 所有webview加载的内容都在各自模块下单独归于一个文件夹下，这样可以方便管理，不会混在一起。
     ```
   skip_clone_if_folder_exist: true  
 output:     
