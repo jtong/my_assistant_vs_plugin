@@ -2,7 +2,7 @@
 const vscode = require('vscode');
 const path = require('path');
 const ChatViewProvider = require('./chatViewProvider');
-const ListViewProvider = require('./ListViewProvider');
+const ChatListViewProvider = require('./chatListViewProvider');
 const ChatMessageHandler = require('./chatMessageHandler');
 const ChatThreadRepository = require('./chatThreadRepository');
 const { Task } = require('ai-agent-response');
@@ -18,7 +18,7 @@ function activateChatExtension(context, agentLoader) {
 
     const messageHandler = new ChatMessageHandler(threadRepository, agentLoader);
     const chatProvider = new ChatViewProvider(context.extensionUri, threadRepository);
-    const listProvider = new ListViewProvider(threadRepository);
+    const listProvider = new ChatListViewProvider(threadRepository);
 
 
     context.subscriptions.push(

@@ -1,6 +1,6 @@
 const vscode = require('vscode');
 
-class ListViewProvider {
+class ChatListViewProvider {
     constructor(threadRepository) {
         this._onDidChangeTreeData = new vscode.EventEmitter();
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
@@ -37,4 +37,4 @@ class ListViewProvider {
     }
 }
 
-module.exports = ListViewProvider;
+module.exports = ChatListViewProvider;
