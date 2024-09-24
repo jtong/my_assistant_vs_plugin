@@ -32,11 +32,29 @@ input:
   instruction: |
     ## 任务约束
     
-    - 无
+    - 分清webview的代码和插件的代码和agent app的代码
+    - 我希望每个agent app有一个自己package.json文件，这样可以单独安装依赖
+    - agents.json的参考结构如下：
+    ```
+    {
+      "agents": [
+        {
+            "name": "testAgent",
+            "path": "./example/TestAgent.js",
+            "metadata": {}
+        }
+      ]
+    }
+    - 
 
     ## 任务
 
-    我希望 重构一下，plugin模块不要叫plugin了，叫agent，plugin marketplace叫agent marketplace
+    我希望 agent下载的时候会：
+    - 先解压到一个文件夹，如果该文件夹存在，就删除掉再解压。
+    - 寻找agents.json文件，然后添加自己的配置，如果已经存在自己的配置，就替换，以文件名指向来判定。
+    - 接着执行 npm install 安装依赖。
+    - 接着执行一个安装脚本，如果有的话。 
+    ```
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

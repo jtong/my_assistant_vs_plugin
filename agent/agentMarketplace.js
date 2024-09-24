@@ -7,6 +7,7 @@ const { pipeline } = require('stream');
 const { promisify } = require('util');
 const streamPipeline = promisify(pipeline);
 const AdmZip = require('adm-zip');
+const { exec } = require('child_process');
 
 class AgentMarketplace {
     constructor(context) {
@@ -21,14 +22,12 @@ class AgentMarketplace {
     }
 
     async getAgentList() {
-        this.updateAgentListUrl(); // 每次获取代理列表时更新 URL
+        this.updateAgentListUrl();
 
         if (this.agentListUrl.startsWith('http')) {
-            // 如果是 URL，使用 axios 获取
             const response = await axios.get(this.agentListUrl);
             return response.data;
         } else {
-            // 如果是本地路径，直接读取文件
             const localPath = path.isAbsolute(this.agentListUrl) 
                 ? this.agentListUrl 
                 : path.join(this.context.extensionPath, this.agentListUrl);
@@ -53,7 +52,6 @@ class AgentMarketplace {
     async installAgent(agent) {
         let zipPath;
         if (agent.downloadUrl.startsWith('http')) {
-            // 如果是 URL，下载到临时目录
             zipPath = path.join(this.context.extensionPath, 'temp', `${agent.name}.zip`);
             const response = await axios({
                 method: 'get',
@@ -62,21 +60,103 @@ class AgentMarketplace {
             });
             await streamPipeline(response.data, fs.createWriteStream(zipPath));
         } else {
-            // 如果是本地路径，直接使用
             zipPath = path.isAbsolute(agent.downloadUrl) 
                 ? agent.downloadUrl 
                 : path.join(path.dirname(this.agentListUrl), agent.downloadUrl);
         }
-
+    
+        const extractedFolderName = path.basename(zipPath, '.zip');
+        const agentExtractPath = path.join(this.agentDir, extractedFolderName);
+    
+        // 如果目标文件夹存在，先删除
+        if (fs.existsSync(agentExtractPath)) {
+            fs.rmdirSync(agentExtractPath, { recursive: true });
+        }
+    
+        // 解压agent
         const zip = new AdmZip(zipPath);
-        zip.extractAllTo(this.agentDir, true);
-
+        zip.extractAllTo(agentExtractPath, true);
+    
+        // 读取agent的配置文件
+        const configPath = path.join(agentExtractPath, 'config.json');
+        let agentConfig;
+        try {
+            const configContent = fs.readFileSync(configPath, 'utf8');
+            agentConfig = JSON.parse(configContent);
+        } catch (error) {
+            console.error(`Error reading agent config: ${error}`);
+            throw new Error(`Failed to read agent configuration for ${agent.name}`);
+        }
+    
+        // 添加path属性到agentConfig，使用解压后的文件夹名
+        agentConfig.path = `./${extractedFolderName}/${agentConfig.entry}`;
+        agentConfig.name = agent.name; // 确保名称与市场中的名称一致
+    
+        // 更新agents.json
+        const agentsJsonPath = path.join(this.agentDir, 'agents.json');
+        let agentsConfig = { agents: [] };
+        if (fs.existsSync(agentsJsonPath)) {
+            const agentsJsonContent = fs.readFileSync(agentsJsonPath, 'utf8');
+            agentsConfig = JSON.parse(agentsJsonContent);
+        }
+    
+        const existingIndex = agentsConfig.agents.findIndex(a => a.name === agent.name);
+        if (existingIndex !== -1) {
+            agentsConfig.agents[existingIndex] = agentConfig;
+        } else {
+            agentsConfig.agents.push(agentConfig);
+        }
+    
+        fs.writeFileSync(agentsJsonPath, JSON.stringify(agentsConfig, null, 2));
+    
+        // 安装依赖
+        await this.installDependencies(agentExtractPath);
+    
+        // 执行安装脚本
+        await this.runInstallScript(agentExtractPath);
+    
         // 如果是临时下载的文件，删除它
         if (agent.downloadUrl.startsWith('http')) {
             fs.unlinkSync(zipPath);
         }
-
+    
         return true;
+    }
+
+    async installDependencies(agentPath) {
+        return new Promise((resolve, reject) => {
+            exec('npm install', { cwd: agentPath }, (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`npm install error: ${stderr}`);
+                    reject(error);
+                    return;
+                }
+                console.log(`npm install stdout: ${stdout}`);
+                // console.error(`npm install stderr: ${stderr}`);
+                resolve();
+            });
+        });
+    }
+
+    async runInstallScript(agentPath) {
+        const packageJsonPath = path.join(agentPath, 'package.json');
+        if (fs.existsSync(packageJsonPath)) {
+            const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+            if (packageJson.scripts && packageJson.scripts.install) {
+                return new Promise((resolve, reject) => {
+                    exec('npm run install', { cwd: agentPath }, (error, stdout, stderr) => {
+                        if (error) {
+                            console.error(`Install script error: ${error}`);
+                            reject(error);
+                            return;
+                        }
+                        console.log(`Install script stdout: ${stdout}`);
+                        console.error(`Install script stderr: ${stderr}`);
+                        resolve();
+                    });
+                });
+            }
+        }
     }
 }
 
