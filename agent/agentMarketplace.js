@@ -12,8 +12,18 @@ const { exec } = require('child_process');
 class AgentMarketplace {
     constructor(context) {
         this.context = context;
-        this.agentDir = path.join(this.context.extensionPath, 'agents');
+        this.updateAgentDir();
         this.updateAgentListUrl();
+    }
+
+    updateAgentDir() {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (workspaceFolders && workspaceFolders.length > 0) {
+            const workspaceRoot = workspaceFolders[0].uri.fsPath;
+            this.agentDir = path.join(workspaceRoot, 'ai_helper', 'agent');
+        } else {
+            throw new Error('No workspace folder found');
+        }
     }
 
     updateAgentListUrl() {

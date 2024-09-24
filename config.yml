@@ -49,11 +49,7 @@ input:
 
     ## 任务
 
-    我希望 agent下载的时候会：
-    - 先解压到一个文件夹，如果该文件夹存在，就删除掉再解压。
-    - 寻找agents.json文件，然后添加自己的配置，如果已经存在自己的配置，就替换，以文件名指向来判定。
-    - 接着执行 npm install 安装依赖。
-    - 接着执行一个安装脚本，如果有的话。 
+    我希望 agent marketplace的安装位置是当前目录下的ai_helper/prompt_builder/agent，而不是插件位置。
     ```
   skip_clone_if_folder_exist: true  
 output:     
