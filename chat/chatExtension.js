@@ -5,21 +5,20 @@ const ChatViewProvider = require('./chatViewProvider');
 const ChatListViewProvider = require('./chatListViewProvider');
 const ChatMessageHandler = require('./chatMessageHandler');
 const ChatThreadRepository = require('./chatThreadRepository');
-const { Task } = require('ai-agent-response');
 const SettingsEditorProvider = require('./settingsEditorProvider');
 const fs = require('fs');
 const yaml = require('js-yaml');
 
 // Object to store open chat panels
 const openChatPanels = {};
+
 function activateChatExtension(context, agentLoader) {
     const projectRoot = context.workspaceState.get('projectRoot');
     const threadRepository = new ChatThreadRepository(path.join(projectRoot, 'ai_helper/agent/memory_repo/chat_threads'));
 
     const messageHandler = new ChatMessageHandler(threadRepository, agentLoader);
-    const chatProvider = new ChatViewProvider(context.extensionUri, threadRepository);
+    const chatProvider = new ChatViewProvider(context.extensionUri, threadRepository, messageHandler);
     const listProvider = new ChatListViewProvider(threadRepository);
-
 
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.refreshChatList', async () => {
@@ -34,13 +33,8 @@ function activateChatExtension(context, agentLoader) {
 
             // 刷新聊天列表视图
             listProvider.refresh();
-
             vscode.window.showInformationMessage('Chat list and agents refreshed successfully.');
         })
-    );
-
-    context.subscriptions.push(
-        vscode.window.registerTreeDataProvider('chatList', listProvider),
     );
 
     context.subscriptions.push(
@@ -137,139 +131,10 @@ function activateChatExtension(context, agentLoader) {
                 );
 
                 panel.webview.html = chatProvider.getWebviewContent(panel.webview, threadId);
-                const host_utils = {
-                    convertToWebviewUri(absolutePath) {
-                        const uri = vscode.Uri.file(absolutePath);
-                        return panel.webview.asWebviewUri(uri).toString();
-                    },
-                    threadRepository
-                };
-                panel.webview.onDidReceiveMessage(async message => {
-                    let thread = chatProvider.getThread(message.threadId);
-                    switch (message.type) {
-                        case 'getMessages':
-                            const postedMessages = { type: 'loadThread', thread }
-                            panel.webview.postMessage(postedMessages);
-                            break;
-                        case 'selectInitialFile':
-                            await handleSelectInitialFile(message.threadId, panel);
-                            break;    
-                        case 'sendMessage':
-                            if (message.filePath) {
-                                // 用户在发送消息时附带了文件路径
-                                const selectedFileUri = message.filePath;
-                                const fileName = path.basename(selectedFileUri);
-                        
-                                // 复制文件到线程的存储文件夹下
-                                const threadFolder = path.join(threadRepository.storagePath, thread.id);
-                                if (!fs.existsSync(threadFolder)) {
-                                    fs.mkdirSync(threadFolder, { recursive: true });
-                                }
-                                const destPath = path.join(threadFolder, fileName);
-                                fs.copyFileSync(selectedFileUri, destPath);
-                        
-                                // 计算相对路径
-                                const relativeFilePath = path.relative(threadRepository.storagePath, destPath);
-                        
-                                // 在消息对象中添加 filePath 属性，使用相对路径
-                                message.filePath = relativeFilePath;
-                            }
-
-                            const updatedThread = messageHandler.addUserMessageToThread(thread, message.message, message.filePath)
-                            const userMessage = updatedThread.messages[updatedThread.messages.length - 1];
-                            panel.webview.postMessage({
-                                type: 'addUserMessage',
-                                message: userMessage
-                            });
-                            const messageTask = buildMessageTask(userMessage.text, updatedThread, host_utils);
-                            await handleThread(messageHandler, updatedThread, messageTask, threadRepository, panel);
-                            break;
-                        case 'retryMessage':
-                            const removedMessages = threadRepository.removeMessagesAfterLastUser(message.threadId);
-                            if (removedMessages.length > 0) {
-                                panel.webview.postMessage({
-                                    type: 'removeMessagesAfterLastUser',
-                                    removedCount: removedMessages.length
-                                });
-                            }
-                            thread = chatProvider.getThread(message.threadId); // 重新获取更新后的线程
-                            const lastUserMessage = thread.messages[thread.messages.length - 1].text;
-                            const retryTask = buildMessageTask(lastUserMessage, thread, host_utils);
-                            await handleThread(messageHandler, thread, retryTask, threadRepository, panel);
-                            break;
-                        case 'executeTask':
-                            {
-                                const taskName = message.taskName;
-                                const userMessage = message.message;
-
-                                // 添加用户消息到线程
-                                messageHandler.addUserMessageToThread(thread, userMessage);
-
-                                const agent = agentLoader.loadAgentForThread(thread);
-                                const task = agent.getTask(taskName);
-                                task.host_utils = host_utils;
-                                if (task) {
-                                    await handleThread(messageHandler, thread, task, threadRepository, panel);
-                                }
-                            }
-                            break;
-                        case 'updateMessage':
-                            threadRepository.updateMessage(thread, message.messageId, { text: message.newText });
-                            break;
-                        case 'copyToClipboard':
-                            vscode.env.clipboard.writeText(message.text).then(() => {
-                                vscode.window.showInformationMessage('Text copied to clipboard');
-                            });
-                            break;
-                        case 'updateSetting':
-                            {
-                                const { threadId, settingKey, value } = message;
-                                // 获取当前线程的设置
-                                let currentSettings = threadRepository.getThreadSettings(threadId) || {};
-
-                                // 如果当前设置为空，从 agents.json 复制设置
-                                if (Object.keys(currentSettings).length === 0) {
-                                    const agentConfig = agentLoader.getAgentConfig(thread.agent);
-                                    currentSettings = { ...agentConfig.settings };
-                                }
-
-                                // 更新设置
-                                currentSettings[settingKey] = value;
-                                threadRepository.updateThreadSettings(threadId, currentSettings);
-
-                                // 重新加载代理，以应用新的设置
-                                const updatedThread = threadRepository.loadThread(threadId);
-                                agentLoader.updateAgentForThread(updatedThread);
-
-                                // 可选：向前端发送确认消息
-                                // panel.webview.postMessage({ type: 'settingUpdated', settingKey, value });
-                            }
-                            break;
-                        case 'deleteMessages':
-                            const deletedIds = threadRepository.deleteMessages(message.threadId, message.messageIds);
-                            panel.webview.postMessage({
-                                type: 'messagesDeleted',
-                                messageIds: deletedIds
-                            });
-                            break;
-                        case 'openAttachedFile':
-                            {
-                                const { filePath } = message;
-                                const absoluteFilePath = path.join(threadRepository.storagePath, filePath);
-                                if (fs.existsSync(absoluteFilePath)) {
-                                    vscode.window.showTextDocument(vscode.Uri.file(absoluteFilePath));
-                                } else {
-                                    vscode.window.showErrorMessage('文件不存在或已被删除。');
-                                }
-                            }
-                            break;    
-                    }
-                });
-
-                openChatPanels[chatName] = panel;
+                chatProvider.resolveWebviewPanel(panel);
 
                 // 获取线程和代理信息
-                const thread = chatProvider.getThread(threadId);
+                const thread = threadRepository.getThread(threadId);
                 const agentConfig = agentLoader.getAgentConfig(thread.agent);
 
                 // 获取代理的 operations
@@ -285,6 +150,7 @@ function activateChatExtension(context, agentLoader) {
                     currentSettings: currentSettings
                 });
 
+                openChatPanels[chatName] = panel;
 
                 panel.onDidDispose(() => {
                     delete openChatPanels[chatName];
@@ -358,153 +224,6 @@ function activateChatExtension(context, agentLoader) {
         chatProvider,
         listProvider
     };
-}
-
-async function handleSelectInitialFile(threadId, panel) {
-    const options = {
-        canSelectMany: false,
-        openLabel: '选择要添加的初始文件',
-        filters: { '所有文件': ['*'] }
-    };
-    const fileUri = await vscode.window.showOpenDialog(options);
-    if (fileUri && fileUri[0]) {
-        const selectedFileUri = fileUri[0];
-        const fileName = path.basename(selectedFileUri.fsPath);
-
-        // 将文件路径发送回前端，暂存起来
-        panel.webview.postMessage({
-            type: 'fileSelected',
-            filePath: selectedFileUri.fsPath,
-            fileName: fileName
-        });
-    }
-}
-
-function buildMessageTask(message, thread, host_utils) {
-    return new Task({
-        name: 'Process Message',
-        type: Task.TYPE_MESSAGE,
-        message: message,
-        meta: {
-            threadId: thread.id,
-            timestamp: Date.now()
-        },
-        host_utils: host_utils
-    });
-}
-
-async function addNewBotMessage(response, thread, threadRepository, panel) {
-    if (response.isStream()) {
-        // 处理流式响应
-        const botMessage = {
-            id: 'msg_' + Date.now(),
-            sender: 'bot',
-            text: '',
-            isHtml: response.isHtml(),
-            timestamp: Date.now(),
-            threadId: thread.id,
-            formSubmitted: false
-        };
-        threadRepository.addMessage(thread, botMessage);
-        panel.webview.postMessage({
-            type: 'addBotMessage',
-            message: botMessage
-        });
-
-        try {
-            for await (const chunk of response.getStream()) {
-                botMessage.text += chunk;
-                panel.webview.postMessage({
-                    type: 'updateBotMessage',
-                    messageId: botMessage.id,
-                    text: chunk
-                });
-            }
-        } catch (streamError) {
-            console.error('Error in stream processing:', streamError);
-            botMessage.text += ' An error occurred during processing.';
-            panel.webview.postMessage({
-                type: 'updateBotMessage',
-                messageId: botMessage.id,
-                text: ' An error occurred during processing.'
-            });
-        }
-
-        threadRepository.updateMessage(thread, botMessage.id, {
-            text: botMessage.text,
-            meta: response.meta,
-            availableTasks: response.availableTasks // 添加这一行
-        });
-    } else {
-        // 非流式响应
-        const botMessage = {
-            id: 'msg_' + Date.now(),
-            sender: 'bot',
-            text: response.getFullMessage(),
-            isHtml: response.isHtml(),
-            timestamp: Date.now(),
-            threadId: thread.id,
-            formSubmitted: false,
-            meta: response.meta
-        };
-        if (response.hasAvailableTasks()) {
-            botMessage.availableTasks = response.getAvailableTasks();
-        }
-        threadRepository.addMessage(thread, botMessage);
-        panel.webview.postMessage({
-            type: 'addBotMessage',
-            message: botMessage
-        });
-    }
-}
-
-async function handleThread(messageHandler, updatedThread, task, threadRepository, panel) {
-    const responseHandler = async (response, thread) => {
-        if (response.shouldUpdateLastMessage()) {
-            const lastBotMessageIndex = [...thread.messages].reverse().findIndex(msg => msg.sender === 'bot');
-            if (lastBotMessageIndex !== -1 && response.hasAvailableTasks()) {
-                const index = thread.messages.length - 1 - lastBotMessageIndex;
-                const lastBotMessage = thread.messages[index];
-                // 发送可用任务列表到 webview 以更新任务按钮
-                lastBotMessage.availableTasks = response.getAvailableTasks();
-                threadRepository.updateMessage(thread, lastBotMessage.id, {
-                    text: lastBotMessage.text,
-                    availableTasks: lastBotMessage.availableTasks
-                });
-                panel.webview.postMessage({
-                    type: 'updateBotMessage',
-                    messageId: lastBotMessage.id,
-                    availableTasks: lastBotMessage.availableTasks
-                });
-            }
-        } else {
-            addNewBotMessage(response, thread, threadRepository, panel);
-        }
-    };
-
-    try {
-        await messageHandler.handleTask(updatedThread, task, responseHandler);
-    } catch (error) {
-        console.error('Error in handleThread:', error);
-        const errorMessage = {
-            id: 'error_' + Date.now(),
-            sender: 'bot',
-            text: 'An unexpected error occurred while processing your task.',
-            isHtml: false,
-            timestamp: Date.now(),
-            threadId: updatedThread.id,
-            formSubmitted: false
-        };
-        threadRepository.addMessage(updatedThread, errorMessage);
-        panel.webview.postMessage({
-            type: 'addBotMessage',
-            message: errorMessage
-        });
-    } finally {
-        panel.webview.postMessage({
-            type: 'botResponseComplete'
-        });
-    }
 }
 
 module.exports = activateChatExtension;

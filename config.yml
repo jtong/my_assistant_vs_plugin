@@ -26,30 +26,17 @@ project:
       - temp
       - doc
       - README.md
-      - job
+      # - job
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
     ## 任务约束
     
     - 分清webview的代码和插件的代码和agent app的代码
-    - 我希望每个agent app有一个自己package.json文件，这样可以单独安装依赖
-    - agents.json的参考结构如下：
-    ```
-    {
-      "agents": [
-        {
-            "name": "testAgent",
-            "path": "./example/TestAgent.js",
-            "metadata": {}
-        }
-      ]
-    }
-    - 
 
     ## 任务
 
-    我希望 所有webview加载的内容都在各自模块下单独归于一个文件夹下，这样可以方便管理，不会混在一起。
+    我希望 chatExtension.js中的代码跟 panel.webview.onDidReceiveMessage 有关的挪到 chatViewProvider.js中去，仿照jobViewProvider.js的写法。
     ```
   skip_clone_if_folder_exist: true  
 output:     
