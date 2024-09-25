@@ -36,7 +36,7 @@ input:
 
     ## 任务
 
-    我希望 chatExtension.js中的代码跟 panel.webview.onDidReceiveMessage 有关的挪到 chatViewProvider.js中去，仿照jobViewProvider.js的写法。
+    我希望 agent文件夹改名为agent_marketplace，agent/agentManager.js 的文件名改名为 agentMarketplaceExtension。类名也相应的做修改。
     ```
   skip_clone_if_folder_exist: true  
 output:     

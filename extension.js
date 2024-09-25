@@ -6,7 +6,7 @@ const AgentLoader = require('./agentLoader');
 const AgentViewProvider = require('./agentViewProvider');
 const activateChatExtension = require('./chat/chatExtension');
 const activateJobExtension = require('./job/jobExtension');
-const AgentManager = require('./agent/agentManager');
+const AgentMarketplaceExtension = require('./agent_marketplace/agentMarketplaceExtension');
 
 function activate(context) {
     // 获取当前打开的工作区文件夹路径
@@ -38,8 +38,8 @@ function activate(context) {
     const chatExtension = activateChatExtension(context, agentLoader);
     const jobExtension = activateJobExtension(context, agentLoader);
 
-    const agentManager = new AgentManager(context);
-    agentManager.activate();
+    const agentMarketplaceExtension = new AgentMarketplaceExtension(context);
+    agentMarketplaceExtension.activate();
 }
 
 

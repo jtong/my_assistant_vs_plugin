@@ -22,7 +22,7 @@
         "logger.js",
         "chat/**",
         "job/**",
-        "agent/**",
+        "agent_marketplace/**",
         "media/**",
         "node_modules/**"
     ],

@@ -3,10 +3,11 @@ project:
   filters:
     - filter_in:
       - "ai_helper/agent/*"
-      # - "ai_helper/agent/node_modules/**"
+      - "ai_helper/agent/node_modules/**"
       - "node_modules/**"
       - "chat/**"
-      # - "job/**"
+      - "job/**"
+      - “agent_marketplace/**”
       - "*.*"
     - ignore:
       - node_modules/@(.*)

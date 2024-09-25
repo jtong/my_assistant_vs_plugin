@@ -1,9 +1,8 @@
-// agent/agentManager.js
 const vscode = require('vscode');
 const AgentMarketplace = require('./agentMarketplace');
 const AgentMarketplaceViewProvider = require('./agentMarketplaceViewProvider');
 
-class AgentManager {
+class AgentMarketplaceExtension {
     constructor(context) {
         this.context = context;
         this.agentMarketplace = new AgentMarketplace(context);
@@ -49,4 +48,4 @@ class AgentManager {
     }
 }
 
-module.exports = AgentManager;
+module.exports = AgentMarketplaceExtension;
