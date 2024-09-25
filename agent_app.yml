@@ -16,13 +16,14 @@ project:
     - filter_in:
         - node_modules/**
         # - image_gen_app/**
-        - "*.js"
+        # - "*.js"
+        - "**/*.js"
         - package.json
 input:
   instruction: |
     ## 任务
 
-    我希望 把所有常用的方法封装为一个工具类，方便复用。
+    我希望 查找一下还有哪些没有放入AgentUtility的可复用代码，然后放入AgentUtility中。
 output:     
   prompt:
     path: ai_helper/prompt_builder/output/working
