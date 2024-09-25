@@ -279,12 +279,12 @@ window.addEventListener('message', event => {
                     messageElement.remove();
                 }
             });
-            break;  
+            break;
         case 'fileSelected':
             selectedFilePath = message.filePath; // 暂存文件路径
             // 在界面上显示已选中的文件名
             showFileSelectedHint(message.fileName);
-            break;      
+            break;
         // ...其他 case    
     }
 });
@@ -341,7 +341,7 @@ function displayOperations(operations) {
             // 创建按钮
             const button = document.createElement('button');
             button.textContent = operation.name;
-            button.addEventListener('click', () => executeTask(operation.task));
+            button.addEventListener('click', () => executeTask(operation));
             container.appendChild(button);
         }
 
@@ -569,19 +569,20 @@ function displayTaskButtons(tasks) {
 }
 
 function executeTask(task) {
-    const userMessage = task.message;
-    displayUserMessage({
-        id: 'msg_' + Date.now(),
-        sender: 'user',
-        text: userMessage,
-        timestamp: Date.now(),
-        threadId: window.threadId
-    });
-
+    if (!task.skipUserMessage) {
+        const userMessage = task.message;
+        displayUserMessage({
+            id: 'msg_' + Date.now(),
+            sender: 'user',
+            text: userMessage,
+            timestamp: Date.now(),
+            threadId: window.threadId
+        });
+    }
     const message = {
         type: 'executeTask',
         threadId: window.threadId,
-        taskName: task.name,
+        taskName: task.taskName,
         message: task.message
     };
     window.vscode.postMessage(message);

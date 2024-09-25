@@ -144,10 +144,14 @@ class ChatViewProvider {
     async handleExecuteTask(message, threadId, panel, host_utils) {
         const taskName = message.taskName;
         const userMessage = message.message;
+
         let thread = this.threadRepository.getThread(threadId);
-        this.messageHandler.addUserMessageToThread(thread, userMessage);
         const agent = this.messageHandler.agentLoader.loadAgentForThread(thread);
         const task = agent.getTask(taskName);
+
+        if (!task.skipUserMessage) {
+            this.messageHandler.addUserMessageToThread(thread, userMessage);
+        }
         task.host_utils = host_utils;
         if (task) {
             await this.handleThread(thread, task, panel);
