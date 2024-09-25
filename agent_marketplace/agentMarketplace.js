@@ -1,11 +1,9 @@
 // agent/agentMarketplace.js
 const vscode = require('vscode');
 const axios = require('axios');
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
-const { pipeline } = require('stream');
-const { promisify } = require('util');
-const streamPipeline = promisify(pipeline);
+const { pipeline } = require('stream/promises');
 const AdmZip = require('adm-zip');
 const { exec } = require('child_process');
 
@@ -42,20 +40,12 @@ class AgentMarketplace {
                 ? this.agentListUrl 
                 : path.join(this.context.extensionPath, this.agentListUrl);
             
-            return new Promise((resolve, reject) => {
-                fs.readFile(localPath, 'utf8', (err, data) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        try {
-                            const jsonData = JSON.parse(data);
-                            resolve(jsonData);
-                        } catch (parseError) {
-                            reject(parseError);
-                        }
-                    }
-                });
-            });
+            try {
+                const data = await fs.readFile(localPath, 'utf8');
+                return JSON.parse(data);
+            } catch (error) {
+                throw new Error(`Error reading or parsing agent list: ${error.message}`);
+            }
         }
     }
 
@@ -68,7 +58,7 @@ class AgentMarketplace {
                 url: agent.downloadUrl,
                 responseType: 'stream'
             });
-            await streamPipeline(response.data, fs.createWriteStream(zipPath));
+            await pipeline(response.data, fs.createWriteStream(zipPath));
         } else {
             zipPath = path.isAbsolute(agent.downloadUrl) 
                 ? agent.downloadUrl 
@@ -79,19 +69,33 @@ class AgentMarketplace {
         const agentExtractPath = path.join(this.agentDir, extractedFolderName);
     
         // 如果目标文件夹存在，先删除
-        if (fs.existsSync(agentExtractPath)) {
-            fs.rmdirSync(agentExtractPath, { recursive: true });
+        try {
+            await fs.access(agentExtractPath);
+            await fs.rm(agentExtractPath, { recursive: true, force: true });
+        } catch (error) {
+            if (error.code !== 'ENOENT') {
+                console.error(`Error removing existing agent folder: ${error}`);
+                throw new Error(`Failed to remove existing agent folder for ${agent.name}`);
+            }
         }
     
         // 解压agent
-        const zip = new AdmZip(zipPath);
-        zip.extractAllTo(agentExtractPath, true);
-    
+        await new Promise((resolve, reject) => {
+            const zip = new AdmZip(zipPath);
+            zip.extractAllToAsync(agentExtractPath, true, false, (err) => {
+                if (err) {
+                    console.error(`Error extracting agent: ${err}`);
+                    reject(err);
+                }
+                else resolve();
+            });
+        });
+           
         // 读取agent的配置文件
         const configPath = path.join(agentExtractPath, 'config.json');
         let agentConfig;
         try {
-            const configContent = fs.readFileSync(configPath, 'utf8');
+            const configContent = await fs.readFile(configPath, 'utf8');
             agentConfig = JSON.parse(configContent);
         } catch (error) {
             console.error(`Error reading agent config: ${error}`);
@@ -105,9 +109,13 @@ class AgentMarketplace {
         // 更新agents.json
         const agentsJsonPath = path.join(this.agentDir, 'agents.json');
         let agentsConfig = { agents: [] };
-        if (fs.existsSync(agentsJsonPath)) {
-            const agentsJsonContent = fs.readFileSync(agentsJsonPath, 'utf8');
+        try {
+            const agentsJsonContent = await fs.readFile(agentsJsonPath, 'utf8');
             agentsConfig = JSON.parse(agentsJsonContent);
+        } catch (error) {
+            if (error.code !== 'ENOENT') {
+                console.error(`Error reading agents.json: ${error}`);
+            }
         }
     
         const existingIndex = agentsConfig.agents.findIndex(a => a.name === agent.name);
@@ -117,7 +125,7 @@ class AgentMarketplace {
             agentsConfig.agents.push(agentConfig);
         }
     
-        fs.writeFileSync(agentsJsonPath, JSON.stringify(agentsConfig, null, 2));
+        await fs.writeFile(agentsJsonPath, JSON.stringify(agentsConfig, null, 2));
     
         // 安装依赖
         await this.installDependencies(agentExtractPath);
@@ -127,13 +135,13 @@ class AgentMarketplace {
     
         // 如果是临时下载的文件，删除它
         if (agent.downloadUrl.startsWith('http')) {
-            fs.unlinkSync(zipPath);
+            await fs.unlink(zipPath);
         }
     
         return true;
     }
 
-    async installDependencies(agentPath) {
+    installDependencies(agentPath) {
         return new Promise((resolve, reject) => {
             exec('npm install', { cwd: agentPath }, (error, stdout, stderr) => {
                 if (error) {
@@ -142,7 +150,6 @@ class AgentMarketplace {
                     return;
                 }
                 console.log(`npm install stdout: ${stdout}`);
-                // console.error(`npm install stderr: ${stderr}`);
                 resolve();
             });
         });
@@ -150,8 +157,9 @@ class AgentMarketplace {
 
     async runInstallScript(agentPath) {
         const packageJsonPath = path.join(agentPath, 'package.json');
-        if (fs.existsSync(packageJsonPath)) {
-            const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+        try {
+            const packageJsonContent = await fs.readFile(packageJsonPath, 'utf8');
+            const packageJson = JSON.parse(packageJsonContent);
             if (packageJson.scripts && packageJson.scripts.install) {
                 return new Promise((resolve, reject) => {
                     exec('npm run install', { cwd: agentPath }, (error, stdout, stderr) => {
@@ -165,6 +173,11 @@ class AgentMarketplace {
                         resolve();
                     });
                 });
+            }
+        } catch (error) {
+            if (error.code !== 'ENOENT') {
+                console.error(`Error reading package.json: ${error}`);
+                throw error;
             }
         }
     }
