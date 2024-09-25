@@ -202,7 +202,7 @@ class ChatViewProvider {
         const responseHandler = async (response, updatedThread) => {
             if (response.shouldUpdateLastMessage()) {
                 const lastBotMessageIndex = [...updatedThread.messages].reverse().findIndex(msg => msg.sender === 'bot');
-                if (lastBotMessageIndex !== -1 && response.hasAvailableTasks()) {
+                if (lastBotMessageIndex !== -1 && response.hasAvailableTasks()) { // 目前更新最后一条就这一种情况，给最后一条加按钮
                     const index = updatedThread.messages.length - 1 - lastBotMessageIndex;
                     const lastBotMessage = updatedThread.messages[index];
                     lastBotMessage.availableTasks = response.getAvailableTasks();
@@ -222,7 +222,13 @@ class ChatViewProvider {
         };
 
         try {
-            await this.messageHandler.handleTask(thread, task, responseHandler);
+            if (task.skipBotMessage) {
+                // 如果任务设置了跳过机器人消息，使用一个不添加消息的处理器
+                const silentResponseHandler = async () => { };
+                await this.messageHandler.handleTask(thread, task, silentResponseHandler);
+            } else {
+                await this.messageHandler.handleTask(thread, task, responseHandler);
+            }
         } catch (error) {
             console.error('Error in handleThread:', error);
             const errorMessage = {

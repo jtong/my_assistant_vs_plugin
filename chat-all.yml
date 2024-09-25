@@ -29,9 +29,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 写一个Agent，可以根据thread的message执行一个prompt来生成总结，然后把这个总结存在thread的knowledge space的memory item里，并且更新memeory_summary_index的值为最后一条message的index。
-    这样下次会基于这个index和messages和memory和向后总结新的memory，并apply到旧的memory上。
-    
+    我想知道，目前执行task的时候，是如何决定要不要给thread里添加一个消息的。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
