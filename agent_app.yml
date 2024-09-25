@@ -15,14 +15,14 @@ project:
         - "**/output"
     - filter_in:
         - node_modules/**
-        - image_gen_app/**
+        # - image_gen_app/**
         - "*.js"
         - package.json
 input:
   instruction: |
     ## 任务
 
-    我希望 roleplay_app 可以对记忆进行总结，每进行15轮对话，就对10轮对话进行总结，然后储存到knowledge space中，这样后面对话就可以只发送summary和最新的5轮对话，这样可以减少对话的长度，节省token。
+    我希望 把所有常用的方法封装为一个工具类，方便复用。
 output:     
   prompt:
     path: ai_helper/prompt_builder/output/working

@@ -36,8 +36,7 @@ input:
 
     ## 任务
 
-    我希望 安装agent的时候不要使用fs.rmdirSync(agentExtractPath, { recursive: true });，目前偶有报错：    
-    DeprecationWarning: In future versions of Node.js, fs.rmdir(path, { recursive: true }) will be removed. Use fs.rm(path, { recursive: true }) instead
+    我希望 agent_marketplace能搜索agent name和agent description，然后返回agent的信息。
     ```
   skip_clone_if_folder_exist: true  
 output:     
