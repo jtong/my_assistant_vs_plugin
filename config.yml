@@ -36,7 +36,7 @@ input:
 
     ## 任务
 
-    我希望 agent_marketplace能搜索agent name和agent description，然后返回agent的信息。
+    我希望 thread创建的时候，创建一个knowledge_space的文件夹和对应的json文件，里面存储的是knowledge_space的数据。
     ```
   skip_clone_if_folder_exist: true  
 output:     

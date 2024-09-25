@@ -9,6 +9,10 @@ class ChatThreadRepository {
         this.buildThreadsIfNotExists();
     }
 
+    getThreadFolderPath(threadId) {
+        return path.join(this.storagePath, threadId);
+    }
+    
     buildThreadsIfNotExists() {
         if (!fs.existsSync(this.storagePath)) {
             fs.mkdirSync(this.storagePath, { recursive: true });
@@ -21,7 +25,6 @@ class ChatThreadRepository {
     getThreadFilePath(threadId) {
         return path.join(this.storagePath, threadId, 'thread.json');
     }
-
 
     loadIndex() {
         return JSON.parse(fs.readFileSync(this.indexPath, 'utf8'));
@@ -53,7 +56,8 @@ class ChatThreadRepository {
         this.saveIndex(index);
     }
 
-    createThread(threadId, name, agentName) {
+    // 修改 createThread 方法，同时创建 knowledge space 文件夹
+    createThread(threadId, name, agentName, initialKnowledgeSpace = null) {
         const newThread = {
             id: threadId,
             name: name,
@@ -61,6 +65,27 @@ class ChatThreadRepository {
             messages: []
         };
         this.saveThread(newThread);
+
+        // 创建 knowledge_space 文件夹和 repo.json
+        const knowledgeSpacePath = this.getKnowledgeSpacePath(threadId);
+        const dirPath = path.dirname(knowledgeSpacePath);
+        if (!fs.existsSync(dirPath)) {
+            fs.mkdirSync(dirPath, { recursive: true });
+        }
+
+        // 如果没有提供初始 knowledge space，使用默认内容
+        const defaultKnowledgeSpace = {
+            knowledge_space: {
+                knowledge_items: [
+                    { id: 0, content: "", type: "memory" }, // 用于记录记忆
+                    { id: 1, content: 0, type: "memory_summary_index" } // 用于记录记忆索引，表示当前的memory是基于第几条之前的message总结的。
+                ]
+            }
+        };
+
+        const knowledgeSpace = initialKnowledgeSpace || defaultKnowledgeSpace;
+        this.saveKnowledgeSpace(threadId, knowledgeSpace);
+
         return newThread;
     }
 
@@ -96,13 +121,37 @@ class ChatThreadRepository {
         return this.loadIndex();
     }
 
-    deleteThread(threadId) {
-        const threadFolder = path.join(this.storagePath, threadId);
-        if (fs.existsSync(threadFolder)) {
-            fs.rmdirSync(threadFolder, { recursive: true });
-        }
+    getKnowledgeSpacePath(threadId) {
+        return path.join(this.getThreadFolderPath(threadId), 'knowledge_space', 'repo.json');
+    }
 
-        // Update index
+    // 新增方法：保存 knowledge space 数据
+    saveKnowledgeSpace(threadId, knowledgeSpace) {
+        const filePath = this.getKnowledgeSpacePath(threadId);
+        const dirPath = path.dirname(filePath);
+        if (!fs.existsSync(dirPath)) {
+            fs.mkdirSync(dirPath, { recursive: true });
+        }
+        fs.writeFileSync(filePath, JSON.stringify(knowledgeSpace, null, 2));
+    }
+
+    // 新增方法：获取 knowledge space 数据
+    getKnowledgeSpace(threadId) {
+        const filePath = this.getKnowledgeSpacePath(threadId);
+        if (fs.existsSync(filePath)) {
+            return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        }
+        return null;
+    }
+
+    deleteThread(threadId) {
+        // not deleting thread folder for now
+        // const threadFolder = path.join(this.storagePath, threadId);
+        // if (fs.existsSync(threadFolder)) {
+        //     fs.rmdirSync(threadFolder, { recursive: true });
+        // }
+
+        // only update index for now
         const index = this.loadIndex();
         delete index[threadId];
         this.saveIndex(index);
@@ -160,7 +209,7 @@ class ChatThreadRepository {
             this.saveThread(thread);
         }
     }
-    
+
     deleteMessages(threadId, messageIds) {
         const thread = this.getThread(threadId);
         if (thread) {

@@ -3,6 +3,7 @@ project:
   filters:
     - filter_in:
       - "ai_helper/agent/*"
+      - "ai_helper/agent/roleplay_app/*"
       - "ai_helper/agent/node_modules/**"
       - "node_modules/**"
       - "chat/**"
@@ -30,7 +31,7 @@ project:
 input:
   git_clone_to_path: ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 在现有的chat-view.html的script中，我希望消除一些重复代码，请帮我找找。 
+    我希望 thread的存储文件夹里也有一个knowledge_space的文件夹，里面存储的是knowledge_space的数据。
     
   skip_clone_if_folder_exist: true  
 output:     
