@@ -20,7 +20,7 @@ function activate(context) {
     const config = vscode.workspace.getConfiguration('myAssistant');
     const settings = config.get('apiKey');
 
-    const agentLoader = new AgentLoader(path.join(projectRoot, 'ai_helper', 'agent', 'agents.json'), settings);
+    const agentLoader = new AgentLoader(path.join(projectRoot, '.ai_helper', 'agent', 'agents.json'), settings);
     // 监听设置变化
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration('myAssistant.apiKey')) {

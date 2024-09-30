@@ -14,7 +14,7 @@ const openChatPanels = {};
 
 function activateChatExtension(context, agentLoader) {
     const projectRoot = context.workspaceState.get('projectRoot');
-    const threadRepository = new ChatThreadRepository(path.join(projectRoot, 'ai_helper/agent/memory_repo/chat_threads'));
+    const threadRepository = new ChatThreadRepository(path.join(projectRoot, '.ai_helper/agent/memory_repo/chat_threads'));
 
     const messageHandler = new ChatMessageHandler(threadRepository, agentLoader);
     const chatProvider = new ChatViewProvider(context.extensionUri, threadRepository, messageHandler);

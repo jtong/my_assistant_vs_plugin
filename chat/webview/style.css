@@ -1,21 +1,40 @@
 
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+}
 
 #chat-container {
     width: 99%;
     float: right;
     margin: auto;
-    height: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
     border: 1px solid #ddd;
     padding: 10px;
 }
 
+#chat-scroll-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
 #chat-box {
-    height: 80%;
     overflow-y: auto;
     margin-bottom: 20px;
     border: 1px solid #ccc;
     padding: 10px;
 }
+
+#chat-input-container {
+    padding: 10px;
+    border-top: 1px solid #ccc;
+}
+
 
 #user-input {
     width: 67%;
@@ -274,10 +293,16 @@
 
 /* 添加新的样式 */
 #chat-header {
+    position: sticky;
+    top: 0;
+    padding: 10px;
+    z-index: 1000;
     display: flex;
+    border-bottom: 1px solid #ccc;
     justify-content: flex-end;
     margin-bottom: 10px;
 }
+
 #chat-header button {
     margin-left: 10px;
     padding: 5px 10px;

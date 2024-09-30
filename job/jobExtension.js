@@ -11,7 +11,7 @@ const openJobPanels = {};
 
 function activateJobExtension(context, agentLoader) {
     const projectRoot = context.workspaceState.get('projectRoot');
-    const threadRepository = new JobThreadRepository(path.join(projectRoot, 'ai_helper/agent/memory_repo/job_threads'));
+    const threadRepository = new JobThreadRepository(path.join(projectRoot, '.ai_helper/agent/memory_repo/job_threads'));
 
     const jobTaskHandler = new JobTaskHandler(threadRepository, agentLoader);
     const jobListProvider = new JobListViewProvider(threadRepository);

@@ -3,10 +3,12 @@ project:
   filters:
     - filter_in:
       - ".ai_helper/agent/*"
-      - ".ai_helper/agent/roleplay_app/*"
+      - ".ai_helper/agent/testLocal_OpneAIInterface_Agent.js"
       - ".ai_helper/agent/node_modules/**"
       - "node_modules/**"
       - "chat/**"
+      # - "job/**"
+      # - "agent_marketplace/**"
       - "*.*"
     - ignore:
       - node_modules/@(.*)
@@ -27,9 +29,10 @@ project:
       - doc
       - README.md
 input:
-  git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
-    我想知道，目前执行task的时候，是如何决定要不要给thread里添加一个消息的。
+    我希望 testLocal_OpneAIInterface_Agent.js 里添加一个将 thread messages 转化为OpenAI messages的函数
+    还可以往messages对象里添加个新的message。
+    
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

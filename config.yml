@@ -7,7 +7,7 @@ project:
       - .mvn
       - node_modules/@(.*)
       - node_modules/!(ai-agent-response)
-      - ai_helper
+      - .ai_helper
       - "**/spike"
       - ".git"
       - "*/node_modules"
@@ -28,7 +28,7 @@ project:
       - README.md
       # - job
 input:
-  git_clone_to_path: ai_helper/prompt_builder/git_repo
+  git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
     ## 任务约束
     
@@ -36,10 +36,10 @@ input:
 
     ## 任务
 
-    我希望 thread创建的时候，创建一个knowledge_space的文件夹和对应的json文件，里面存储的是knowledge_space的数据。
+    我希望 滚屏的时候，编辑按钮一行作为一个完整的bar，悬浮在上面，不会滚动。只有聊天记录的气泡可以滚动。
     ```
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
-    path: ai_helper/prompt_builder/output/working
-    backup_path: ai_helper/prompt_builder/output/backup
+    path: .ai_helper/prompt_builder/output/working
+    backup_path: .ai_helper/prompt_builder/output/backup

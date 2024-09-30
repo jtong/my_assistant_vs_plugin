@@ -145,6 +145,8 @@ function addEditButtons() {
                 buttonContainer.appendChild(cancelBtn);
 
                 editWrapper.appendChild(buttonContainer);
+                
+                
 
                 container.insertBefore(editWrapper, textContainer);
                 textContainer.style.display = 'none';
@@ -199,10 +201,6 @@ function autoResizeTextarea(textarea) {
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';
 
-    textarea.addEventListener('input', function () {
-        this.style.height = 'auto';
-        this.style.height = this.scrollHeight + 'px';
-    });
 }
 
 let selectedFilePath = null; // 用于暂存选中的文件路径

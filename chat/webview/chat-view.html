@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>对话UI</title>
@@ -8,21 +9,26 @@
     <script src="${markdownItUri}"></script>
     <script src="${highlightJsUri}"></script>
 </head>
-<body>
-    <div id="chat-header">
-        <button id="edit-btn">编辑</button>
-        <button id="delete-selected-btn">删除选中</button>
-        <button id="done-btn" style="display:none;">退出</button>
-    </div>
-    <div id="chat-container">
 
-        <div id="chat-box"></div>
-        <!-- <div id="task-buttons"></div> -->
-        <button id="add-initial-file-btn" style="display:none;">添加初始文件</button>
-        <div id="operations-container"></div>
-        <button id="retry-btn">重试</button>
-        <input type="text" id="user-input" placeholder="输入信息...">
-        <button id="send-btn">发送</button>
+<body>
+
+    <div id="chat-container">
+        <div id="chat-header">
+            <button id="edit-btn">编辑</button>
+            <button id="delete-selected-btn">删除选中</button>
+            <button id="done-btn" style="display:none;">退出</button>
+        </div>
+        <div id="chat-scroll-container">
+            <div id="chat-box"></div>
+        </div>
+        <div id="chat-input-container">
+            <!-- <div id="task-buttons"></div> -->
+            <button id="add-initial-file-btn" style="display:none;">添加初始文件</button>
+            <div id="operations-container"></div>
+            <button id="retry-btn">重试</button>
+            <input type="text" id="user-input" placeholder="输入信息...">
+            <button id="send-btn">发送</button>
+        </div>
     </div>
     <script>
         window.vscode = acquireVsCodeApi();
@@ -30,4 +36,5 @@
     </script>
     <script src="${scriptUri}"></script>
 </body>
+
 </html>

@@ -3,6 +3,7 @@
 node_modules
 *.vsix
 dist
-ai_helper
+.ai_helper
 spike
 debug.log
+temp
