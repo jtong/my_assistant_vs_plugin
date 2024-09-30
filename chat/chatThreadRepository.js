@@ -3,10 +3,11 @@ const fs = require('fs');
 const path = require('path');
 
 class ChatThreadRepository {
-    constructor(storagePath) {
+    constructor(storagePath,agentLoader) {
         this.storagePath = storagePath;
         this.indexPath = path.join(this.storagePath, 'threads.json');
         this.buildThreadsIfNotExists();
+        this.agentLoader= agentLoader;
     }
 
     getThreadFolderPath(threadId) {
@@ -58,12 +59,26 @@ class ChatThreadRepository {
 
     // 修改 createThread 方法，同时创建 knowledge space 文件夹
     createThread(threadId, name, agentName, initialKnowledgeSpace = null) {
+        const agentConfig = this.agentLoader.getAgentConfig(agentName);
+        const messages = [];
+        
+        if (agentConfig && agentConfig.metadata && agentConfig.metadata.bootMessage) {
+            messages.push({
+                id: 'boot_message',
+                sender: 'bot',
+                text: agentConfig.metadata.bootMessage.text,
+                timestamp: Date.now(),
+                isVirtual: true
+            });
+        }
+
         const newThread = {
             id: threadId,
             name: name,
             agent: agentName,
-            messages: []
+            messages: messages
         };
+
         this.saveThread(newThread);
 
         // 创建 knowledge_space 文件夹和 repo.json
