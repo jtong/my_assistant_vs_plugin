@@ -67,6 +67,7 @@ class ChatThreadRepository {
                 id: 'boot_message',
                 sender: 'bot',
                 text: agentConfig.metadata.bootMessage.text,
+                availableTasks: agentConfig.metadata.bootMessage.availableTasks,
                 timestamp: Date.now(),
                 isVirtual: true
             });

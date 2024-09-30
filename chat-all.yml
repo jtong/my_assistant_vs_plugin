@@ -16,10 +16,12 @@ project:
       - config.yml
       - "**/*.png"
       - "**/.DS_Store"
+      - ".ai_helper/**/debug-agent.log"
       - ".ai_helper/**/.DS_Store"
       - ".ai_helper/**/LICENSE.txt"
       - "**/LICENSE.txt"
       - ".ai_helper/**/package-lock.json"
+      - "**/package-lock.json"
       - "*/test"
       - "*.yml"
       - "**/*.log"
@@ -31,9 +33,7 @@ project:
 input:
   git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望给agent配置一个bootMessage，是作为agent启动的第一条消息。
-    我们会把这个信息存在thread的messages里的第一条消息作为bootMessage。
-    但是这个message会标记为virtual，也就是说它虽然显示，但是不会被发送。转化为history的时候会被过滤掉。
+    我希望TestBootMessageWithTaskButtonsAgent.js创建的时候会给BootMessage添加task Button，按钮是在agents.json里配置的
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
