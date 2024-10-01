@@ -19,6 +19,17 @@ function activateChatExtension(context, agentLoader) {
     const messageHandler = new ChatMessageHandler(threadRepository, agentLoader);
     const chatProvider = new ChatViewProvider(context.extensionUri, threadRepository, messageHandler);
     const listProvider = new ChatListViewProvider(threadRepository);
+    
+    context.subscriptions.push(
+        vscode.commands.registerCommand('myAssistant.revealInExplorer', (item) => {
+            const threadFolder = path.join(threadRepository.storagePath, item.id);
+            if (fs.existsSync(threadFolder)) {
+                vscode.commands.executeCommand('revealInExplorer', vscode.Uri.file(threadFolder));
+            } else {
+                vscode.window.showErrorMessage(`Folder for chat "${item.name}" not found.`);
+            }
+        })
+    );
 
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.refreshChatList', async () => {

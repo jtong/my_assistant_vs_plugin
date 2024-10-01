@@ -3,8 +3,8 @@
 - [x] 刷新chatlist
 - [x] 重新加载agents
 - [x] 打印日志
-- [ ] 把输出路径从ai_helper改成.ai_helper
-- [ ] 
+- [x] 把输出路径从ai_helper改成.ai_helper
+- [ ] filter 掉virtualMessage不生成chat`
 
 ## bug
 

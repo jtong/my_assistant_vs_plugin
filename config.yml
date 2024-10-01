@@ -36,7 +36,7 @@ input:
 
     ## 任务
 
-    我希望 滚屏的时候，编辑按钮一行作为一个完整的bar，悬浮在上面，不会滚动。只有聊天记录的气泡可以滚动。
+    我希望 chat list 上的item，点击后可以右键菜单里加入一项：Reveal in Explorer。点击后，打开当前thread的文件夹。
     ```
   skip_clone_if_folder_exist: true  
 output:     

@@ -73,6 +73,10 @@
                 "title": "Edit Settings"
             },
             {
+                "command": "myAssistant.revealInExplorer",
+                "title": "Reveal in Explorer"
+            },
+            {
                 "command": "myAssistant.newJob",
                 "title": "New Job",
                 "icon": "$(plus)"
@@ -148,12 +152,12 @@
                     "group": "1_modification"
                 },
                 {
-                    "command": "myAssistant.renameJob",
-                    "when": "view == jobList && viewItem == job",
+                    "command": "myAssistant.openSettingsEditor",
+                    "when": "view == chatList && viewItem == chat",
                     "group": "1_modification"
                 },
                 {
-                    "command": "myAssistant.openSettingsEditor",
+                    "command": "myAssistant.revealInExplorer",
                     "when": "view == chatList && viewItem == chat",
                     "group": "1_modification"
                 },
@@ -161,6 +165,11 @@
                     "command": "myAssistant.deleteChat",
                     "when": "view == chatList && viewItem == chat",
                     "group": "2_modification"
+                },
+                {
+                    "command": "myAssistant.renameJob",
+                    "when": "view == jobList && viewItem == job",
+                    "group": "1_modification"
                 },
                 {
                     "command": "myAssistant.deleteJob",
