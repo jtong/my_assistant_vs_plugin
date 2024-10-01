@@ -36,7 +36,8 @@ input:
 
     ## 任务
 
-    我希望 chat list 上的item，点击后可以右键菜单里加入一项：Reveal in Explorer。点击后，打开当前thread的文件夹。
+    我希望 可以写一个js版的gradio库来拼界面，后台是vscode而不是服务端。
+    在这个基础上写一个新的模块，读取agent的代码得到界面和响应界面的后台。
     ```
   skip_clone_if_folder_exist: true  
 output:     

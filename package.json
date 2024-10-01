@@ -97,6 +97,10 @@
             {
                 "command": "myAssistant.installAgent",
                 "title": "Install Agent"
+            },
+            {
+                "command": "myAssistant.newAppThread",
+                "title": "Show VSGradio Interface"
             }
         ],
         "viewsContainers": {

@@ -94,7 +94,7 @@ class ChatThreadRepository {
             knowledge_space: {
                 knowledge_items: [
                     { id: 0, content: "", type: "memory" }, // 用于记录记忆
-                    { id: 1, content: 0, type: "memory_summary_index" } // 用于记录记忆索引，表示当前的memory是基于第几条之前的message总结的。
+                    { id: 1, content: -1, type: "memory_summary_index" } // 用于记录记忆索引，表示当前的memory是基于第几条之前的message总结的。
                 ]
             }
         };

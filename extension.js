@@ -7,7 +7,7 @@ const AgentViewProvider = require('./agentViewProvider');
 const activateChatExtension = require('./chat/chatExtension');
 const activateJobExtension = require('./job/jobExtension');
 const AgentMarketplaceExtension = require('./agent_marketplace/agentMarketplaceExtension');
-
+const activeAppExtention =  require("./app/appExtension");
 function activate(context) {
     // 获取当前打开的工作区文件夹路径
     const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -40,6 +40,8 @@ function activate(context) {
 
     const agentMarketplaceExtension = new AgentMarketplaceExtension(context);
     agentMarketplaceExtension.activate();
+
+    activeAppExtention(context);
 }
 
 
