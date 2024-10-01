@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,22 +10,28 @@
             font-family: Arial, sans-serif;
             padding: 20px;
         }
+
         #vsgradio-container {
             max-width: 600px;
             margin: 0 auto;
         }
-        input, button {
+
+        input,
+        button {
             margin: 10px 0;
             padding: 5px;
         }
+
         button {
             cursor: pointer;
         }
+
         #outputs {
             margin-top: 20px;
         }
     </style>
 </head>
+
 <body>
     <div id="vsgradio-container"></div>
 
@@ -42,6 +49,9 @@
                 case 'updateOutput':
                     updateOutput(message.value);
                     break;
+                case 'eventResult':
+                    handleEventResult(message);
+                    break;
             }
         });
 
@@ -50,7 +60,7 @@
             container.innerHTML = `
                 <h2>${config.title}</h2>
                 <div id="inputs">
-                    ${config.inputs.map(renderInput).join('')}
+                    ${config.inputs.map((input, index) => renderInput(input, index)).join('')}
                 </div>
                 <div id="outputs">
                     ${config.outputs.map(renderOutput).join('')}
@@ -59,11 +69,11 @@
             setupEventListeners(config);
         }
 
-        function renderInput(input) {
+        function renderInput(input, index) {
             if (input.type === 'text') {
-                return `<input type="text" id="${input.label}" placeholder="${input.label}" value="${input.default || ''}">`;
+                return `<input type="text" id="input_${index}" placeholder="${input.label}" value="${input.default || ''}" data-input-index="${index}">`;
             } else if (input.type === 'button') {
-                return `<button id="${input.label}">${input.label}</button>`;
+                return `<button id="input_${index}" data-input-index="${index}">${input.label}</button>`;
             }
             // 可以在这里添加更多输入类型
         }
@@ -73,18 +83,44 @@
         }
 
         function setupEventListeners(config) {
+            config.inputs.forEach((input, index) => {
+                const element = document.getElementById(`input_${index}`);
+                if (element) {
+                    input.events.forEach(eventName => {
+                        element.addEventListener(eventName, (event) => {
+                            const allInputs = getAllInputValues();
+                            vscode.postMessage({
+                                type: 'event',
+                                inputIndex: index,
+                                eventName: eventName,
+                                args: [event.target.value], // 当前触发事件的元素值
+                                allInputs: allInputs // 所有输入元素的 ID 和值
+                            });
+                        });
+                    });
+                }
+            });
+
             const button = document.querySelector('button');
             if (button) {
                 button.addEventListener('click', () => {
-                    const inputs = config.inputs
-                        .filter(input => input.type === 'text')
-                        .map(input => document.getElementById(input.label).value);
+                    const allInputs = getAllInputValues();
                     vscode.postMessage({
                         type: 'execute',
-                        inputs: inputs
+                        inputs: Object.values(allInputs)
                     });
                 });
             }
+        }
+        
+        function getAllInputValues() {
+            const inputs = {};
+            document.querySelectorAll('[id^="input_"]').forEach(element => {
+                const id = element.id;
+                const value = element.value || element.textContent;
+                inputs[id] = value;
+            });
+            return inputs;
         }
 
         function updateOutput(value) {
@@ -94,8 +130,14 @@
             }
         }
 
+        function handleEventResult(message) {
+            console.log(`Event result for input ${message.inputIndex}, event ${message.eventName}:`, message.result);
+            // 可以在这里添加更多的处理逻辑
+        }
+
         // 初始化时请求接口配置
         vscode.postMessage({ type: 'getInterface' });
     </script>
 </body>
+
 </html>

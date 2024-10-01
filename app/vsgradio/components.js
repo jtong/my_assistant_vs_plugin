@@ -2,14 +2,16 @@ function TextInput(options = {}) {
     return {
         type: 'text',
         label: options.label || 'Text Input',
-        default: options.default || ''
+        default: options.default || '',
+        events: options.events || {}
     };
 }
 
 function Button(options = {}) {
     return {
         type: 'button',
-        label: options.label || 'Button'
+        label: options.label || 'Button',
+        events: options.events || {}
     };
 }
 

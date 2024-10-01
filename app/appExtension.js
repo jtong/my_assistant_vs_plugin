@@ -5,6 +5,7 @@ const vsgradio = require('./vsgradio');
 
 function activate(context) {
     let interfaceInstance = createInterface();
+    interfaceInstance.registerEventHandlers();
 
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.newAppThread', () => {
@@ -38,6 +39,22 @@ function activate(context) {
                                 value: result
                             });
                             return;
+                        case 'event':
+                            const eventResult = interfaceInstance.handleEvent(
+                                message.inputIndex,
+                                message.eventName,
+                                message.args[0],
+                                message.allInputs
+                            );
+                            if (eventResult !== undefined) {
+                                panel.webview.postMessage({
+                                    type: 'eventResult',
+                                    inputIndex: message.inputIndex,
+                                    eventName: message.eventName,
+                                    result: eventResult
+                                });
+                            }
+                            return;
                     }
                 },
                 undefined,
@@ -51,11 +68,31 @@ function createInterface() {
     return vsgradio.Interface({
         fn: (text) => text,
         inputs: [
-            vsgradio.TextInput({ label: "Enter text" }),
-            vsgradio.Button({ label: "Echo" })
+            vsgradio.TextInput({
+                label: "Enter text",
+                events: {
+                    click: (value, allInputs) => {
+                        console.log("Text input clicked, current value:", value);
+                        console.log("All input values:", allInputs);
+                    },
+                    input: (value, allInputs) => {
+                        console.log("Input changed to:", value);
+                        console.log("All input values:", allInputs);
+                    }
+                }
+            }),
+            vsgradio.Button({
+                label: "Echo",
+                events: {
+                    click: (value, allInputs) => {
+                        console.log("Button clicked");
+                        console.log("All input values:", allInputs);
+                    }
+                }
+            })
         ],
         outputs: [
-            vsgradio.TextOutput({ label: "Result" })
+            vsgradio.TextOutput({label: "Result"})
         ],
         title: "Echo Text Example"
     });
