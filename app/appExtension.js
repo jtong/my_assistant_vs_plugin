@@ -68,43 +68,47 @@ function activate(context) {
 }
 
 function createInstance() {
-    const instance =  vsgradio.Interface({
-        fn: (text) => {
-            return `You entered: ${text}`;
-        },
-        inputs: [
-            vsgradio.TextInput({
-                id: 'textInput',
-                label: "Enter text",
-                role: 'input',
-                events: {
-                    input: (value, allInputs) => {
-                        console.log("Text input changed, current value:", value);
+    const instance = vsgradio.Blocks([
+        vsgradio.Column({
+            children: [
+                vsgradio.TextInput({
+                    id: 'textInput',
+                    label: "Enter text",
+                    role: 'input',
+                    events: {
+                        input: (value, allInputs) => {
+                            console.log("Text input changed, current value:", value);
+                        }
                     }
-                }
-            }),
-            vsgradio.Button({
-                id: 'echoButton',
-                label: "Echo",
-                role: 'action',
-                events: {
-                    click: (value, allInputs) => {
-                        console.log("Button clicked");
-                        console.log("All input values:", allInputs);
-                        const result = instance.fn(allInputs.textInput);
-                        return {
-                            type: 'updateOutput',
-                            value: result
-                        };
+                }),
+                vsgradio.Button({
+                    id: 'echoButton',
+                    label: "Echo",
+                    role: 'action',
+                    events: {
+                        click: (value, allInputs) => {
+                            console.log("Button clicked");
+                            console.log("All input values:", allInputs);
+                            const result = `You entered: ${allInputs.textInput}`;
+                            return {
+                                type: 'updateOutput',
+                                value: result
+                            };
+                        }
                     }
-                }
-            })
-        ],
-        outputs: [
-            vsgradio.TextOutput({ id: 'result', label: "Result" })
-        ],
-        title: "Echo Text Example"
-    });
+                }),
+                vsgradio.TextInput({
+                    id: 'result',
+                    label: "Result",
+                    role: 'output',
+                    readOnly: true
+                })
+            ]
+        })
+    ]);
+
+    instance.title = "Echo Text Example";
+
     return instance;
 }
 

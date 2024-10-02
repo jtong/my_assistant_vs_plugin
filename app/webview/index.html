@@ -26,10 +26,6 @@
             cursor: pointer;
         }
 
-        #outputs {
-            margin-top: 20px;
-        }
-
         .row {
             display: flex;
             flex-direction: row;
@@ -40,6 +36,10 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
+        }
+
+        input[readonly] {
+            background-color: #f0f0f0;
         }
     </style>
 </head>
@@ -58,7 +58,6 @@
                 <div id="inputs">
                     ${renderBlocks(config.blocks)}
                 </div>
-                ${config.outputs ? `<div id="outputs">${config.outputs.map(renderOutput).join('')}</div>` : ''}
             `;
             setupEventListeners(config);
         }
@@ -73,15 +72,10 @@
             } else if (block.type === 'column') {
                 return `<div class="column" id="${block.id}" data-role="${block.role}">${block.children.map((child, childIndex) => renderBlock(child, `${index}_${childIndex}`)).join('')}</div>`;
             } else if (block.type === 'text') {
-                return `<input type="text" id="${block.id}" data-role="${block.role}" placeholder="${block.label}" value="${block.default || ''}">`;
+                return `<input type="text" id="${block.id}" data-role="${block.role}" placeholder="${block.label}" value="${block.default || ''}" ${block.role === 'output' ? 'readonly' : ''}>`;
             } else if (block.type === 'button') {
                 return `<button id="${block.id}" data-role="${block.role}">${block.label}</button>`;
             }
-            // 可以在这里添加更多块类型
-        }
-
-        function renderOutput(output) {
-            return `<div id="${output.label}">${output.label}: <span></span></div>`;
         }
 
         function setupEventListeners(config) {
@@ -124,9 +118,9 @@
         }
 
         function updateOutput(value) {
-            const outputElement = document.querySelector('#outputs span');
+            const outputElement = document.querySelector('#result');
             if (outputElement) {
-                outputElement.textContent = value;
+                outputElement.value = value;
             }
         }
 
@@ -162,4 +156,4 @@
     </script>
 </body>
 
-</html>
+</html> 

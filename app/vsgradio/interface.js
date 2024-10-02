@@ -2,11 +2,13 @@ class Blocks {
     constructor(blocks) {
         this.blocks = blocks;
         this.events = {};
+        this.title = "";
     }
 
     getConfig() {
         return {
-            blocks: this.blocks.map(this.mapBlockConfig.bind(this))
+            blocks: this.blocks.map(this.mapBlockConfig.bind(this)),
+            title: this.title
         };
     }
 
@@ -28,7 +30,6 @@ class Blocks {
         this.traverseBlocks(this.blocks, (block) => {
             if (block.events) {
                 Object.entries(block.events).forEach(([eventName, handler]) => {
-                    // 使用 block.id 而不是 path
                     const key = `${block.id}_${eventName}`;
                     this.events[key] = handler;
                 });
@@ -54,41 +55,8 @@ class Blocks {
     }
 }
 
-class Interface extends Blocks {
-    constructor(config) {
-        // 将 inputs 转换为 blocks 结构
-        const blocks = [
-            {
-                type: 'column',
-                children: config.inputs
-            }
-        ];
-        super(blocks);
-        
-        this.fn = config.fn;
-        this.outputs = config.outputs;
-        this.title = config.title;
-    }
-
-    getConfig() {
-        const blocksConfig = super.getConfig();
-        return {
-            ...blocksConfig,
-            outputs: this.outputs,
-            title: this.title
-        };
-    }
-
-    execute(inputs) {
-        return this.fn(...inputs);
-    }
-}
-
 module.exports = {
     Blocks: function(blocks) {
         return new Blocks(blocks);
-    },
-    Interface: function(config) {
-        return new Interface(config);
     }
 };

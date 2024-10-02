@@ -24,16 +24,16 @@ project:
       - doc
       - README.md
 input:
-  git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
     ## 任务约束
     
     - 分清webview的代码和插件的代码和agent app的代码
+    - 打调试型日志的不要删掉。
+    - 文本也不要删掉。
 
     ## 任务
 
-    我希望发送eventResult被webview内接收到，但是没有。
-  skip_clone_if_folder_exist: true  
+    我希望 不要用interface实现现在的效果。我们暂时不使用interface这个实例，专注于用Blocks来实现同样的布局和效果。
 output:     
   prompt:
     path: .ai_helper/prompt_builder/output/working
