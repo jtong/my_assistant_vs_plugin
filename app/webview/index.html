@@ -16,7 +16,8 @@
             margin: 0 auto;
         }
 
-        input, button {
+        input,
+        button {
             margin: 10px 0;
             padding: 5px;
         }
@@ -50,22 +51,6 @@
         const vscode = acquireVsCodeApi();
         let interfaceConfig = null;
 
-        window.addEventListener('message', event => {
-            const message = event.data;
-            switch (message.type) {
-                case 'setInterface':
-                    interfaceConfig = message.value;
-                    renderInterface(interfaceConfig);
-                    break;
-                case 'updateOutput':
-                    updateOutput(message.value);
-                    break;
-                case 'eventResult':
-                    handleEventResult(message);
-                    break;
-            }
-        });
-
         function renderInterface(config) {
             const container = document.getElementById('vsgradio-container');
             container.innerHTML = `
@@ -84,13 +69,13 @@
 
         function renderBlock(block, index) {
             if (block.type === 'row') {
-                return `<div class="row" id="block_${index}">${block.children.map((child, childIndex) => renderBlock(child, `${index}_${childIndex}`)).join('')}</div>`;
+                return `<div class="row" id="${block.id}" data-role="${block.role}">${block.children.map((child, childIndex) => renderBlock(child, `${index}_${childIndex}`)).join('')}</div>`;
             } else if (block.type === 'column') {
-                return `<div class="column" id="block_${index}">${block.children.map((child, childIndex) => renderBlock(child, `${index}_${childIndex}`)).join('')}</div>`;
+                return `<div class="column" id="${block.id}" data-role="${block.role}">${block.children.map((child, childIndex) => renderBlock(child, `${index}_${childIndex}`)).join('')}</div>`;
             } else if (block.type === 'text') {
-                return `<input type="text" id="block_${index}" placeholder="${block.label}" value="${block.default || ''}" data-block-index="${index}">`;
+                return `<input type="text" id="${block.id}" data-role="${block.role}" placeholder="${block.label}" value="${block.default || ''}">`;
             } else if (block.type === 'button') {
-                return `<button id="block_${index}" data-block-index="${index}">${block.label}</button>`;
+                return `<button id="${block.id}" data-role="${block.role}">${block.label}</button>`;
             }
             // 可以在这里添加更多块类型
         }
@@ -105,15 +90,16 @@
 
         function setupBlockEventListeners(blocks, parentPath = '') {
             blocks.forEach((block, index) => {
-                const currentPath = parentPath ? `${parentPath}_${index}` : `block_${index}`;
-                const element = document.getElementById(currentPath);
+                const currentPath = parentPath ? `${parentPath}_${index}` : `${block.id}`;
+                const element = document.getElementById(block.id);
                 if (element && block.events) {
-                    block.events.forEach(eventName => {
+                    block.events.forEach((eventName) => {
                         element.addEventListener(eventName, (event) => {
                             const allInputs = getAllInputValues();
+                            console.log(`Event triggered: ${eventName} on ${block.id}`);
                             vscode.postMessage({
                                 type: 'event',
-                                blockPath: currentPath,
+                                componentId: block.id,
                                 eventName: eventName,
                                 args: [event.target.value],
                                 allInputs: allInputs
@@ -145,9 +131,31 @@
         }
 
         function handleEventResult(message) {
-            console.log(`Event result for block ${message.blockPath}, event ${message.eventName}:`, message.result);
+            console.log(`Event result for component ${message.componentId}, event ${message.eventName}:`, message.result);
+
+            if (message.result && message.result.type === 'updateOutput') {
+                updateOutput(message.result.value);
+            }
+
             // 可以在这里添加更多的处理逻辑
         }
+
+        window.addEventListener('message', event => {
+            const message = event.data;
+            console.log('Received message from extension:', message);  // 添加这行
+            switch (message.type) {
+                case 'setInterface':
+                    interfaceConfig = message.value;
+                    renderInterface(interfaceConfig);
+                    break;
+                case 'updateOutput':
+                    updateOutput(message.value);
+                    break;
+                case 'eventResult':
+                    handleEventResult(message);
+                    break;
+            }
+        });
 
         // 初始化时请求接口配置
         vscode.postMessage({ type: 'getInterface' });

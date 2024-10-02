@@ -25,10 +25,11 @@ class Blocks {
     }
 
     registerEventHandlers() {
-        this.traverseBlocks(this.blocks, (block, path) => {
+        this.traverseBlocks(this.blocks, (block) => {
             if (block.events) {
                 Object.entries(block.events).forEach(([eventName, handler]) => {
-                    const key = `${path}_${eventName}`;
+                    // 使用 block.id 而不是 path
+                    const key = `${block.id}_${eventName}`;
                     this.events[key] = handler;
                 });
             }
@@ -45,8 +46,8 @@ class Blocks {
         });
     }
 
-    handleEvent(blockPath, eventName, value, allInputs) {
-        const key = `${blockPath}_${eventName}`;
+    handleEvent(componentId, eventName, value, allInputs) {
+        const key = `${componentId}_${eventName}`;
         if (this.events[key]) {
             return this.events[key](value, allInputs);
         }

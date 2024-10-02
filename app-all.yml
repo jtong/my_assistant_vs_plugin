@@ -32,7 +32,7 @@ input:
 
     ## 任务
 
-    Blocks的事件没有被触发，我希望被触发。
+    我希望发送eventResult被webview内接收到，但是没有。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

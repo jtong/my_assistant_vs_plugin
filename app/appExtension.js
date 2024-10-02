@@ -3,8 +3,10 @@ const path = require('path');
 const fs = require('fs');
 const vsgradio = require('./vsgradio');
 
+let instance = null;
+
 function activate(context) {
-    let instance = createInstance();
+    instance = createInstance();
     instance.registerEventHandlers();
 
     context.subscriptions.push(
@@ -32,26 +34,25 @@ function activate(context) {
                                 value: instance.getConfig()
                             });
                             return;
-                        case 'execute':
-                            if (instance.execute) {
-                                const result = instance.execute(message.inputs);
-                                panel.webview.postMessage({
-                                    type: 'updateOutput',
-                                    value: result
-                                });
-                            }
-                            return;
                         case 'event':
+                            console.log('Received event from webview:', message);
                             const eventResult = instance.handleEvent(
-                                message.blockPath,
+                                message.componentId,
                                 message.eventName,
                                 message.args[0],
                                 message.allInputs
                             );
+                            console.log('Sending eventResult to webview:', {
+                                type: 'eventResult',
+                                componentId: message.componentId,
+                                eventName: message.eventName,
+                                result: eventResult
+                            });
                             if (eventResult !== undefined) {
                                 panel.webview.postMessage({
                                     type: 'eventResult',
-                                    blockPath: message.blockPath,
+                                    value: "",
+                                    componentId: message.componentId,
                                     eventName: message.eventName,
                                     result: eventResult
                                 });
@@ -67,13 +68,15 @@ function activate(context) {
 }
 
 function createInstance() {
-    // 你可以在这里选择创建 Interface 或 Blocks
-    // 这里我们创建一个 Interface 实例作为示例
-    return vsgradio.Interface({
-        fn: (text) => text,
+    const instance =  vsgradio.Interface({
+        fn: (text) => {
+            return `You entered: ${text}`;
+        },
         inputs: [
             vsgradio.TextInput({
+                id: 'textInput',
                 label: "Enter text",
+                role: 'input',
                 events: {
                     input: (value, allInputs) => {
                         console.log("Text input changed, current value:", value);
@@ -81,20 +84,28 @@ function createInstance() {
                 }
             }),
             vsgradio.Button({
+                id: 'echoButton',
                 label: "Echo",
+                role: 'action',
                 events: {
                     click: (value, allInputs) => {
                         console.log("Button clicked");
                         console.log("All input values:", allInputs);
+                        const result = instance.fn(allInputs.textInput);
+                        return {
+                            type: 'updateOutput',
+                            value: result
+                        };
                     }
                 }
             })
         ],
         outputs: [
-            vsgradio.TextOutput({label: "Result"})
+            vsgradio.TextOutput({ id: 'result', label: "Result" })
         ],
         title: "Echo Text Example"
     });
+    return instance;
 }
 
 module.exports = activate;
