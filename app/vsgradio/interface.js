@@ -1,47 +1,93 @@
-class Interface {
-    constructor(config) {
-        this.fn = config.fn;
-        this.inputs = config.inputs;
-        this.outputs = config.outputs;
-        this.title = config.title;
-        this.events = {}; // 存储所有事件处理器
+class Blocks {
+    constructor(blocks) {
+        this.blocks = blocks;
+        this.events = {};
     }
 
     getConfig() {
         return {
-            title: this.title,
-            inputs: this.inputs.map(input => ({
-                ...input,
-                events: Object.keys(input.events || {})
-            })),
-            outputs: this.outputs
+            blocks: this.blocks.map(this.mapBlockConfig.bind(this))
         };
     }
 
-    execute(inputs) {
-        return this.fn(...inputs);
+    mapBlockConfig(block) {
+        if (block.type === 'row' || block.type === 'column') {
+            return {
+                ...block,
+                children: block.children.map(this.mapBlockConfig.bind(this))
+            };
+        } else {
+            return {
+                ...block,
+                events: block.events ? Object.keys(block.events) : []
+            };
+        }
     }
 
-    // 新方法：注册事件处理器
     registerEventHandlers() {
-        this.inputs.forEach((input, index) => {
-            if (input.events) {
-                Object.entries(input.events).forEach(([eventName, handler]) => {
-                    const key = `input_${index}_${eventName}`;
+        this.traverseBlocks(this.blocks, (block, path) => {
+            if (block.events) {
+                Object.entries(block.events).forEach(([eventName, handler]) => {
+                    const key = `${path}_${eventName}`;
                     this.events[key] = handler;
                 });
             }
         });
     }
 
-    handleEvent(inputIndex, eventName, value, allInputs) {
-        const key = `input_${inputIndex}_${eventName}`;
+    traverseBlocks(blocks, callback, parentPath = '') {
+        blocks.forEach((block, index) => {
+            const currentPath = parentPath ? `${parentPath}_${index}` : `block_${index}`;
+            callback(block, currentPath);
+            if (block.children) {
+                this.traverseBlocks(block.children, callback, currentPath);
+            }
+        });
+    }
+
+    handleEvent(blockPath, eventName, value, allInputs) {
+        const key = `${blockPath}_${eventName}`;
         if (this.events[key]) {
             return this.events[key](value, allInputs);
         }
     }
 }
 
-module.exports = function(config) {
-    return new Interface(config);
+class Interface extends Blocks {
+    constructor(config) {
+        // 将 inputs 转换为 blocks 结构
+        const blocks = [
+            {
+                type: 'column',
+                children: config.inputs
+            }
+        ];
+        super(blocks);
+        
+        this.fn = config.fn;
+        this.outputs = config.outputs;
+        this.title = config.title;
+    }
+
+    getConfig() {
+        const blocksConfig = super.getConfig();
+        return {
+            ...blocksConfig,
+            outputs: this.outputs,
+            title: this.title
+        };
+    }
+
+    execute(inputs) {
+        return this.fn(...inputs);
+    }
+}
+
+module.exports = {
+    Blocks: function(blocks) {
+        return new Blocks(blocks);
+    },
+    Interface: function(config) {
+        return new Interface(config);
+    }
 };

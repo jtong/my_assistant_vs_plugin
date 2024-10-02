@@ -4,8 +4,8 @@ const fs = require('fs');
 const vsgradio = require('./vsgradio');
 
 function activate(context) {
-    let interfaceInstance = createInterface();
-    interfaceInstance.registerEventHandlers();
+    let instance = createInstance();
+    instance.registerEventHandlers();
 
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.newAppThread', () => {
@@ -29,19 +29,21 @@ function activate(context) {
                         case 'getInterface':
                             panel.webview.postMessage({
                                 type: 'setInterface',
-                                value: interfaceInstance.getConfig()
+                                value: instance.getConfig()
                             });
                             return;
                         case 'execute':
-                            const result = interfaceInstance.execute(message.inputs);
-                            panel.webview.postMessage({
-                                type: 'updateOutput',
-                                value: result
-                            });
+                            if (instance.execute) {
+                                const result = instance.execute(message.inputs);
+                                panel.webview.postMessage({
+                                    type: 'updateOutput',
+                                    value: result
+                                });
+                            }
                             return;
                         case 'event':
-                            const eventResult = interfaceInstance.handleEvent(
-                                message.inputIndex,
+                            const eventResult = instance.handleEvent(
+                                message.blockPath,
                                 message.eventName,
                                 message.args[0],
                                 message.allInputs
@@ -49,7 +51,7 @@ function activate(context) {
                             if (eventResult !== undefined) {
                                 panel.webview.postMessage({
                                     type: 'eventResult',
-                                    inputIndex: message.inputIndex,
+                                    blockPath: message.blockPath,
                                     eventName: message.eventName,
                                     result: eventResult
                                 });
@@ -64,20 +66,17 @@ function activate(context) {
     );
 }
 
-function createInterface() {
+function createInstance() {
+    // 你可以在这里选择创建 Interface 或 Blocks
+    // 这里我们创建一个 Interface 实例作为示例
     return vsgradio.Interface({
         fn: (text) => text,
         inputs: [
             vsgradio.TextInput({
                 label: "Enter text",
                 events: {
-                    click: (value, allInputs) => {
-                        console.log("Text input clicked, current value:", value);
-                        console.log("All input values:", allInputs);
-                    },
                     input: (value, allInputs) => {
-                        console.log("Input changed to:", value);
-                        console.log("All input values:", allInputs);
+                        console.log("Text input changed, current value:", value);
                     }
                 }
             }),

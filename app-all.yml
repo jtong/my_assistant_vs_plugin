@@ -1,0 +1,40 @@
+project:
+  base_path: ./
+  filters:
+    - filter_in:
+      - app/**
+    - ignore:
+      - .ai_helper
+      - "**/spike"
+      - ".git"
+      - "*/node_modules"
+      - config.yml
+      - "**/*.png"
+      - "**/.DS_Store"
+      - "**/LICENSE.txt"
+      - "**/package-lock.json"
+      - media
+      - "*/test"
+      - "*.log"
+      - "chat/webview/lib"
+      - "*.yml"
+      - "**/*.vsix"
+      - dist
+      - temp
+      - doc
+      - README.md
+input:
+  git_clone_to_path: .ai_helper/prompt_builder/git_repo
+  instruction: |
+    ## 任务约束
+    
+    - 分清webview的代码和插件的代码和agent app的代码
+
+    ## 任务
+
+    Blocks的事件没有被触发，我希望被触发。
+  skip_clone_if_folder_exist: true  
+output:     
+  prompt:
+    path: .ai_helper/prompt_builder/output/working
+    backup_path: .ai_helper/prompt_builder/output/backup

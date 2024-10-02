@@ -16,8 +16,7 @@
             margin: 0 auto;
         }
 
-        input,
-        button {
+        input, button {
             margin: 10px 0;
             padding: 5px;
         }
@@ -28,6 +27,18 @@
 
         #outputs {
             margin-top: 20px;
+        }
+
+        .row {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
     </style>
 </head>
@@ -58,24 +69,30 @@
         function renderInterface(config) {
             const container = document.getElementById('vsgradio-container');
             container.innerHTML = `
-                <h2>${config.title}</h2>
+                <h2>${config.title || ''}</h2>
                 <div id="inputs">
-                    ${config.inputs.map((input, index) => renderInput(input, index)).join('')}
+                    ${renderBlocks(config.blocks)}
                 </div>
-                <div id="outputs">
-                    ${config.outputs.map(renderOutput).join('')}
-                </div>
+                ${config.outputs ? `<div id="outputs">${config.outputs.map(renderOutput).join('')}</div>` : ''}
             `;
             setupEventListeners(config);
         }
 
-        function renderInput(input, index) {
-            if (input.type === 'text') {
-                return `<input type="text" id="input_${index}" placeholder="${input.label}" value="${input.default || ''}" data-input-index="${index}">`;
-            } else if (input.type === 'button') {
-                return `<button id="input_${index}" data-input-index="${index}">${input.label}</button>`;
+        function renderBlocks(blocks) {
+            return blocks.map((block, index) => renderBlock(block, index)).join('');
+        }
+
+        function renderBlock(block, index) {
+            if (block.type === 'row') {
+                return `<div class="row" id="block_${index}">${block.children.map((child, childIndex) => renderBlock(child, `${index}_${childIndex}`)).join('')}</div>`;
+            } else if (block.type === 'column') {
+                return `<div class="column" id="block_${index}">${block.children.map((child, childIndex) => renderBlock(child, `${index}_${childIndex}`)).join('')}</div>`;
+            } else if (block.type === 'text') {
+                return `<input type="text" id="block_${index}" placeholder="${block.label}" value="${block.default || ''}" data-block-index="${index}">`;
+            } else if (block.type === 'button') {
+                return `<button id="block_${index}" data-block-index="${index}">${block.label}</button>`;
             }
-            // 可以在这里添加更多输入类型
+            // 可以在这里添加更多块类型
         }
 
         function renderOutput(output) {
@@ -83,39 +100,36 @@
         }
 
         function setupEventListeners(config) {
-            config.inputs.forEach((input, index) => {
-                const element = document.getElementById(`input_${index}`);
-                if (element) {
-                    input.events.forEach(eventName => {
+            setupBlockEventListeners(config.blocks);
+        }
+
+        function setupBlockEventListeners(blocks, parentPath = '') {
+            blocks.forEach((block, index) => {
+                const currentPath = parentPath ? `${parentPath}_${index}` : `block_${index}`;
+                const element = document.getElementById(currentPath);
+                if (element && block.events) {
+                    block.events.forEach(eventName => {
                         element.addEventListener(eventName, (event) => {
                             const allInputs = getAllInputValues();
                             vscode.postMessage({
                                 type: 'event',
-                                inputIndex: index,
+                                blockPath: currentPath,
                                 eventName: eventName,
-                                args: [event.target.value], // 当前触发事件的元素值
-                                allInputs: allInputs // 所有输入元素的 ID 和值
+                                args: [event.target.value],
+                                allInputs: allInputs
                             });
                         });
                     });
                 }
+                if (block.children) {
+                    setupBlockEventListeners(block.children, currentPath);
+                }
             });
-
-            const button = document.querySelector('button');
-            if (button) {
-                button.addEventListener('click', () => {
-                    const allInputs = getAllInputValues();
-                    vscode.postMessage({
-                        type: 'execute',
-                        inputs: Object.values(allInputs)
-                    });
-                });
-            }
         }
-        
+
         function getAllInputValues() {
             const inputs = {};
-            document.querySelectorAll('[id^="input_"]').forEach(element => {
+            document.querySelectorAll('input, button').forEach(element => {
                 const id = element.id;
                 const value = element.value || element.textContent;
                 inputs[id] = value;
@@ -131,7 +145,7 @@
         }
 
         function handleEventResult(message) {
-            console.log(`Event result for input ${message.inputIndex}, event ${message.eventName}:`, message.result);
+            console.log(`Event result for block ${message.blockPath}, event ${message.eventName}:`, message.result);
             // 可以在这里添加更多的处理逻辑
         }
 

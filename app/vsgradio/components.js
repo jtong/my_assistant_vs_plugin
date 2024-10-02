@@ -22,8 +22,25 @@ function TextOutput(options = {}) {
     };
 }
 
+function Row(options = {}) {
+    return {
+        type: 'row',
+        children: options.children || []
+    };
+}
+
+function Column(options = {}) {
+    return {
+        type: 'column',
+        children: options.children || []
+    };
+}
+
+
 module.exports = {
     TextInput,
     Button,
-    TextOutput
+    TextOutput,
+    Row,
+    Column
 };
