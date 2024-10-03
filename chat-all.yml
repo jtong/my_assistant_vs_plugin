@@ -3,8 +3,8 @@ project:
   filters:
     - filter_in:
       - ".ai_helper/agent/*"
-      - ".ai_helper/agent/roleplay_app/*"
-      - ".ai_helper/agent/node_modules/**"
+      # - ".ai_helper/agent/roleplay_app/*"
+      # - ".ai_helper/agent/node_modules/**"
       - "node_modules/**"
       - "chat/**"
       - "*.*"
@@ -33,7 +33,7 @@ project:
 input:
   git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望TestBootMessageWithTaskButtonsAgent.js创建的时候会给BootMessage添加task Button，按钮是在agents.json里配置的
+    我希望把所有的chat的agent包括配置文件都移到agent/chat文件夹下，这样可以跟app、job隔离
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
