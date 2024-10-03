@@ -10,8 +10,11 @@ const AgentLoader = require('../agentLoader');
 // 添加这个对象来跟踪打开的 job 面板
 const openJobPanels = {};
 
-function activateJobExtension(context, settings) {
+function activateJobExtension(context) {
     const projectRoot = context.workspaceState.get('projectRoot');
+    const config = vscode.workspace.getConfiguration('myAssistant');
+    const settings = config.get('apiKey');
+
     const agentLoader = new AgentLoader(path.join(projectRoot, '.ai_helper', 'agent', 'job', 'agents.json'), settings);
     // 监听设置变化
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {

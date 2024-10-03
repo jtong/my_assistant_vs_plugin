@@ -1,6 +1,7 @@
 // chat/chatExtension.js
 const vscode = require('vscode');
 const path = require('path');
+const AgentLoader = require('../agentLoader');
 const ChatViewProvider = require('./chatViewProvider');
 const ChatListViewProvider = require('./chatListViewProvider');
 const ChatMessageHandler = require('./chatMessageHandler');
@@ -12,8 +13,19 @@ const yaml = require('js-yaml');
 // Object to store open chat panels
 const openChatPanels = {};
 
-function activateChatExtension(context, agentLoader) {
+function activateChatExtension(context) {
     const projectRoot = context.workspaceState.get('projectRoot');
+    const config = vscode.workspace.getConfiguration('myAssistant');
+    const settings = config.get('apiKey');
+
+    const agentLoader = new AgentLoader(path.join(projectRoot, '.ai_helper', 'agent', 'agents.json'), settings);
+    // 监听设置变化
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
+        if (e.affectsConfiguration('myAssistant.apiKey')) {
+            const updatedSettings = vscode.workspace.getConfiguration('myAssistant').get('apiKey');
+            agentLoader.updateSettings(updatedSettings);
+        }
+    }));
     const threadRepository = new ChatThreadRepository(path.join(projectRoot, '.ai_helper/agent/memory_repo/chat_threads'), agentLoader);
 
     const messageHandler = new ChatMessageHandler(threadRepository, agentLoader);
