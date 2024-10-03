@@ -36,7 +36,7 @@ function activate(context) {
     // );
 
     const chatExtension = activateChatExtension(context, agentLoader);
-    const jobExtension = activateJobExtension(context, agentLoader);
+    const jobExtension = activateJobExtension(context, settings);
 
     const agentMarketplaceExtension = new AgentMarketplaceExtension(context);
     agentMarketplaceExtension.activate();

@@ -12,21 +12,23 @@ project:
       - node_modules/!(ai-agent-response)
       - ".ai_helper/agent/node_modules/!(ai-agent-response|@jtong)"
       - ".ai_helper/agent/node_modules/!(@jtong/knowledge_query)"
+      - ".ai_helper/agent/node_modules/@jtong/knowledge_query/test"
       - config.yml
       - "**/*.png"
       - "**/.DS_Store"
       - "**/LICENSE.txt"
       - "**/package-lock.json"
+      - ".ai_helper/**/package-lock.json"
       - "*/test"
       - "*.yml"
-      - "**/*.log"
+      - ".ai_helper/**/*.log"
       - "*.log"
       - "**/*.vsix"
       - doc
 input:
   git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 job-view.html 点开的时候，要加载所有的job。
+    我希望 job 在ai_helper专门开辟一个job文件夹来存储所有的job的agent，job的配置文件也不要放在agents.json里，而在job文件夹下搞一个专门的配置文件job_agents.json
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

@@ -5,12 +5,21 @@ const JobListViewProvider = require('./JobListViewProvider');
 const JobViewProvider = require('./JobViewProvider');
 const JobTaskHandler = require('./jobTaskHandler');
 const JobThreadRepository = require('./jobThreadRepository');
+const AgentLoader = require('../agentLoader');
 
 // 添加这个对象来跟踪打开的 job 面板
 const openJobPanels = {};
 
-function activateJobExtension(context, agentLoader) {
+function activateJobExtension(context, settings) {
     const projectRoot = context.workspaceState.get('projectRoot');
+    const agentLoader = new AgentLoader(path.join(projectRoot, '.ai_helper', 'agent', 'job', 'agents.json'), settings);
+    // 监听设置变化
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
+        if (e.affectsConfiguration('myAssistant.apiKey')) {
+            const updatedSettings = vscode.workspace.getConfiguration('myAssistant').get('apiKey');
+            agentLoader.updateSettings(updatedSettings);
+        }
+    }));
     const threadRepository = new JobThreadRepository(path.join(projectRoot, '.ai_helper/agent/memory_repo/job_threads'));
 
     const jobTaskHandler = new JobTaskHandler(threadRepository, agentLoader);
@@ -36,8 +45,8 @@ function activateJobExtension(context, agentLoader) {
                 prompt: "Enter a name for the new job"
             });
             if (jobName) {
-                const agents = agentLoader.getAgentsList();
-                const jobAgents = agents.filter(agent => agent.metadata && agent.metadata.type === 'job');
+                const jobAgents = agentLoader.getAgentsList();
+                // const jobAgents = agents.filter(agent => agent.metadata && agent.metadata.type === 'job');
                 if (jobAgents.length === 0) {
                     vscode.window.showErrorMessage('No job type agents available.');
                     return;
