@@ -3,8 +3,11 @@ project:
   filters:
     - filter_in:
       - app/**
+      - ".ai_helper/agent/testAgent.js"
+      - ".ai_helper/agent/*.json"
+      - chat/**
+      - "node_modules/vsgradio/**"
     - ignore:
-      - .ai_helper
       - "**/spike"
       - ".git"
       - "*/node_modules"
@@ -13,6 +16,7 @@ project:
       - "**/.DS_Store"
       - "**/LICENSE.txt"
       - "**/package-lock.json"
+      - ".ai_helper/**/package-lock.json"
       - media
       - "*/test"
       - "*.log"
@@ -33,7 +37,8 @@ input:
 
     ## 任务
 
-    我希望 block.events 应该不是一个数组，我不知道目前的代码为什么要搞成数组，理论上搞成json更适合。
+    我希望 我们的instance不是在运行前就准备好的，有可能是在运行时才生成的，这个instance应该是require了一个js文件然后调对应的接口函数来生成的，而且我们同时可能有多个，那么我们就要考虑怎么让正确的事件派发给了正确的instance。而且为了更新考虑，这个instance还要提供一种更新机制。（注意:instance是插件端的，webview里不需要考虑这个问题）
+    instance的具体文件是存在.ai_helper/agent/app下的。
 output:     
   prompt:
     path: .ai_helper/prompt_builder/output/working
