@@ -2,23 +2,25 @@ project:
   base_path: ./
   filters:
     - filter_in:
-      - ".ai_helper/agent/*"
-      - ".ai_helper/agent/roleplay_app/*"
-      - ".ai_helper/agent/node_modules/**"
+      - ".ai_helper/agent/chat/*"
+      # - ".ai_helper/agent/chat/roleplay_app/*"
+      # - ".ai_helper/agent/chat/node_modules/**"
       - "node_modules/**"
       - "chat/**"
-      - "job/**"
-      - "agent_marketplace/**"
       - "*.*"
     - ignore:
       - node_modules/@(.*)
       - node_modules/!(ai-agent-response)
-      - ".ai_helper/agent/node_modules/!(ai-agent-response|@jtong)"
-      - ".ai_helper/agent/node_modules/!(@jtong/knowledge_query)"
+      - ".ai_helper/agent/chat/node_modules/!(ai-agent-response|@jtong)"
+      - ".ai_helper/agent/chat/node_modules/!(@jtong/knowledge_query)"
       - config.yml
       - "**/*.png"
       - "**/.DS_Store"
+      - ".ai_helper/**/debug-agent.log"
+      - ".ai_helper/**/.DS_Store"
+      - ".ai_helper/**/LICENSE.txt"
       - "**/LICENSE.txt"
+      - ".ai_helper/**/package-lock.json"
       - "**/package-lock.json"
       - "*/test"
       - "*.yml"
@@ -31,8 +33,7 @@ project:
 input:
   git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望 thread的存储文件夹里也有一个knowledge_space的文件夹，里面存储的是knowledge_space的数据。
-    
+    我希望把所有的chat的agent包括配置文件都移到agent/chat文件夹下，这样可以跟app、job隔离
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

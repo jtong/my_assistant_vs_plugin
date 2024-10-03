@@ -1,5 +1,5 @@
 project:
-  base_path: ./ai_helper/agent/
+  base_path: ./.ai_helper/agent/chat
   filters:
     - ignore:
         - .git
@@ -26,5 +26,5 @@ input:
     我希望 AgentUtility中跟gemini相关的挪到GeminiUtility中去。
 output:     
   prompt:
-    path: ai_helper/prompt_builder/output/working
-    backup_path: ai_helper/prompt_builder/output/backup
+    path: .ai_helper/prompt_builder/output/working
+    backup_path: .ai_helper/prompt_builder/output/backup

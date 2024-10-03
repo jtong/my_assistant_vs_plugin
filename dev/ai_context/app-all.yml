@@ -3,8 +3,8 @@ project:
   filters:
     - filter_in:
       - app/**
-      - ".ai_helper/agent/testAgent.js"
-      - ".ai_helper/agent/*.json"
+      - ".ai_helper/agent/chat/testAgent.js"
+      - ".ai_helper/agent/chat/*.json"
       - chat/**
       - "node_modules/vsgradio/**"
     - ignore:
