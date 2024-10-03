@@ -9,8 +9,22 @@ class AgentLoader {
         this.loadedAgents = {};
         this.globalSettings = globalSettings;
         this.threadAgents = {};
+        this.ensureConfigFile();
         this.config = this.loadConfig();
+    }
 
+    ensureConfigFile() {
+        const dirPath = path.dirname(this.configPath);
+        if (!fs.existsSync(dirPath)) {
+            fs.mkdirSync(dirPath, { recursive: true });
+        }
+        if (!fs.existsSync(this.configPath)) {
+            const defaultConfig = {
+                agents: []
+            };
+            fs.writeFileSync(this.configPath, JSON.stringify(defaultConfig, null, 2));
+            console.log(`Initialized default config at ${this.configPath}`);
+        }
     }
 
     loadConfig() {
@@ -36,10 +50,10 @@ class AgentLoader {
         this.threadAgents = {};
     }
 
-    getAgentConfig(name){
+    getAgentConfig(name) {
         return this.config.agents.find(a => a.name === name);
     }
-    
+
     loadAgent(name) {
         if (this.loadedAgents[name]) {
             return this.loadedAgents[name];
@@ -80,7 +94,7 @@ class AgentLoader {
 
     loadAgentForThread(thread) {
         const key = `${thread.id}:${thread.agent}`;
-        
+
         if (this.threadAgents[key]) {
             return this.threadAgents[key];
         }
@@ -92,12 +106,12 @@ class AgentLoader {
 
         const AgentClass = require(path.resolve(path.dirname(this.configPath), agentConfig.path));
         const mergedSettings = this.mergeSettings(agentConfig.settings, this.globalSettings);
-        
+
         // 只有当 thread 有 settings 时才合并
         const finalSettings = thread.settings ? { ...mergedSettings, ...thread.settings } : mergedSettings;
-        
+
         const agent = new AgentClass(agentConfig.metadata, finalSettings);
-        
+
         this.threadAgents[key] = agent;
         return agent;
     }

@@ -22,9 +22,7 @@ project:
       - "chat/webview/lib"
       - "*.yml"
       - "**/*.vsix"
-      - dist
-      - temp
-      - doc
+      - dev
       - README.md
       # - job
 input:
@@ -36,8 +34,7 @@ input:
 
     ## 任务
 
-    我希望 可以写一个js版的gradio库来拼界面，后台是vscode而不是服务端。
-    在这个基础上写一个新的模块，读取agent的代码得到界面和响应界面的后台。
+    我希望 初始化的时候，如果chat、job、app下没有配置文件，就初始化一个。
     ```
   skip_clone_if_folder_exist: true  
 output:     
