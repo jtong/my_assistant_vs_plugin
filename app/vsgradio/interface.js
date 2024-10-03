@@ -21,7 +21,7 @@ class Blocks {
         } else {
             return {
                 ...block,
-                events: block.events ? Object.keys(block.events) : []
+                events: block.events ? block.events : {}
             };
         }
     }
@@ -29,9 +29,13 @@ class Blocks {
     registerEventHandlers() {
         this.traverseBlocks(this.blocks, (block) => {
             if (block.events) {
-                Object.entries(block.events).forEach(([eventName, handler]) => {
+                Object.entries(block.events).forEach(([eventName, eventDetails]) => {
                     const key = `${block.id}_${eventName}`;
-                    this.events[key] = handler;
+                    this.events[key] = {
+                        handler: eventDetails.handler,
+                        inputs: eventDetails.inputs,
+                        outputs: eventDetails.outputs
+                    };
                 });
             }
         });
@@ -47,10 +51,26 @@ class Blocks {
         });
     }
 
-    handleEvent(componentId, eventName, value, allInputs) {
+    handleEvent(componentId, eventName, value, inputsFromFrontend) {
         const key = `${componentId}_${eventName}`;
-        if (this.events[key]) {
-            return this.events[key](value, allInputs);
+        const eventObj = this.events[key];
+        if (eventObj) {
+            const { handler, inputs: inputIds, outputs: outputIds } = eventObj;
+            // 从输入中获取指定的输入值
+            const inputs = {};
+            inputIds.forEach(id => {
+                inputs[id] = inputsFromFrontend[id];
+            });
+            // 执行处理函数
+            const result = handler(inputs);
+            // 准备更新指令
+            if (outputIds && result !== undefined) {
+                return {
+                    type: 'updateComponents',
+                    updates: outputIds.map(outputId => ({ id: outputId, value: result }))
+                };
+            }
+            return result;
         }
     }
 }

@@ -40,7 +40,7 @@ function activate(context) {
                                 message.componentId,
                                 message.eventName,
                                 message.args[0],
-                                message.allInputs
+                                message.inputs  // 修改为使用指定的输入
                             );
                             console.log('Sending eventResult to webview:', {
                                 type: 'eventResult',
@@ -51,7 +51,6 @@ function activate(context) {
                             if (eventResult !== undefined) {
                                 panel.webview.postMessage({
                                     type: 'eventResult',
-                                    value: "",
                                     componentId: message.componentId,
                                     eventName: message.eventName,
                                     result: eventResult
@@ -74,26 +73,22 @@ function createInstance() {
                 vsgradio.TextInput({
                     id: 'textInput',
                     label: "Enter text",
-                    role: 'input',
-                    events: {
-                        input: (value, allInputs) => {
-                            console.log("Text input changed, current value:", value);
-                        }
-                    }
+                    role: 'input'
                 }),
                 vsgradio.Button({
                     id: 'echoButton',
                     label: "Echo",
                     role: 'action',
                     events: {
-                        click: (value, allInputs) => {
-                            console.log("Button clicked");
-                            console.log("All input values:", allInputs);
-                            const result = `You entered: ${allInputs.textInput}`;
-                            return {
-                                type: 'updateOutput',
-                                value: result
-                            };
+                        click: {
+                            inputs: ['textInput'],  // 指定输入组件
+                            outputs: ['result'],    // 指定输出组件
+                            handler: (inputs) => {  // 指定处理函数
+                                console.log("Button clicked");
+                                const inputValue = inputs.textInput;
+                                const result = `You entered: ${inputValue}`;
+                                return result;
+                            }
                         }
                     }
                 }),

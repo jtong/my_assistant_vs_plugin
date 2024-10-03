@@ -33,7 +33,7 @@ input:
 
     ## 任务
 
-    我希望 不要用interface实现现在的效果。我们暂时不使用interface这个实例，专注于用Blocks来实现同样的布局和效果。
+    我希望 block.events 应该不是一个数组，我不知道目前的代码为什么要搞成数组，理论上搞成json更适合。
 output:     
   prompt:
     path: .ai_helper/prompt_builder/output/working

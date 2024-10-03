@@ -52,6 +52,7 @@
         let interfaceConfig = null;
 
         function renderInterface(config) {
+            interfaceConfig = config;  // 更新全局的配置对象
             const container = document.getElementById('vsgradio-container');
             container.innerHTML = `
                 <h2>${config.title || ''}</h2>
@@ -82,37 +83,62 @@
             setupBlockEventListeners(config.blocks);
         }
 
-        function setupBlockEventListeners(blocks, parentPath = '') {
-            blocks.forEach((block, index) => {
-                const currentPath = parentPath ? `${parentPath}_${index}` : `${block.id}`;
+        function setupBlockEventListeners(blocks) {
+            blocks.forEach((block) => {
                 const element = document.getElementById(block.id);
                 if (element && block.events) {
-                    block.events.forEach((eventName) => {
+                    Object.keys(block.events).forEach((eventName) => {
                         element.addEventListener(eventName, (event) => {
-                            const allInputs = getAllInputValues();
                             console.log(`Event triggered: ${eventName} on ${block.id}`);
-                            vscode.postMessage({
-                                type: 'event',
-                                componentId: block.id,
-                                eventName: eventName,
-                                args: [event.target.value],
-                                allInputs: allInputs
-                            });
+                            // 获取事件绑定的输入组件列表
+                            const eventObj = block.events[eventName];
+                            if (eventObj) {
+                                const inputs = getSpecifiedInputValues(eventObj.inputs);
+                                vscode.postMessage({
+                                    type: 'event',
+                                    componentId: block.id,
+                                    eventName: eventName,
+                                    args: [event.target.value],
+                                    inputs: inputs  // 只传递指定的输入值
+                                });
+                            }
                         });
                     });
                 }
                 if (block.children) {
-                    setupBlockEventListeners(block.children, currentPath);
+                    setupBlockEventListeners(block.children);
                 }
             });
         }
 
-        function getAllInputValues() {
+
+        function getEventObject(componentId, eventName) {
+            // 从 interfaceConfig 中找到对应的事件对象
+            let eventObj = null;
+
+            function searchEvents(blocks) {
+                for (const block of blocks) {
+                    if (block.id === componentId && block.events && block.events[eventName]) {
+                        eventObj = block.events[eventName];
+                        return;
+                    }
+                    if (block.children) {
+                        searchEvents(block.children);
+                    }
+                }
+            }
+            searchEvents(interfaceConfig.blocks);
+            return eventObj;
+        }
+
+        function getSpecifiedInputValues(inputIds) {
             const inputs = {};
-            document.querySelectorAll('input, button').forEach(element => {
-                const id = element.id;
-                const value = element.value || element.textContent;
-                inputs[id] = value;
+            inputIds.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    const value = element.value || element.textContent;
+                    inputs[id] = value;
+                }
             });
             return inputs;
         }
@@ -127,8 +153,13 @@
         function handleEventResult(message) {
             console.log(`Event result for component ${message.componentId}, event ${message.eventName}:`, message.result);
 
-            if (message.result && message.result.type === 'updateOutput') {
-                updateOutput(message.result.value);
+            if (message.result && message.result.type === 'updateComponents') {
+                message.result.updates.forEach(update => {
+                    const element = document.getElementById(update.id);
+                    if (element) {
+                        element.value = update.value;
+                    }
+                });
             }
 
             // 可以在这里添加更多的处理逻辑
@@ -136,14 +167,11 @@
 
         window.addEventListener('message', event => {
             const message = event.data;
-            console.log('Received message from extension:', message);  // 添加这行
+            console.log('Received message from extension:', message);  // 保留日志
             switch (message.type) {
                 case 'setInterface':
                     interfaceConfig = message.value;
                     renderInterface(interfaceConfig);
-                    break;
-                case 'updateOutput':
-                    updateOutput(message.value);
                     break;
                 case 'eventResult':
                     handleEventResult(message);
@@ -156,4 +184,4 @@
     </script>
 </body>
 
-</html> 
+</html>
