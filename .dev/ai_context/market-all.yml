@@ -30,7 +30,7 @@ project:
 input:
   git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望搜索的时候有三个选项卡，可以分别搜chat、job和app，分别去不同的文件里搜索。
+    我希望加载的时候显示第chat选项卡的所有列表，点击不同的选项卡时会显示不同的选项卡的列表
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

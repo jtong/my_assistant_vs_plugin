@@ -1,6 +1,5 @@
 const vscode = acquireVsCodeApi();
 
-
 let allAgents = {
     chat: [],
     job: [],
@@ -18,7 +17,7 @@ function renderAgentList(agents) {
         <div class="agent-item" data-name="${agent.name.toLowerCase()}" data-description="${agent.description.toLowerCase()}">
             <h3>${agent.name} (v${agent.version})</h3>
             <p>${agent.description}</p>
-            <button class="install-btn" onclick="installAgent('${agent.name}', '${agent.type}')">Install</button>
+            <button class="install-btn" onclick="installAgent('${agent.name}', '${currentTab}')">Install</button>
         </div>
     `).join('');
 }
@@ -62,3 +61,8 @@ window.addEventListener('message', event => {
 
 // 初始化时请求代理列表
 vscode.postMessage({ command: 'getAgentList' });
+
+// 页面加载完成后，显示 chat 选项卡的列表
+document.addEventListener('DOMContentLoaded', () => {
+    filterAgents('');
+});
