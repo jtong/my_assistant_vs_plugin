@@ -30,7 +30,7 @@ project:
 input:
   git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望搜索的时候有三个选项卡，可以分别搜chat、job和app，分别去不同的文件里搜索。安装的时候也安装到不同的文件夹下，比如现在就是只搜了chat，安装也是去了chat。
+    我希望搜索的时候有三个选项卡，可以分别搜chat、job和app，分别去不同的文件里搜索。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

@@ -41,7 +41,7 @@ class AgentMarketplaceExtension {
         // 监听设置变化
         vscode.workspace.onDidChangeConfiguration(e => {
             if (e.affectsConfiguration('myAssistant.agentRepositoryUrl')) {
-                this.agentMarketplace.updateAgentListUrl();
+                this.agentMarketplace.updateAgentListUrls();
                 this.agentMarketplaceViewProvider.refresh();
             }
         });

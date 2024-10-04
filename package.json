@@ -43,28 +43,18 @@
                     }
                 },
                 "myAssistant.agentRepositoryUrl": {
-                "type": "object",
-                "default": {
-                    "chat": "https://raw.githubusercontent.com/your-repo/chat-agents/main/agent-list.json",
-                    "job": "https://raw.githubusercontent.com/your-repo/job-agents/main/agent-list.json",
-                    "app": "https://raw.githubusercontent.com/your-repo/app-agents/main/agent-list.json"
-                },
-                "description": "URLs or local paths to the agent repository JSON files for each type",
-                "properties": {
-                    "chat": {
-                        "type": "string",
-                        "description": "URL or local path to the chat agent repository JSON file"
+                    "type": "object",
+                    "default": {
+                        "chat": "https://jtong.dev/agent_marketplace/maketplace_storage/chat/agent-list.json",
+                        "job": "https://jtong.dev/agent_marketplace/maketplace_storage/job/agent-list.json",
+                        "app": "https://jtong.dev/agent_marketplace/maketplace_storage/app/agent-list.json"
                     },
-                    "job": {
-                        "type": "string",
-                        "description": "URL or local path to the job agent repository JSON file"
-                    },
-                    "app": {
-                        "type": "string",
-                        "description": "URL or local path to the app agent repository JSON file"
+                    "description": "URLs or local paths to the agent repository JSON files for each type",
+                    "additionalProperties": {
+                        "type": "string"
                     }
+                    
                 }
-            }
             }
         },
         "commands": [
