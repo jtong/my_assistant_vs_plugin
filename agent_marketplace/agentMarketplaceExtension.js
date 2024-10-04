@@ -23,16 +23,16 @@ class AgentMarketplaceExtension {
         );
 
         this.context.subscriptions.push(
-            vscode.commands.registerCommand('myAssistant.installAgent', async (agentName) => {
-                const agents = await this.agentMarketplace.getAgentList();
-                const agent = agents.find(p => p.name === agentName);
+            vscode.commands.registerCommand('myAssistant.installAgent', async (agentName, agentType) => {
+                const agents = await agentMarketplace.getAgentList();
+                const agent = agents[agentType].find(p => p.name === agentName);
                 if (agent) {
-                    const success = await this.agentMarketplace.installAgent(agent);
+                    const success = await agentMarketplace.installAgent(agent);
                     if (success) {
-                        vscode.window.showInformationMessage(`Agent ${agent.name} installed successfully! Please reload the window to activate the agent.`);
-                        this.agentMarketplaceViewProvider.refresh();
+                        vscode.window.showInformationMessage(`Agent ${agent.name} (${agentType}) installed successfully! Please reload the window to activate the agent.`);
+                        agentMarketplaceViewProvider.refresh();
                     } else {
-                        vscode.window.showErrorMessage(`Failed to install agent ${agent.name}.`);
+                        vscode.window.showErrorMessage(`Failed to install agent ${agent.name} (${agentType}).`);
                     }
                 }
             })

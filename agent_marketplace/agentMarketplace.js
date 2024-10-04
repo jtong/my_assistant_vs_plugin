@@ -10,43 +10,55 @@ const { exec } = require('child_process');
 class AgentMarketplace {
     constructor(context) {
         this.context = context;
-        this.updateAgentDir();
-        this.updateAgentListUrl();
+        this.updateAgentDirs();
+        this.updateAgentListUrls();
     }
 
-    updateAgentDir() {
+    updateAgentDirs() {
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (workspaceFolders && workspaceFolders.length > 0) {
             const workspaceRoot = workspaceFolders[0].uri.fsPath;
-            this.agentDir = path.join(workspaceRoot, '.ai_helper', 'agent', 'chat');
+            this.agentDirs = {
+                chat: path.join(workspaceRoot, '.ai_helper', 'agent', 'chat'),
+                job: path.join(workspaceRoot, '.ai_helper', 'agent', 'job'),
+                app: path.join(workspaceRoot, '.ai_helper', 'agent', 'app')
+            };
         } else {
             throw new Error('No workspace folder found');
         }
     }
 
-    updateAgentListUrl() {
+    updateAgentListUrls() {
         const config = vscode.workspace.getConfiguration('myAssistant');
-        this.agentListUrl = config.get('agentRepositoryUrl');
+        this.agentListUrls = config.get('agentRepositoryUrl');
     }
 
     async getAgentList() {
-        this.updateAgentListUrl();
+        this.updateAgentListUrls();
 
-        if (this.agentListUrl.startsWith('http')) {
-            const response = await axios.get(this.agentListUrl);
-            return response.data;
-        } else {
-            const localPath = path.isAbsolute(this.agentListUrl) 
-                ? this.agentListUrl 
-                : path.join(this.context.extensionPath, this.agentListUrl);
-            
-            try {
-                const data = await fs.readFile(localPath, 'utf8');
-                return JSON.parse(data);
-            } catch (error) {
-                throw new Error(`Error reading or parsing agent list: ${error.message}`);
+        const allAgents = {};
+
+        for (const agentType of ['chat', 'job', 'app']) {
+            const url = this.agentListUrls[agentType];
+            if (url.startsWith('http')) {
+                const response = await axios.get(url);
+                allAgents[agentType] = response.data;
+            } else {
+                const localPath = path.isAbsolute(url)
+                    ? url
+                    : path.join(this.context.extensionPath, url);
+
+                try {
+                    const data = await fs.promises.readFile(localPath, 'utf8');
+                    allAgents[agentType] = JSON.parse(data);
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Error reading or parsing agent list for ${agentType}: ${error.message}`);
+                    allAgents[agentType] = [];
+                }
             }
         }
+
+        return allAgents;
     }
 
     async installAgent(agent) {
@@ -60,14 +72,14 @@ class AgentMarketplace {
             });
             await pipeline(response.data, fs.createWriteStream(zipPath));
         } else {
-            zipPath = path.isAbsolute(agent.downloadUrl) 
-                ? agent.downloadUrl 
+            zipPath = path.isAbsolute(agent.downloadUrl)
+                ? agent.downloadUrl
                 : path.join(path.dirname(this.agentListUrl), agent.downloadUrl);
         }
-    
+
         const extractedFolderName = path.basename(zipPath, '.zip');
-        const agentExtractPath = path.join(this.agentDir, extractedFolderName);
-    
+        const agentExtractPath = path.join(this.agentDirs[agent.type], extractedFolderName);
+
         // 如果目标文件夹存在，先删除
         try {
             await fs.access(agentExtractPath);
@@ -78,7 +90,7 @@ class AgentMarketplace {
                 throw new Error(`Failed to remove existing agent folder for ${agent.name}`);
             }
         }
-    
+
         // 解压agent
         await new Promise((resolve, reject) => {
             const zip = new AdmZip(zipPath);
@@ -90,7 +102,7 @@ class AgentMarketplace {
                 else resolve();
             });
         });
-           
+
         // 读取agent的配置文件
         const configPath = path.join(agentExtractPath, 'config.json');
         let agentConfig;
@@ -101,11 +113,11 @@ class AgentMarketplace {
             console.error(`Error reading agent config: ${error}`);
             throw new Error(`Failed to read agent configuration for ${agent.name}`);
         }
-    
+
         // 添加path属性到agentConfig，使用解压后的文件夹名
         agentConfig.path = `./${extractedFolderName}/${agentConfig.entry}`;
         agentConfig.name = agent.name; // 确保名称与市场中的名称一致
-    
+
         // 更新agents.json
         const agentsJsonPath = path.join(this.agentDir, 'agents.json');
         let agentsConfig = { agents: [] };
@@ -117,27 +129,27 @@ class AgentMarketplace {
                 console.error(`Error reading agents.json: ${error}`);
             }
         }
-    
+
         const existingIndex = agentsConfig.agents.findIndex(a => a.name === agent.name);
         if (existingIndex !== -1) {
             agentsConfig.agents[existingIndex] = agentConfig;
         } else {
             agentsConfig.agents.push(agentConfig);
         }
-    
+
         await fs.writeFile(agentsJsonPath, JSON.stringify(agentsConfig, null, 2));
-    
+
         // 安装依赖
         await this.installDependencies(agentExtractPath);
-    
+
         // 执行安装脚本
         await this.runInstallScript(agentExtractPath);
-    
+
         // 如果是临时下载的文件，删除它
         if (agent.downloadUrl.startsWith('http')) {
             await fs.unlink(zipPath);
         }
-    
+
         return true;
     }
 
