@@ -7,6 +7,11 @@ let allAgents = {
 };
 let currentTab = 'chat';
 
+function showAgentDetails(agentName, agentType) {
+    vscode.postMessage({ command: 'showAgentDetails', agentName: agentName, agentType: agentType });
+}
+
+
 function installAgent(agentName, agentType) {
     vscode.postMessage({ command: 'installAgent', agentName: agentName, agentType: agentType });
 }
@@ -14,10 +19,10 @@ function installAgent(agentName, agentType) {
 function renderAgentList(agents) {
     const agentListElement = document.getElementById('agentList');
     agentListElement.innerHTML = agents.map(agent => `
-        <div class="agent-item" data-name="${agent.name.toLowerCase()}" data-description="${agent.description.toLowerCase()}">
+        <div class="agent-item" data-name="${agent.name.toLowerCase()}" data-description="${agent.description.toLowerCase()}" onclick="showAgentDetails('${agent.name}', '${currentTab}')">
             <h3>${agent.name} (v${agent.version})</h3>
             <p>${agent.description}</p>
-            <button class="install-btn" onclick="installAgent('${agent.name}', '${currentTab}')">Install</button>
+            <button class="install-btn" onclick="event.stopPropagation(); installAgent('${agent.name}', '${currentTab}')">Install</button>
         </div>
     `).join('');
 }

@@ -2,7 +2,7 @@
     "name": "my-assistant",
     "displayName": "My Assistant",
     "description": "plugin of chat assistant and job management client",
-    "version": "0.0.4",
+    "version": "0.1.1",
     "publisher": "jtong",
     "icon": "media/chat-icon.png",
     "repository": "https://github.com/jtong/my_assistant_vs_plugin",
@@ -19,11 +19,11 @@
     "files": [
         "extension.js",
         "agentLoader.js",
-        "agentViewProvider.js",
         "logger.js",
         "chat/**",
         "job/**",
         "agent_marketplace/**",
+        "app/**",
         "media/**",
         "node_modules/**"
     ],
@@ -106,6 +106,10 @@
             {
                 "command": "myAssistant.installAgent",
                 "title": "Install Agent"
+            },
+            {
+                "command": "myAssistant.showAgentDetails",
+                "title": "Show Agent Details"
             },
             {
                 "command": "myAssistant.newAppThread",
@@ -196,9 +200,6 @@
         "package": "webpack --mode development",
         "package:production": "webpack --mode production",
         "webpack-dev": "webpack --mode development --watch"
-    },
-    "devDependencies": {
-        "@types/vscode": "^1.73.0"
     },
     "dependencies": {
         "adm-zip": "^0.5.9",

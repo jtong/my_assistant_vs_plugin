@@ -45,7 +45,49 @@ class AgentMarketplaceExtension {
                 this.agentMarketplaceViewProvider.refresh();
             }
         });
+
+        this.context.subscriptions.push(
+            vscode.commands.registerCommand('myAssistant.showAgentDetails', async (agentName, agentType) => {
+                const detailsUrl = await this.agentMarketplace.getAgentDetailsUrl(agentName, agentType);
+                const panel = vscode.window.createWebviewPanel(
+                    'agentDetails',
+                    `${agentName} Details`,
+                    vscode.ViewColumn.One,
+                    {
+                        enableScripts: true
+                    }
+                );
+                panel.webview.html = this.getAgentDetailsWebviewContent(agentName, detailsUrl);
+            })
+        );
+    }
+
+    getAgentDetailsWebviewContent(agentName, detailsUrl) {
+        return `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>${agentName} Details</title>
+                <style>
+                    body, html, iframe {
+                        margin: 0;
+                        padding: 0;
+                        height: 100%;
+                        width: 100%;
+                        border: none;
+                    }
+                </style>
+            </head>
+            <body>
+                <iframe src="${detailsUrl}" frameborder="0"></iframe>
+            </body>
+            </html>
+        `;
     }
 }
+
+
 
 module.exports = AgentMarketplaceExtension;

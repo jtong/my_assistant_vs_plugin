@@ -17,10 +17,13 @@ class AgentMarketplaceViewProvider {
         webviewView.webview.onDidReceiveMessage(message => {
             switch (message.command) {
                 case 'installAgent':
-                    vscode.commands.executeCommand('myAssistant.installAgent', message.agentName);
+                    vscode.commands.executeCommand('myAssistant.installAgent', message.agentName, message.agentType);
                     break;
                 case 'getAgentList':
                     this.sendAgentListToWebview();
+                    break;
+                case 'showAgentDetails':
+                    vscode.commands.executeCommand('myAssistant.showAgentDetails', message.agentName, message.agentType);
                     break;
             }
         });

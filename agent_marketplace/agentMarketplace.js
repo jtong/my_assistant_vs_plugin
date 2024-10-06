@@ -193,6 +193,30 @@ class AgentMarketplace {
             }
         }
     }
+
+    async getAgentDetailsUrl(agentName, agentType) {
+        const agentListUrl = this.agentListUrls[agentType];
+        if (agentListUrl.startsWith('http')) {
+            // 解析 URL
+            const parsedUrl = new URL(agentListUrl);
+
+            // 提取基础 URL
+            const baseUrl = `${parsedUrl.protocol}//${parsedUrl.hostname}${parsedUrl.pathname.split('/').slice(0, -2).join('/')}`;
+
+            // 提取相对路径
+            const relativePath = parsedUrl.pathname.split('/').slice(-2, -1).join('/');
+
+            // 构造最终 URL
+            const detailsUrl = `${baseUrl}/#/${relativePath}/${agentName}/Home.md`;
+
+            return detailsUrl;
+        } else {
+            // 处理本地路径
+            const basePath = path.dirname(agentListUrl);
+            return path.join(basePath, `${agentName}`, 'Home.md');
+        }
+
+    }
 }
 
 module.exports = AgentMarketplace;

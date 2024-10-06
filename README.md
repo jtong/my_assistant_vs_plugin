@@ -22,7 +22,7 @@
 
 在vscode extensions marketplace搜索 my-assitant ：
 
-![search-plugin](.dev/doc/media/search-plugin.png)
+![search-plugin](https://jtong-pic.obs.cn-north-4.myhuaweicloud.com/doc/my-assistant/search-plugin.png)
 
 点击 install 即可。
 
@@ -42,7 +42,7 @@
 
 根据您使用的 AI 服务，添加相应的 API 密钥：
 
-![setup_apikey](.dev/doc/media/setup_apikey.png)
+![setup_apikey](https://jtong-pic.obs.cn-north-4.myhuaweicloud.com/doc/my-assistant/setup_apikey.png)
 
 ## 使用指南
 
