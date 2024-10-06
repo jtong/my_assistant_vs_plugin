@@ -302,20 +302,37 @@ function displayOperations(operations) {
             select.id = `operation-${operation.settingKey}`;
 
             // 创建选项
-            operation.options.forEach(optionValue => {
-                const option = document.createElement('option');
-                option.value = optionValue;
-                option.textContent = optionValue;
-                select.appendChild(option);
+            operation.options.forEach(option => {
+                const optionElement = document.createElement('option');
+                if (typeof option === 'string') {
+                    optionElement.value = option;
+                    optionElement.textContent = option;
+                } else {
+                    // 只有当 value 是对象时才进行 JSON 转换
+                    optionElement.value = typeof option.value === 'object' ? JSON.stringify(option.value) : option.value;
+                    optionElement.textContent = option.label;
+                }
+                select.appendChild(optionElement);
             });
 
             // 设置默认值
-            const currentValue = window.currentSettings[operation.settingKey] || operation.default || operation.options[0];
-            select.value = currentValue;
+            let currentValue = window.currentSettings[operation.settingKey] || operation.default;
+            if (typeof currentValue === 'object') {
+                debugger;
+                currentValue = JSON.stringify(currentValue);
+            }
+            select.value = currentValue || (typeof operation.options[0] === 'string' ? operation.options[0] : 
+                (typeof operation.options[0].value === 'object' ? JSON.stringify(operation.options[0].value) : operation.options[0].value));
 
             // 监听选择变化事件
             select.addEventListener('change', function () {
-                const selectedValue = this.value;
+                let selectedValue = this.value;
+                try {
+                    // 尝试解析为 JSON，如果失败则保持原样（字符串）
+                    selectedValue = JSON.parse(selectedValue);
+                } catch (e) {
+                    // 值不是有效的 JSON，保持为字符串
+                }
                 // 发送消息给扩展后端，通知更新设置
                 window.vscode.postMessage({
                     type: 'updateSetting',
@@ -333,8 +350,6 @@ function displayOperations(operations) {
             // 将标签和下拉框添加到容器
             container.appendChild(label);
             container.appendChild(select);
-            // container.appendChild(document.createElement('br'));
-
         } else if (operation.type === 'action' && operation.control === 'button') {
             // 创建按钮
             const button = document.createElement('button');
@@ -342,7 +357,6 @@ function displayOperations(operations) {
             button.addEventListener('click', () => executeTask(operation));
             container.appendChild(button);
         }
-
 
         if (operation.type === 'file_upload') {
             hasFileUploadOperation = true;

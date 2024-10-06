@@ -1,5 +1,6 @@
 {
     "name": "my-assistant",
+    "displayName": "My Assistant",
     "description": "plugin of chat assistant and job management client",
     "version": "0.0.4",
     "publisher": "jtong",

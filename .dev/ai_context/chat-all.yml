@@ -33,7 +33,12 @@ project:
 input:
   git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望把所有的chat的agent包括配置文件都移到agent/chat文件夹下，这样可以跟app、job隔离
+    ## 任务约束
+    
+    - 分清webview的代码和插件的代码和agent app的代码
+
+    ## 任务
+    我希望operations 里面，配置的时候可以配置显示的值和实际的value值
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

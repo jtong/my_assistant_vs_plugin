@@ -4,8 +4,8 @@
 - [x] 重新加载agents
 - [x] 打印日志
 - [x] 把输出路径从ai_helper改成.ai_helper
-- [ ] filter 掉virtualMessage不生成chat`
-
+- [ ] filter 掉virtualMessage不生成chat history
+- [ ] 刷新的时候，删除所有已经require的agent的缓存，避免重启
 ## bug
 
 - [ ] 任务点击按钮后，删除并保留带按钮的气泡，然后再点击重试，不会发送生成按钮的消息，反而会发送点击过按钮的消息，而且并不执行按钮对应的任务。
