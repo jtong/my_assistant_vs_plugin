@@ -11,6 +11,7 @@ body {
     border: 1px solid #ccc;
     padding: 10px;
     margin-bottom: 10px;
+    cursor: pointer; 
 }
 .agent-item h3 {
     margin-top: 0;
@@ -21,8 +22,11 @@ body {
     border: none;
     padding: 5px 10px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
 }
-
+.agent-item:hover {
+    background-color: #ffffff; /* 悬停时的背景色 */
+}
 .tab-container {
     display: flex;
     margin-bottom: 10px;

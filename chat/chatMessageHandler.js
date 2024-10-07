@@ -44,8 +44,7 @@ class ChatMessageHandler {
             sender: 'user',
             text: userMessage,
             timestamp: Date.now(),
-            threadId: thread.id,
-            formSubmitted: false
+            threadId: thread.id
         };
     
         if (filePath) {

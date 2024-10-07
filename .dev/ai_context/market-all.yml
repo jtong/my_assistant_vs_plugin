@@ -30,8 +30,7 @@ project:
 input:
   git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
-    我希望点击列表项的时候，会显示一个详情页。详情页上是对应插件文件夹下的Home.md文档。
-    目前不能点击列表项，也没有详情页。
+    我希望点击鼠标hover在item上的时候会显示手型。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

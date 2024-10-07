@@ -241,8 +241,7 @@ class ChatViewProvider {
                 text: 'An unexpected error occurred while processing your task.',
                 isHtml: false,
                 timestamp: Date.now(),
-                threadId: thread.id,
-                formSubmitted: false
+                threadId: thread.id
             };
             this.threadRepository.addMessage(thread, errorMessage);
             panel.webview.postMessage({
@@ -264,8 +263,7 @@ class ChatViewProvider {
                 text: '',
                 isHtml: response.isHtml(),
                 timestamp: Date.now(),
-                threadId: thread.id,
-                formSubmitted: false
+                threadId: thread.id
             };
             this.threadRepository.addMessage(thread, botMessage);
             panel.webview.postMessage({
@@ -305,7 +303,6 @@ class ChatViewProvider {
                 isHtml: response.isHtml(),
                 timestamp: Date.now(),
                 threadId: thread.id,
-                formSubmitted: false,
                 meta: response.meta
             };
             if (response.hasAvailableTasks()) {
