@@ -238,6 +238,22 @@ class ChatThreadRepository {
         }
         return [];
     }
+
+    addMarker(thread) {
+        const markerMessage = {
+            id: 'marker_' + Date.now(),
+            type: 'marker',
+            timestamp: Date.now()
+        };
+        thread.messages.push(markerMessage);
+        this.saveThread(thread);
+        return markerMessage.id;
+    }
+
+    getMessagesAfterLastMarker(thread) {
+        const lastMarkerIndex = thread.messages.map(msg => msg.type).lastIndexOf('marker');
+        return lastMarkerIndex !== -1 ? thread.messages.slice(lastMarkerIndex + 1) : thread.messages;
+    }
 }
 
 module.exports = ChatThreadRepository;

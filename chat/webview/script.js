@@ -283,9 +283,24 @@ window.addEventListener('message', event => {
             // 在界面上显示已选中的文件名
             showFileSelectedHint(message.fileName);
             break;
+        case 'markerAdded':
+            addMarkerLine(message.markerId);
+            break;    
         // ...其他 case    
     }
 });
+
+
+
+function addMarkerLine(markerId) {
+    const markerLine = document.createElement('div');
+    markerLine.className = 'marker-line';
+    markerLine.setAttribute('data-marker-id', markerId);
+    
+    const chatBox = document.getElementById('chat-box');
+    chatBox.appendChild(markerLine);
+}
+
 
 
 // 定义显示操作项的函数
@@ -350,11 +365,11 @@ function displayOperations(operations) {
             // 将标签和下拉框添加到容器
             container.appendChild(label);
             container.appendChild(select);
-        } else if (operation.type === 'action' && operation.control === 'button') {
+        } else if (operation.type === 'task' && operation.control === 'button') {
             // 创建按钮
             const button = document.createElement('button');
             button.textContent = operation.name;
-            button.addEventListener('click', () => executeTask(operation));
+            button.addEventListener('click', () => executeTask(operation.task));
             container.appendChild(button);
         }
 
@@ -514,7 +529,9 @@ function displayThread(thread) {
     const chatBox = document.getElementById('chat-box');
     chatBox.innerHTML = ''; // 清除现有消息
     thread.messages.forEach(message => {
-        if (message.sender === 'user') {
+        if (message.type === 'marker') {
+            addMarkerLine(message.id);
+        } else if (message.sender === 'user') {
             displayUserMessage(message);
         } else if (message.sender === 'bot') {
             displayBotMessage(message);
@@ -594,10 +611,10 @@ function executeTask(task) {
     const message = {
         type: 'executeTask',
         threadId: window.threadId,
-        taskName: task.taskName,
-        message: task.message
+        task: task,
     };
     window.vscode.postMessage(message);
 }
+
 
 

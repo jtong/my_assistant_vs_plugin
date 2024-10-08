@@ -38,7 +38,10 @@ class ChatViewProvider {
                 const uri = vscode.Uri.file(absolutePath);
                 return panel.webview.asWebviewUri(uri).toString();
             },
-            threadRepository: this.threadRepository
+            threadRepository: this.threadRepository,
+            postMessage:(message) => {
+                panel.webview.postMessage(message);
+            }
         };
 
         panel.webview.onDidReceiveMessage(async (message) => {
@@ -142,15 +145,12 @@ class ChatViewProvider {
     }
 
     async handleExecuteTask(message, threadId, panel, host_utils) {
-        const taskName = message.taskName;
-        const userMessage = message.message;
+        const task = message.task;
 
         let thread = this.threadRepository.getThread(threadId);
-        const agent = this.messageHandler.agentLoader.loadAgentForThread(thread);
-        const task = agent.getTask(taskName);
 
         if (!task.skipUserMessage) {
-            this.messageHandler.addUserMessageToThread(thread, userMessage);
+            this.messageHandler.addUserMessageToThread(thread, task.message);
         }
         task.host_utils = host_utils;
         if (task) {

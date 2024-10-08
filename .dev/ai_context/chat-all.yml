@@ -38,7 +38,7 @@ input:
     - 分清webview的代码和插件的代码和agent app的代码
 
     ## 任务
-    我希望operations 里面，配置的时候可以配置显示的值和实际的value值
+    我希望 可以给thread加标记，表示从这个标记的message后面开始是新的对话，让Agent从这个标记后面重新开始对话。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

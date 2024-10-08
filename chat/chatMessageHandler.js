@@ -11,7 +11,7 @@ class ChatMessageHandler {
         const agent = this.agentLoader.loadAgentForThread(thread);
         let response;
 
-        if (task.isMessageTask()) {
+        if (task.type === Task.TYPE_MESSAGE) {
             response = await agent.generateReply(thread, task.host_utils);
         } else {
             response = await agent.executeTask(task, thread);
