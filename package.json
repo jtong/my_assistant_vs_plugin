@@ -2,7 +2,7 @@
     "name": "my-assistant",
     "displayName": "My Assistant",
     "description": "plugin of chat assistant and job management client",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "publisher": "jtong",
     "icon": "media/chat-icon.png",
     "repository": "https://github.com/jtong/my_assistant_vs_plugin",
@@ -203,7 +203,7 @@
     },
     "dependencies": {
         "adm-zip": "^0.5.9",
-        "ai-agent-response": "^1.0.9",
+        "ai-agent-response": "^1.1.0",
         "axios": "^1.6.8",
         "handlebars": "^4.7.8",
         "js-yaml": "^4.1.0",

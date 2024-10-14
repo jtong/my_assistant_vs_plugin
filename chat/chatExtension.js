@@ -31,7 +31,7 @@ function activateChatExtension(context) {
     const messageHandler = new ChatMessageHandler(threadRepository, agentLoader);
     const chatProvider = new ChatViewProvider(context.extensionUri, threadRepository, messageHandler);
     const listProvider = new ChatListViewProvider(threadRepository);
-    
+
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.revealInExplorer', (item) => {
             const threadFolder = path.join(threadRepository.storagePath, item.id);
@@ -178,6 +178,12 @@ function activateChatExtension(context) {
                 panel.onDidDispose(() => {
                     delete openChatPanels[chatName];
                 });
+
+                // 处理 bootMessage
+                if (agentConfig && agentConfig.metadata && agentConfig.metadata.bootMessage) {
+                    const bootResponse = Response.fromJSON(agentConfig.metadata.bootMessage);
+                    chatProvider.handleResponse(bootResponse, thread, panel);
+                }
             }
         })
     );

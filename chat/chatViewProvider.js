@@ -34,12 +34,28 @@ class ChatViewProvider {
 
     resolveWebviewPanel(panel) {
         const host_utils = {
+            getConfig: () => {
+                const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+                const projectRoot = workspaceFolder ? workspaceFolder.uri.fsPath : '';
+                const projectName = workspaceFolder ? workspaceFolder.name : '';
+
+                // 假设 .ai_helper 文件夹在项目根目录下
+                const aiHelperRoot = path.join(projectRoot, '.ai_helper');
+                const chatWorkingSpaceRoot = path.join(aiHelperRoot, 'agent', 'memory_repo', 'chat_working_space');
+
+                return {
+                    projectRoot: projectRoot,
+                    projectName: projectName,
+                    aiHelperRoot: aiHelperRoot,
+                    chatWorkingSpaceRoot: chatWorkingSpaceRoot,
+                };
+            },
             convertToWebviewUri: (absolutePath) => {
                 const uri = vscode.Uri.file(absolutePath);
                 return panel.webview.asWebviewUri(uri).toString();
             },
             threadRepository: this.threadRepository,
-            postMessage:(message) => {
+            postMessage: (message) => {
                 panel.webview.postMessage(message);
             }
         };
@@ -201,37 +217,49 @@ class ChatViewProvider {
             host_utils: host_utils
         });
     }
+    addAvailableTasks(message, availableTasks, panel) {
+        message.availableTasks = availableTasks;
+        this.threadRepository.updateMessage(message.threadId, message.id, message);
+        panel.webview.postMessage({
+            type: 'updateBotMessage',
+            messageId: message.id,
+            availableTasks: availableTasks
+        });
+    }
+
+    async handleResponse(response, updatedThread, panel) {
+        let botMessage;
+        if (response.shouldUpdateLastMessage()) {
+            const lastBotMessageIndex = [...updatedThread.messages].reverse().findIndex(msg => msg.sender === 'bot');
+            if (lastBotMessageIndex !== -1) {
+                const index = updatedThread.messages.length - 1 - lastBotMessageIndex;
+                botMessage = updatedThread.messages[index];
+
+                if (botMessage && response.hasAvailableTasks()) { // 目前更新最后一条就这一种情况：给最后一条加按钮。更新最后一条的成熟逻辑及相关机制暂且不做设计，在作出合理的机制设计之前，这条注释不能删除，以提示后人防止将来改出bug。
+                    this.addAvailableTasks(botMessage, response.getAvailableTasks(), panel);
+                }
+            }
+        } else {
+            botMessage = await this.addNewBotMessage(response, updatedThread, panel); //目前 addNewBotMessage 中，非流式response有availableTask会被添加，而流式则不会处理，因为流式会走更新最后一条的逻辑，目前不确定非流式的是否存在更新最后一条这种机制之外的机制来添加。
+        }
+
+
+        if (response.hasNextTask()) {
+            const nextTask = response.getNextTask();
+            await this.handleThread(updatedThread, nextTask, panel);
+        }
+    }
 
     async handleThread(thread, task, panel) {
-        const responseHandler = async (response, updatedThread) => {
-            if (response.shouldUpdateLastMessage()) {
-                const lastBotMessageIndex = [...updatedThread.messages].reverse().findIndex(msg => msg.sender === 'bot');
-                if (lastBotMessageIndex !== -1 && response.hasAvailableTasks()) { // 目前更新最后一条就这一种情况，给最后一条加按钮
-                    const index = updatedThread.messages.length - 1 - lastBotMessageIndex;
-                    const lastBotMessage = updatedThread.messages[index];
-                    lastBotMessage.availableTasks = response.getAvailableTasks();
-                    this.threadRepository.updateMessage(updatedThread, lastBotMessage.id, {
-                        text: lastBotMessage.text,
-                        availableTasks: lastBotMessage.availableTasks
-                    });
-                    panel.webview.postMessage({
-                        type: 'updateBotMessage',
-                        messageId: lastBotMessage.id,
-                        availableTasks: lastBotMessage.availableTasks
-                    });
-                }
-            } else {
-                await this.addNewBotMessage(response, updatedThread, panel);
-            }
-        };
-
         try {
             if (task.skipBotMessage) {
                 // 如果任务设置了跳过机器人消息，使用一个不添加消息的处理器
                 const silentResponseHandler = async () => { };
                 await this.messageHandler.handleTask(thread, task, silentResponseHandler);
             } else {
-                await this.messageHandler.handleTask(thread, task, responseHandler);
+                await this.messageHandler.handleTask(thread, task, (response, updatedThread) =>
+                    this.handleResponse(response, updatedThread, panel)
+                );
             }
         } catch (error) {
             console.error('Error in handleThread:', error);
@@ -263,7 +291,9 @@ class ChatViewProvider {
                 text: '',
                 isHtml: response.isHtml(),
                 timestamp: Date.now(),
-                threadId: thread.id
+                threadId: thread.id,
+                isVirtual: response.meta?.isVirtual || false
+
             };
             this.threadRepository.addMessage(thread, botMessage);
             panel.webview.postMessage({
@@ -303,7 +333,9 @@ class ChatViewProvider {
                 isHtml: response.isHtml(),
                 timestamp: Date.now(),
                 threadId: thread.id,
-                meta: response.meta
+                meta: response.meta,
+                isVirtual: response.meta?.isVirtual || false
+
             };
             if (response.hasAvailableTasks()) {
                 botMessage.availableTasks = response.getAvailableTasks();
