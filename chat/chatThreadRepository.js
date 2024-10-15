@@ -62,17 +62,6 @@ class ChatThreadRepository {
         const agentConfig = this.agentLoader.getAgentConfig(agentName);
         const messages = [];
         
-        if (agentConfig && agentConfig.metadata && agentConfig.metadata.bootMessage) {
-            messages.push({
-                id: 'boot_message',
-                sender: 'bot',
-                text: agentConfig.metadata.bootMessage.text,
-                availableTasks: agentConfig.metadata.bootMessage.availableTasks,
-                timestamp: Date.now(),
-                isVirtual: true
-            });
-        }
-
         const newThread = {
             id: threadId,
             name: name,

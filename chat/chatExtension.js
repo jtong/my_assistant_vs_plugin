@@ -9,6 +9,7 @@ const ChatThreadRepository = require('./chatThreadRepository');
 const SettingsEditorProvider = require('./settingsEditorProvider');
 const fs = require('fs');
 const yaml = require('js-yaml');
+const { Response, Task, AvailableTask } = require('ai-agent-response');
 
 // Object to store open chat panels
 const openChatPanels = {};
@@ -180,7 +181,8 @@ function activateChatExtension(context) {
                 });
 
                 // 处理 bootMessage
-                if (agentConfig && agentConfig.metadata && agentConfig.metadata.bootMessage) {
+                const messagesAfterLastMarker = threadRepository.getMessagesAfterLastMarker(thread);
+                if (messagesAfterLastMarker.length === 0 && agentConfig && agentConfig.metadata && agentConfig.metadata.bootMessage) {
                     const bootResponse = Response.fromJSON(agentConfig.metadata.bootMessage);
                     chatProvider.handleResponse(bootResponse, thread, panel);
                 }

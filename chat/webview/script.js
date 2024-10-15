@@ -455,8 +455,7 @@ function displayBotMessage(message, isStreaming = false) {
     if (isStreaming) {
         messageElement.querySelector('.message-text').textContent = '';
     }
-
-    if (isLastBotMessage() && message.availableTasks && message.availableTasks.length > 0) {
+    if (message.availableTasks && message.availableTasks.length > 0) {
         addTaskButtons(messageElement, message.availableTasks);
     }
 
@@ -479,12 +478,7 @@ function addTaskButtons(container, availableTasks) {
     container.querySelector('.message-container').appendChild(taskContainer);
 }
 
-// 判断是否为最后一个bot消息
-function isLastBotMessage() {
-    const chatBox = document.getElementById('chat-box');
-    const messages = chatBox.getElementsByClassName('bot');
-    return messages.length === 0 || messages[messages.length - 1] === chatBox.lastElementChild;
-}
+
 
 function updateBotMessage(messageId, text, availableTasks) {
     const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
