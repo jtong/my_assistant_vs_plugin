@@ -244,10 +244,12 @@ class ChatViewProvider {
         }
 
 
-        if (response.hasNextTask()) {
-            const nextTask = response.getNextTask();
-            await this.handleThread(updatedThread, nextTask, panel);
-        }
+        if (response.hasNextTasks()) {
+            const nextTasks = response.getNextTasks();
+            for (const nextTask of nextTasks) {
+                await this.handleThread(updatedThread, nextTask, panel);
+            }
+        }   
     }
 
     async handleThread(thread, task, panel) {
