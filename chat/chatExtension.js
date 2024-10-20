@@ -155,7 +155,34 @@ function activateChatExtension(context) {
                 );
 
                 panel.webview.html = chatProvider.getWebviewContent(panel.webview, threadId);
-                chatProvider.resolveWebviewPanel(panel);
+                const host_utils = {
+                    getConfig: () => {
+                        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+                        const projectRoot = workspaceFolder ? workspaceFolder.uri.fsPath : '';
+                        const projectName = workspaceFolder ? workspaceFolder.name : '';
+        
+                        // 假设 .ai_helper 文件夹在项目根目录下
+                        const aiHelperRoot = path.join(projectRoot, '.ai_helper');
+                        const chatWorkingSpaceRoot = path.join(aiHelperRoot, 'agent', 'memory_repo', 'chat_working_space');
+        
+                        return {
+                            projectRoot: projectRoot,
+                            projectName: projectName,
+                            aiHelperRoot: aiHelperRoot,
+                            chatWorkingSpaceRoot: chatWorkingSpaceRoot,
+                        };
+                    },
+                    convertToWebviewUri: (absolutePath) => {
+                        const uri = vscode.Uri.file(absolutePath);
+                        return panel.webview.asWebviewUri(uri).toString();
+                    },
+                    threadRepository: threadRepository,
+                    postMessage: (message) => {
+                        panel.webview.postMessage(message);
+                    }
+                };
+
+                chatProvider.resolveWebviewPanel(panel, host_utils);
 
                 // 获取线程和代理信息
                 const thread = threadRepository.getThread(threadId);
@@ -184,7 +211,7 @@ function activateChatExtension(context) {
                 const messagesAfterLastMarker = threadRepository.getMessagesAfterLastMarker(thread);
                 if (messagesAfterLastMarker.length === 0 && agentConfig && agentConfig.metadata && agentConfig.metadata.bootMessage) {
                     const bootResponse = Response.fromJSON(agentConfig.metadata.bootMessage);
-                    chatProvider.handleResponse(bootResponse, thread, panel);
+                    chatProvider.handleNormalResponse(bootResponse, thread, panel, host_utils);
                 }
             }
         })

@@ -32,33 +32,7 @@ class ChatViewProvider {
         return htmlContent;
     }
 
-    resolveWebviewPanel(panel) {
-        const host_utils = {
-            getConfig: () => {
-                const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-                const projectRoot = workspaceFolder ? workspaceFolder.uri.fsPath : '';
-                const projectName = workspaceFolder ? workspaceFolder.name : '';
-
-                // 假设 .ai_helper 文件夹在项目根目录下
-                const aiHelperRoot = path.join(projectRoot, '.ai_helper');
-                const chatWorkingSpaceRoot = path.join(aiHelperRoot, 'agent', 'memory_repo', 'chat_working_space');
-
-                return {
-                    projectRoot: projectRoot,
-                    projectName: projectName,
-                    aiHelperRoot: aiHelperRoot,
-                    chatWorkingSpaceRoot: chatWorkingSpaceRoot,
-                };
-            },
-            convertToWebviewUri: (absolutePath) => {
-                const uri = vscode.Uri.file(absolutePath);
-                return panel.webview.asWebviewUri(uri).toString();
-            },
-            threadRepository: this.threadRepository,
-            postMessage: (message) => {
-                panel.webview.postMessage(message);
-            }
-        };
+    resolveWebviewPanel(panel, host_utils) {
 
         panel.webview.onDidReceiveMessage(async (message) => {
             const threadId = message.threadId;
@@ -217,9 +191,14 @@ class ChatViewProvider {
             host_utils: host_utils
         });
     }
+
     addAvailableTasks(message, availableTasks, panel) {
         message.availableTasks = availableTasks;
-        this.threadRepository.updateMessage(message.threadId, message.id, message);
+        availableTasks.forEach(availableTask => {
+            availableTask.task.host_utils = undefined;
+        })
+        const thread = this.threadRepository.getThread(message.threadId);
+        this.threadRepository.updateMessage(thread, message.id, message);
         panel.webview.postMessage({
             type: 'updateBotMessage',
             messageId: message.id,
@@ -227,26 +206,23 @@ class ChatViewProvider {
         });
     }
 
-    async handleResponse(response, updatedThread, panel) {
-        let botMessage;
-        if (response.shouldUpdateLastMessage()) {
-            const lastBotMessageIndex = [...updatedThread.messages].reverse().findIndex(msg => msg.sender === 'bot');
-            if (lastBotMessageIndex !== -1) {
-                const index = updatedThread.messages.length - 1 - lastBotMessageIndex;
-                botMessage = updatedThread.messages[index];
-
-                if (botMessage && response.hasAvailableTasks()) { // 目前更新最后一条就这一种情况：给最后一条加按钮。更新最后一条的成熟逻辑及相关机制暂且不做设计，在作出合理的机制设计之前，这条注释不能删除，以提示后人防止将来改出bug。
-                    this.addAvailableTasks(botMessage, response.getAvailableTasks(), panel);
-                }
-            }
-        } else {
-            botMessage = await this.addNewBotMessage(response, updatedThread, panel); //目前 addNewBotMessage 中，非流式response有availableTask会被添加，而流式则不会处理，因为流式会走更新最后一条的逻辑，目前不确定非流式的是否存在更新最后一条这种机制之外的机制来添加。
+    async handleNormalResponse(response, updatedThread, panel, host_utils) {
+        const botMessage = await this.addNewBotMessage(response, updatedThread, panel);
+        
+        if (response.hasAvailableTasks()) {
+            this.addAvailableTasks(botMessage, response.getAvailableTasks(), panel);
         }
 
+        await this.handleNextTasks(response, updatedThread, panel, host_utils, botMessage.id);
+        
+    }
 
+    async handleNextTasks(response, updatedThread, panel, host_utils, messageId){
         if (response.hasNextTasks()) {
             const nextTasks = response.getNextTasks();
             for (const nextTask of nextTasks) {
+                nextTask.host_utils = host_utils;
+                nextTask.meta = { ...nextTask.meta, messageId: messageId };
                 await this.handleThread(updatedThread, nextTask, panel);
             }
         }   
@@ -256,11 +232,19 @@ class ChatViewProvider {
         try {
             if (task.skipBotMessage) {
                 // 如果任务设置了跳过机器人消息，使用一个不添加消息的处理器
-                const silentResponseHandler = async () => { };
+                const silentResponseHandler = async (response, updatedThread) => { 
+
+                    if (response.hasAvailableTasks()) {
+                        const botMessage = task.host_utils.threadRepository.getMessageById(thread.id, task.meta.messageId);
+                        this.addAvailableTasks(botMessage, response.getAvailableTasks(), panel);
+                    }
+
+                    await this.handleNextTasks(response, updatedThread, panel, task.host_utils, task.meta.messageId);
+                };
                 await this.messageHandler.handleTask(thread, task, silentResponseHandler);
             } else {
-                await this.messageHandler.handleTask(thread, task, (response, updatedThread) =>
-                    this.handleResponse(response, updatedThread, panel)
+                await this.messageHandler.handleTask(thread, task, async (response, updatedThread) =>
+                    await this.handleNormalResponse(response, updatedThread, panel, task.host_utils)
                 );
             }
         } catch (error) {
@@ -286,18 +270,20 @@ class ChatViewProvider {
     }
 
     async addNewBotMessage(response, thread, panel) {
-        if (response.isStream()) {
-            const botMessage = {
-                id: 'msg_' + Date.now(),
-                sender: 'bot',
-                text: '',
-                isHtml: response.isHtml(),
-                timestamp: Date.now(),
-                threadId: thread.id,
-                isVirtual: response.meta?.isVirtual || false
+        let botMessage = {
+            id: 'msg_' + Date.now(),
+            sender: 'bot',
+            text: '',
+            isHtml: response.isHtml(),
+            timestamp: Date.now(),
+            threadId: thread.id,
+            meta: response.getMeta(),
+            isVirtual: response.getMeta()?.isVirtual || false
+        };
 
-            };
-            this.threadRepository.addMessage(thread, botMessage);
+        this.threadRepository.addMessage(thread, botMessage);
+
+        if (response.isStream()) {
             panel.webview.postMessage({
                 type: 'addBotMessage',
                 message: botMessage
@@ -321,33 +307,19 @@ class ChatViewProvider {
                     text: ' An error occurred during processing.'
                 });
             }
-
-            this.threadRepository.updateMessage(thread, botMessage.id, {
-                text: botMessage.text,
-                meta: response.meta,
-                availableTasks: response.availableTasks
-            });
         } else {
-            const botMessage = {
-                id: 'msg_' + Date.now(),
-                sender: 'bot',
-                text: response.getFullMessage(),
-                isHtml: response.isHtml(),
-                timestamp: Date.now(),
-                threadId: thread.id,
-                meta: response.meta,
-                isVirtual: response.meta?.isVirtual || false
-
-            };
-            if (response.hasAvailableTasks()) {
-                botMessage.availableTasks = response.getAvailableTasks();
-            }
-            this.threadRepository.addMessage(thread, botMessage);
+            botMessage.text = response.getFullMessage();
             panel.webview.postMessage({
                 type: 'addBotMessage',
                 message: botMessage
             });
         }
+
+        this.threadRepository.updateMessage(thread, botMessage.id, {
+            text: botMessage.text
+        });
+        
+        return botMessage;
     }
 }
 

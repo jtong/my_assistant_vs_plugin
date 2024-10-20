@@ -243,6 +243,14 @@ class ChatThreadRepository {
         const lastMarkerIndex = thread.messages.map(msg => msg.type).lastIndexOf('marker');
         return lastMarkerIndex !== -1 ? thread.messages.slice(lastMarkerIndex + 1) : thread.messages;
     }
+    
+    getMessageById(threadId, messageId) {
+        const thread = this.getThread(threadId);
+        if (thread) {
+            return thread.messages.find(message => message.id === messageId);
+        }
+        return null;
+    }
 }
 
 module.exports = ChatThreadRepository;

@@ -28,7 +28,7 @@ class ChatListViewProvider {
         const chatItems = Object.values(threads).flatMap(thread => ({
             name: thread.name,
             id: thread.id
-        }));
+        })).reverse();
         return chatItems
     }
 
