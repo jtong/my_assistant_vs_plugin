@@ -124,7 +124,7 @@ body {
 .edit-wrapper textarea {
     width: 100%;
     resize: both;
-    overflow: hidden;
+    overflow: auto;
     min-height: 50px;
     padding: 5px;
     margin-bottom: 5px;

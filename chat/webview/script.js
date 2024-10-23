@@ -542,11 +542,9 @@ function sendMessageHandler() {
 
     if (userInput_value) {
         isBotResponding = true;  // 设置标志，表示 bot 开始回复
-        const messageId = 'msg_' + Math.random().toString(36).substr(2, 9);
         const message = {
             type: 'sendMessage',
             threadId: window.threadId,
-            messageId: messageId,
             message: userInput_value
         };
 
@@ -592,16 +590,16 @@ function displayTaskButtons(tasks) {
 }
 
 function executeTask(task) {
-    if (!task.skipUserMessage) {
-        const userMessage = task.message;
-        displayUserMessage({
-            id: 'msg_' + Date.now(),
-            sender: 'user',
-            text: userMessage,
-            timestamp: Date.now(),
-            threadId: window.threadId
-        });
-    }
+    // if (!task.skipUserMessage) {
+    //     const userMessage = task.message;
+    //     displayUserMessage({
+    //         id: 'msg_' + Date.now(),
+    //         sender: 'user',
+    //         text: userMessage,
+    //         timestamp: Date.now(),
+    //         threadId: window.threadId
+    //     });
+    // }
     const message = {
         type: 'executeTask',
         threadId: window.threadId,

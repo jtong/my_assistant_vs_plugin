@@ -69,6 +69,7 @@ function activateChatExtension(context) {
             canSelectMany: false
         })
     );
+    
 
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.newChat', async () => {

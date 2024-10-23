@@ -38,7 +38,7 @@ input:
     - 分清webview的代码和插件的代码和agent app的代码
 
     ## 任务
-    我希望 改改机制，不再支持updateLastMessage，而是统一的在message添加完，执行nextTask的时候，把message的id设置给task的meta。而当resposne里有availableTask的时候，我默认response的meta里，也有message的id。
+    我希望 修正一个问题，有时候批量删除的时候checkbox回传一个不存在messageId，查一查是因为什么？
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

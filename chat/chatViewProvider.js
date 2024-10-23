@@ -140,7 +140,12 @@ class ChatViewProvider {
         let thread = this.threadRepository.getThread(threadId);
 
         if (!task.skipUserMessage) {
-            this.messageHandler.addUserMessageToThread(thread, task.message);
+            const updatedThread = this.messageHandler.addUserMessageToThread(thread, task.message);
+            const userMessage = updatedThread.messages[updatedThread.messages.length - 1];
+            panel.webview.postMessage({
+                type: 'addUserMessage',
+                message: userMessage
+            });
         }
         task.host_utils = host_utils;
         if (task) {
