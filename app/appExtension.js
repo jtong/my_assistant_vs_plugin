@@ -37,7 +37,7 @@ function activate(context) {
                     context.subscriptions
                 );
 
-                // 发送初始配置到 webview
+                // 发送初始配置到 webview              
                 panel.webview.postMessage({
                     type: 'setInterface',
                     value: appInterface.getConfig()

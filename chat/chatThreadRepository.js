@@ -1,13 +1,15 @@
 // chat/chatThreadRepository.js
 const fs = require('fs');
 const path = require('path');
+const SyncManager = require('../app/syncManager');
 
 class ChatThreadRepository {
-    constructor(storagePath,agentLoader) {
+    constructor(storagePath, agentLoader) {
         this.storagePath = storagePath;
         this.indexPath = path.join(this.storagePath, 'threads.json');
         this.buildThreadsIfNotExists();
-        this.agentLoader= agentLoader;
+        this.agentLoader = agentLoader;
+        this.syncManager = new SyncManager();
     }
 
     getThreadFolderPath(threadId) {
@@ -149,17 +151,10 @@ class ChatThreadRepository {
         return null;
     }
 
-    deleteThread(threadId) {
-        // not deleting thread folder for now
-        // const threadFolder = path.join(this.storagePath, threadId);
-        // if (fs.existsSync(threadFolder)) {
-        //     fs.rmdirSync(threadFolder, { recursive: true });
-        // }
-
-        // only update index for now
-        const index = this.loadIndex();
-        delete index[threadId];
-        this.saveIndex(index);
+    async deleteThread(threadId) {
+        let threads = await this.getAllThreads();
+        delete threads[threadId];
+        await this.syncManager.setItem('chatThreads', threads);
     }
 
     removeLastBotMessage(threadId) {
@@ -250,6 +245,21 @@ class ChatThreadRepository {
             return thread.messages.find(message => message.id === messageId);
         }
         return null;
+    }
+
+    async getAllThreads() {
+        return await this.syncManager.getItem('chatThreads') || {};
+    }
+
+    async saveThread(thread) {
+        let threads = await this.getAllThreads();
+        threads[thread.id] = thread;
+        await this.syncManager.setItem('chatThreads', threads);
+    }
+
+    async getThread(threadId) {
+        const threads = await this.getAllThreads();
+        return threads[threadId];
     }
 }
 

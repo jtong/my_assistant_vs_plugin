@@ -438,6 +438,25 @@ function createMessageElement(message) {
     container.appendChild(textContainer);
     messageElement.appendChild(container);
 
+    // 添加消息气泡的点击事件
+    messageElement.addEventListener('click', (event) => {
+        // 如果不在编辑模式下，不处理点击事件
+        if (!document.getElementById('chat-container').classList.contains('edit-mode')) {
+            return;
+        }
+        
+        // 如果点击的是按钮、链接或复选框本身，不触发选中效果
+        if (event.target.tagName === 'BUTTON' || 
+            event.target.tagName === 'A' || 
+            event.target.className === 'message-checkbox') {
+            return;
+        }
+        
+        // 切换复选框的状态
+        const checkbox = messageElement.querySelector('.message-checkbox');
+        checkbox.checked = !checkbox.checked;
+    });
+
     return messageElement;
 }
 

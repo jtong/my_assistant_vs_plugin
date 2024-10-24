@@ -38,7 +38,7 @@ input:
     - 分清webview的代码和插件的代码和agent app的代码
 
     ## 任务
-    我希望 修正一个问题，有时候批量删除的时候checkbox回传一个不存在messageId，查一查是因为什么？
+    我希望 点击气泡就会勾中message的checkbox，而不是非要勾中checkbox本身。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

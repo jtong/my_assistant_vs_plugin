@@ -311,9 +311,12 @@ body {
 .edit-mode .message-checkbox {
     display: inline-block;
 }
+
 .message-checkbox {
     display: none;
     margin-right: 5px;
+    pointer-events: none; /* 防止复选框自身的点击事件触发冒泡 */
+
 }
 #delete-selected-btn {
     background-color: #f44336;
