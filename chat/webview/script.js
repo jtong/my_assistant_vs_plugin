@@ -553,6 +553,31 @@ function displayThread(thread) {
     addEditButtons();
 }
 
+function attachFilePathToMessage(message) {
+    if (selectedFilePath) {
+        message.filePath = selectedFilePath;
+        selectedFilePath = null; // 发送后清除暂存的文件路径
+
+        // 移除界面上的提示
+        const hintElement = document.getElementById('file-selected-hint');
+        if (hintElement) {
+            hintElement.remove();
+        }
+    }
+}
+
+function doSendMessage(message_text){
+    isBotResponding = true;  // 设置标志，表示 bot 开始回复
+    const message = {
+        type: 'sendMessage',
+        threadId: window.threadId,
+        message: message_text
+    };
+
+    attachFilePathToMessage(message);
+    window.vscode.postMessage(message);
+}
+
 function sendMessageHandler() {
     if (isBotResponding) return;  // 如果 bot 正在回复，不允许发送新消息
 
@@ -560,26 +585,8 @@ function sendMessageHandler() {
     const userInput_value = userInput.value.trim();
 
     if (userInput_value) {
-        isBotResponding = true;  // 设置标志，表示 bot 开始回复
-        const message = {
-            type: 'sendMessage',
-            threadId: window.threadId,
-            message: userInput_value
-        };
-
-        if (selectedFilePath) {
-            message.filePath = selectedFilePath;
-            selectedFilePath = null; // 发送后清除暂存的文件路径
-
-            // 移除界面上的提示
-            const hintElement = document.getElementById('file-selected-hint');
-            if (hintElement) {
-                hintElement.remove();
-            }
-        }
-        window.vscode.postMessage(message);
-
-        userInput.value = '';
+        doSendMessage(userInput_value);
+            userInput.value = '';
     }
 }
 
@@ -619,12 +626,19 @@ function executeTask(task) {
     //         threadId: window.threadId
     //     });
     // }
-    const message = {
-        type: 'executeTask',
-        threadId: window.threadId,
-        task: task,
-    };
-    window.vscode.postMessage(message);
+
+    if (isBotResponding) return;  // 如果 bot 正在回复，不允许发送新任务
+
+    if (task.type === 'message') {
+        doSendMessage(task.message);
+    }else{
+        const message = {
+            type: 'executeTask',
+            threadId: window.threadId,
+            task: task,
+        };
+        window.vscode.postMessage(message);
+    }
 }
 
 

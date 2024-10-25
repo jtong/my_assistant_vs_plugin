@@ -38,7 +38,7 @@ input:
     - 分清webview的代码和插件的代码和agent app的代码
 
     ## 任务
-    我希望 点击气泡就会勾中message的checkbox，而不是非要勾中checkbox本身。
+    我希望 点击bootmessage的task的时候，如果是message类型的消息，且已经选中了上下文，也会发出去带上上下文。不知道为什么没带上。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
