@@ -31,8 +31,6 @@ class SettingsEditorProvider {
             
             // 如果解析成功，进行保存操作
             this.threadRepository.updateThreadSettings(threadId, newSettings);
-            const thread = this.threadRepository.loadThread(threadId);
-            this.agentLoader.updateAgentForThread(thread);
             
             // 显示成功消息
             vscode.window.showInformationMessage('Settings saved successfully.');

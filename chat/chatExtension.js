@@ -262,8 +262,6 @@ function activateChatExtension(context) {
                         const content = fs.readFileSync(tempFilePath, 'utf8');
                         const newSettings = yaml.load(content);
                         threadRepository.updateThreadSettings(threadId, newSettings);
-                        const updatedThread = threadRepository.loadThread(threadId);
-                        agentLoader.updateAgentForThread(updatedThread);
                         vscode.window.showInformationMessage('Settings saved successfully.');
                     } catch (error) {
                         vscode.window.showErrorMessage(`Error saving settings: ${error.message}`);

@@ -162,8 +162,6 @@ class ChatViewProvider {
         }
         currentSettings[settingKey] = value;
         this.threadRepository.updateThreadSettings(threadId, currentSettings);
-        const updatedThread = this.threadRepository.getThread(threadId);
-        this.messageHandler.agentLoader.updateAgentForThread(updatedThread);
     }
 
     handleDeleteMessages(message, threadId, panel) {

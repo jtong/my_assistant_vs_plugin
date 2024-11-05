@@ -212,6 +212,7 @@ class ChatThreadRepository {
         if (thread) {
             thread.settings = newSettings;
             this.saveThread(thread);
+            this.agentLoader.updateAgentForThread(thread);
         }
     }
 
