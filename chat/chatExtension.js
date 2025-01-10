@@ -69,7 +69,7 @@ function activateChatExtension(context) {
             canSelectMany: false
         })
     );
-    
+
 
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.newChat', async () => {
@@ -161,11 +161,11 @@ function activateChatExtension(context) {
                         const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
                         const projectRoot = workspaceFolder ? workspaceFolder.uri.fsPath : '';
                         const projectName = workspaceFolder ? workspaceFolder.name : '';
-        
+
                         // 假设 .ai_helper 文件夹在项目根目录下
                         const aiHelperRoot = path.join(projectRoot, '.ai_helper');
                         const chatWorkingSpaceRoot = path.join(aiHelperRoot, 'agent', 'memory_repo', 'chat_working_space');
-        
+
                         return {
                             projectRoot: projectRoot,
                             projectName: projectName,
@@ -274,6 +274,88 @@ function activateChatExtension(context) {
             });
 
             context.subscriptions.push(closeDisposable);
+        })
+    );
+
+    // 在 activateChatExtension 函数中添加新的命令注册
+    context.subscriptions.push(
+        vscode.commands.registerCommand('myAssistant.createThreadFromJson', async (uri) => {
+            try {
+                // 读取 JSON 文件内容
+                const jsonContent = fs.readFileSync(uri.fsPath, 'utf8');
+                const threadData = JSON.parse(jsonContent);
+
+                // 验证 JSON 结构
+                if (!threadData.id || !threadData.name || !threadData.agent || !Array.isArray(threadData.messages)) {
+                    throw new Error('Invalid thread JSON structure. Required fields: id, name, agent, messages array');
+                }
+
+                // 验证指定的 agent 是否存在
+                const agents = agentLoader.getAgentsList();
+                if (!agents.find(a => a.name === threadData.agent)) {
+                    const selectedAgent = await vscode.window.showQuickPick(
+                        agents.map(agent => agent.name),
+                        {
+                            placeHolder: "Selected agent not found. Please choose an available agent",
+                            ignoreFocusOut: true
+                        }
+                    );
+                    if (!selectedAgent) {
+                        return;
+                    }
+                    threadData.agent = selectedAgent;
+                }
+
+                // 让用户确认或修改聊天名称
+                const chatName = await vscode.window.showInputBox({
+                    prompt: "Enter a name for the new chat",
+                    value: threadData.name,
+                    ignoreFocusOut: true
+                });
+
+                if (!chatName) {
+                    return;
+                }
+
+                // 生成新的 thread ID
+                const newThreadId = 'thread_' + Date.now();
+
+                // 使用现有的 createThread 方法创建基本 thread 结构
+                const newThread = threadRepository.createThread(
+                    newThreadId,
+                    chatName,
+                    threadData.agent,
+                    threadData.knowledge_space
+                );
+
+                // 更新所有消息的 threadId
+                const messages = threadData.messages.map(msg => ({
+                    ...msg,
+                    id: msg.id || 'msg_' + Date.now(),
+                    threadId: newThreadId,
+                    timestamp: msg.timestamp || Date.now()
+                }));
+
+                // 使用 threadRepository 中的方法批量添加消息
+                messages.forEach(message => {
+                    threadRepository.addMessage(newThread, message);
+                });
+
+                // 如果有设置，使用现有方法更新设置
+                if (threadData.settings) {
+                    threadRepository.updateThreadSettings(newThreadId, threadData.settings);
+                }
+
+                // 刷新聊天列表
+                listProvider.refresh();
+
+                // 打开新创建的聊天
+                vscode.commands.executeCommand('myAssistant.openChat', chatName, newThreadId);
+
+                vscode.window.showInformationMessage(`Successfully created thread from JSON: ${chatName}`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to create thread from JSON: ${error.message}`);
+            }
         })
     );
 

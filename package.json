@@ -151,9 +151,27 @@
                 "command": "myAssistant.refreshAppList",
                 "title": "Refresh App List",
                 "icon": "$(refresh)"
+            },
+            {
+                "command": "myAssistant.createThreadFromJson",
+                "title": "Create Chat Thread From JSON"
             }
         ],
         "menus": {
+            "explorer/context": [
+                {
+                    "command": "myAssistant.createThreadFromJson",
+                    "when": "resourceExtname == .json",
+                    "group": "myAssistant"
+                }
+            ],
+            "editor/context": [
+                {
+                    "command": "myAssistant.createThreadFromJson",
+                    "when": "resourceExtname == .json",
+                    "group": "myAssistant"
+                }
+            ],
             "view/title": [
                 {
                     "command": "myAssistant.newChat",

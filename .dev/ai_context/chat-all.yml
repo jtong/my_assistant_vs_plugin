@@ -38,7 +38,7 @@ input:
     - 分清webview的代码和插件的代码和agent app的代码
 
     ## 任务
-    我希望 可以在agent里面更新thread settings，同时还会更新AgentLoader，导致thread settings马上生效有什么建议吗？
+    我希望 支持一个命令，可以选中一个json文件，右键菜单执行命令，基于这个json文件建立一个thread。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
