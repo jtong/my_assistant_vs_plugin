@@ -41,15 +41,64 @@
         input[readonly] {
             background-color: #f0f0f0;
         }
+
+        /* App List Styles */
+        .app-list {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+        }
+
+        .app-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .app-item {
+            border: 1px solid #eee;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+
+        .app-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .app-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .app-config-container {
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
     </style>
 </head>
 
 <body>
     <div id="vsgradio-container"></div>
+    <div id="app-list-root"></div>
 
+    <script src="./appList.js"></script>
     <script>
         const vscode = acquireVsCodeApi();
         let interfaceConfig = null;
+        let appList = null;
+
+        // Initialize app list
+        window.addEventListener('load', () => {
+            appList = new AppList();
+            document.getElementById('app-list-root').appendChild(appList.render());
+        });
 
         function renderInterface(config) {
             interfaceConfig = config;  // 更新全局的配置对象
@@ -111,7 +160,6 @@
             });
         }
 
-
         function getEventObject(componentId, eventName) {
             // 从 interfaceConfig 中找到对应的事件对象
             let eventObj = null;
@@ -167,14 +215,29 @@
 
         window.addEventListener('message', event => {
             const message = event.data;
-            console.log('Received message from extension:', message);  // 保留日志
+            console.log('Received message from extension:', message);
             switch (message.type) {
                 case 'setInterface':
-                    interfaceConfig = message.value;
-                    renderInterface(interfaceConfig);
+                    renderInterface(message.value);
                     break;
                 case 'eventResult':
                     handleEventResult(message);
+                    break;
+                case 'updateApps':
+                    console.log('Updating apps with:', message.apps);
+                    if (appList) {
+                        appList.updateApps(message.apps);
+                    } else {
+                        console.error('AppList not initialized');
+                    }
+                    break;
+                case 'updateAppConfig':
+                    console.log('Updating app config:', message.appId, message.config);
+                    if (appList) {
+                        appList.updateAppConfig(message.appId, message.config);
+                    } else {
+                        console.error('AppList not initialized');
+                    }
                     break;
             }
         });

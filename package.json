@@ -28,6 +28,34 @@
         "node_modules/**"
     ],
     "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "my-assistant",
+                    "title": "My Assistant",
+                    "icon": "media/chat-icon.png"
+                }
+            ]
+        },
+        "views": {
+            "my-assistant": [
+                {
+                    "id": "chatList",
+                    "name": "Chat",
+                    "icon": "media/chat-icon.png"
+                },
+                {
+                    "id": "jobList",
+                    "name": "Job",
+                    "icon": "media/job-icon.png"
+                },
+                {
+                    "id": "appList",
+                    "name": "App",
+                    "icon": "media/app-icon.png"
+                }
+            ]
+        },
         "configuration": {
             "title": "My Assistant Configuration",
             "properties": {
@@ -103,50 +131,37 @@
                 "icon": "$(refresh)"
             },
             {
-                "command": "myAssistant.installAgent",
-                "title": "Install Agent"
+                "command": "myAssistant.newApp",
+                "title": "New App",
+                "icon": "$(plus)"
             },
             {
-                "command": "myAssistant.showAgentDetails",
-                "title": "Show Agent Details"
+                "command": "myAssistant.deleteApp",
+                "title": "Delete App"
             },
             {
-                "command": "myAssistant.newAppThread",
-                "title": "Show VSGradio Interface"
+                "command": "myAssistant.renameApp",
+                "title": "Rename App"
+            },
+            {
+                "command": "myAssistant.openApp",
+                "title": "Open App"
+            },
+            {
+                "command": "myAssistant.refreshAppList",
+                "title": "Refresh App List",
+                "icon": "$(refresh)"
             }
         ],
-        "viewsContainers": {
-            "activitybar": [
-                {
-                    "id": "chatSidebar",
-                    "title": "Chat",
-                    "icon": "media/chat-icon.png"
-                }
-            ]
-        },
-        "views": {
-            "chatSidebar": [
-                {
-                    "id": "chatList",
-                    "name": "Chat List",
-                    "type": "tree"
-                },
-                {
-                    "id": "jobList",
-                    "name": "Job List",
-                    "type": "tree"
-                },
-                {
-                    "id": "agentMarketplace",
-                    "name": "Agent Marketplace",
-                    "type": "webview"
-                }
-            ]
-        },
         "menus": {
             "view/title": [
                 {
                     "command": "myAssistant.newChat",
+                    "when": "view == chatList",
+                    "group": "navigation"
+                },
+                {
+                    "command": "myAssistant.refreshChatList",
                     "when": "view == chatList",
                     "group": "navigation"
                 },
@@ -156,41 +171,49 @@
                     "group": "navigation"
                 },
                 {
-                    "command": "myAssistant.refreshChatList",
-                    "when": "view == chatList",
+                    "command": "myAssistant.refreshAgentMarketplace",
+                    "when": "view == jobList",
+                    "group": "navigation"
+                },
+                {
+                    "command": "myAssistant.newApp",
+                    "when": "view == appList",
+                    "group": "navigation"
+                },
+                {
+                    "command": "myAssistant.refreshAppList",
+                    "when": "view == appList",
                     "group": "navigation"
                 }
             ],
             "view/item/context": [
                 {
-                    "command": "myAssistant.renameChat",
-                    "when": "view == chatList && viewItem == chat",
-                    "group": "1_modification"
+                    "command": "myAssistant.deleteChat",
+                    "when": "view == chatList && viewItem == chat"
                 },
                 {
-                    "command": "myAssistant.openSettingsEditor",
-                    "when": "view == chatList && viewItem == chat",
-                    "group": "1_modification"
+                    "command": "myAssistant.renameChat",
+                    "when": "view == chatList && viewItem == chat"
                 },
                 {
                     "command": "myAssistant.revealInExplorer",
-                    "when": "view == chatList && viewItem == chat",
-                    "group": "1_modification"
-                },
-                {
-                    "command": "myAssistant.deleteChat",
-                    "when": "view == chatList && viewItem == chat",
-                    "group": "2_modification"
-                },
-                {
-                    "command": "myAssistant.renameJob",
-                    "when": "view == jobList && viewItem == job",
-                    "group": "1_modification"
+                    "when": "view == chatList && viewItem == chat"
                 },
                 {
                     "command": "myAssistant.deleteJob",
-                    "when": "view == jobList && viewItem == job",
-                    "group": "2_modification"
+                    "when": "view == jobList && viewItem == job"
+                },
+                {
+                    "command": "myAssistant.renameJob",
+                    "when": "view == jobList && viewItem == job"
+                },
+                {
+                    "command": "myAssistant.deleteApp",
+                    "when": "view == appList && viewItem == app"
+                },
+                {
+                    "command": "myAssistant.renameApp",
+                    "when": "view == appList && viewItem == app"
                 }
             ]
         }
@@ -207,5 +230,9 @@
         "handlebars": "^4.7.8",
         "js-yaml": "^4.1.0",
         "vsgradio": "^0.0.1"
+    },
+    "devDependencies": {
+        "webpack": "^5.89.0",
+        "webpack-cli": "^5.1.4"
     }
 }
