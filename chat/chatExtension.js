@@ -10,6 +10,7 @@ const SettingsEditorProvider = require('./settingsEditorProvider');
 const fs = require('fs');
 const yaml = require('js-yaml');
 const { Response, Task, AvailableTask } = require('ai-agent-response');
+const createHostUtils = require('./hostUtils');
 
 // Object to store open chat panels
 const openChatPanels = {};
@@ -156,32 +157,8 @@ function activateChatExtension(context) {
                 );
 
                 panel.webview.html = chatProvider.getWebviewContent(panel.webview, threadId);
-                const host_utils = {
-                    getConfig: () => {
-                        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-                        const projectRoot = workspaceFolder ? workspaceFolder.uri.fsPath : '';
-                        const projectName = workspaceFolder ? workspaceFolder.name : '';
 
-                        // 假设 .ai_helper 文件夹在项目根目录下
-                        const aiHelperRoot = path.join(projectRoot, '.ai_helper');
-                        const chatWorkingSpaceRoot = path.join(aiHelperRoot, 'agent', 'memory_repo', 'chat_working_space');
-
-                        return {
-                            projectRoot: projectRoot,
-                            projectName: projectName,
-                            aiHelperRoot: aiHelperRoot,
-                            chatWorkingSpaceRoot: chatWorkingSpaceRoot,
-                        };
-                    },
-                    convertToWebviewUri: (absolutePath) => {
-                        const uri = vscode.Uri.file(absolutePath);
-                        return panel.webview.asWebviewUri(uri).toString();
-                    },
-                    threadRepository: threadRepository,
-                    postMessage: (message) => {
-                        panel.webview.postMessage(message);
-                    }
-                };
+                const host_utils = createHostUtils(panel, threadRepository);
 
                 chatProvider.resolveWebviewPanel(panel, host_utils);
 
@@ -208,11 +185,24 @@ function activateChatExtension(context) {
                     delete openChatPanels[chatName];
                 });
 
-                // 处理 bootMessage
+                // 处理 bootMessage 和 bootTASK，建议两者只能存在一个
                 const messagesAfterLastMarker = threadRepository.getMessagesAfterLastMarker(thread);
-                if (messagesAfterLastMarker.length === 0 && agentConfig && agentConfig.metadata && agentConfig.metadata.bootMessage) {
-                    const bootResponse = Response.fromJSON(agentConfig.metadata.bootMessage);
-                    chatProvider.handleNormalResponse(bootResponse, thread, panel, host_utils);
+                if (messagesAfterLastMarker.length === 0 && agentConfig) {
+                    if (agentConfig.metadata && agentConfig.metadata.bootMessage) { // 如果配置了 bootMessage
+                        const bootResponse = Response.fromJSON(agentConfig.metadata.bootMessage);
+                        chatProvider.handleNormalResponse(bootResponse, thread, panel, host_utils);
+                    }
+
+                    const initTask =  new Task({
+                        name: "InitTask",
+                        type: Task.TYPE_ACTION,
+                        message: "",
+                        meta: {},
+                        host_utils
+                    });
+
+                    chatProvider.handleThread(thread, initTask, panel);
+
                 }
             }
         })

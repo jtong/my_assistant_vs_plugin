@@ -207,15 +207,24 @@
             "view/item/context": [
                 {
                     "command": "myAssistant.deleteChat",
-                    "when": "view == chatList && viewItem == chat"
+                    "when": "view == chatList && viewItem == chat",
+                    "group": "1_modification"
+
                 },
                 {
                     "command": "myAssistant.renameChat",
-                    "when": "view == chatList && viewItem == chat"
+                    "when": "view == chatList && viewItem == chat",
+                    "group": "1_modification"
                 },
                 {
                     "command": "myAssistant.revealInExplorer",
-                    "when": "view == chatList && viewItem == chat"
+                    "when": "view == chatList && viewItem == chat",
+                    "group": "1_modification"
+                },
+                {
+                    "command": "myAssistant.openSettingsEditor",
+                    "when": "view == chatList && viewItem == chat",
+                    "group": "2_modification"
                 },
                 {
                     "command": "myAssistant.deleteJob",
