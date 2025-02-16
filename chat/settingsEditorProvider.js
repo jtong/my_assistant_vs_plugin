@@ -15,7 +15,7 @@ class SettingsEditorProvider {
             if (thread && thread.agent) {
                 const agent = this.agentLoader.loadAgentForThread(thread);
                 settings = agent.settings || {};
-                this.threadRepository.updateThreadSettings(threadId, settings);
+                this.threadRepository.updateThreadSettings(thread, settings);
             }
         }
         return yaml.dump(settings || {});
@@ -28,9 +28,10 @@ class SettingsEditorProvider {
         try {
             // 尝试解析 YAML
             const newSettings = yaml.load(content);
-            
+
+            const thread = this.threadRepository.loadTread(threadId)
             // 如果解析成功，进行保存操作
-            this.threadRepository.updateThreadSettings(threadId, newSettings);
+            this.threadRepository.updateThreadSettings(thread, newSettings);
             
             // 显示成功消息
             vscode.window.showInformationMessage('Settings saved successfully.');

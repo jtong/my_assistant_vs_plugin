@@ -155,13 +155,14 @@ class ChatViewProvider {
 
     handleUpdateSetting(message, threadId) {
         const { settingKey, value } = message;
-        let currentSettings = this.threadRepository.getThreadSettings(threadId) || {};
+        const thread = this.threadRepository.loadThread(threadId);
+        let currentSettings = thread.settings || {};
         if (Object.keys(currentSettings).length === 0) {
             const agentConfig = this.messageHandler.agentLoader.getAgentConfig(this.threadRepository.getThread(threadId).agent);
             currentSettings = { ...agentConfig.settings };
         }
         currentSettings[settingKey] = value;
-        this.threadRepository.updateThreadSettings(threadId, currentSettings);
+        this.threadRepository.updateThreadSettings(thread, currentSettings);
     }
 
     handleDeleteMessages(message, threadId, panel) {

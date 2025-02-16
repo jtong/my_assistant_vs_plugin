@@ -207,10 +207,11 @@ class ChatThreadRepository {
         return thread.settings;
     }
 
-    updateThreadSettings(threadId, newSettings) {
-        const thread = this.loadThread(threadId);
+    updateThreadSettings(thread_in_memory, newSettings) {
+        const thread = this.loadThread(thread_in_memory.id);
         if (thread) {
             thread.settings = newSettings;
+            thread_in_memory.settings = newSettings;
             this.saveThread(thread);
             this.agentLoader.updateAgentForThread(thread);
         }

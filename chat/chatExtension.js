@@ -197,8 +197,11 @@ function activateChatExtension(context) {
                         name: "InitTask",
                         type: Task.TYPE_ACTION,
                         message: "",
-                        meta: {},
-                        host_utils
+                        meta: {
+                        },
+                        host_utils,
+                        skipUserMessage: true,
+                        skipBotMessage: false
                     });
 
                     chatProvider.handleThread(thread, initTask, panel);
@@ -251,7 +254,7 @@ function activateChatExtension(context) {
                     try {
                         const content = fs.readFileSync(tempFilePath, 'utf8');
                         const newSettings = yaml.load(content);
-                        threadRepository.updateThreadSettings(threadId, newSettings);
+                        threadRepository.updateThreadSettings(thread, newSettings);
                         vscode.window.showInformationMessage('Settings saved successfully.');
                     } catch (error) {
                         vscode.window.showErrorMessage(`Error saving settings: ${error.message}`);
@@ -333,7 +336,7 @@ function activateChatExtension(context) {
 
                 // 如果有设置，使用现有方法更新设置
                 if (threadData.settings) {
-                    threadRepository.updateThreadSettings(newThreadId, threadData.settings);
+                    threadRepository.updateThreadSettings(newThread, threadData.settings);
                 }
 
                 // 刷新聊天列表
