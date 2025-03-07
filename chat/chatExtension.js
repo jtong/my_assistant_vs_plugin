@@ -138,7 +138,7 @@ function activateChatExtension(context) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('myAssistant.openChat', (chatName, threadId) => {
+        vscode.commands.registerCommand('myAssistant.openChat', async (chatName, threadId) => {
             if (openChatPanels[chatName]) {
                 openChatPanels[chatName].reveal(vscode.ViewColumn.One);
             } else {
@@ -165,13 +165,25 @@ function activateChatExtension(context) {
                 // 获取线程和代理信息
                 const thread = threadRepository.getThread(threadId);
                 const agentConfig = agentLoader.getAgentConfig(thread.agent);
-
-                // 获取代理的 operations
-                const operations = agentConfig.operations || [];
-
+                const agent = agentLoader.loadAgentForThread(thread);
+                let operations = [];
+                
+                // 尝试从agent获取operations
+                if (agent && typeof agent.loadOperations === 'function') {
+                    try {
+                        operations = await agent.loadOperations(thread) || [];
+                    } catch (error) {
+                        console.error('Error loading operations from agent:', error);
+                        // 如果从agent加载失败，退回到使用配置中的operations
+                        operations = agentConfig.operations || [];
+                    }
+                } else {
+                    operations = agentConfig.operations || [];
+                }
+                
                 // 获取当前线程的设置
                 const currentSettings = threadRepository.getThreadSettings(threadId) || {};
-
+                
                 // 发送 operations 和当前设置到前端
                 panel.webview.postMessage({
                     type: 'loadOperations',
