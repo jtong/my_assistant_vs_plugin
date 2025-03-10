@@ -6,15 +6,44 @@ body {
     overflow: hidden;
 }
 
+
 #chat-container {
-    width: 99%;
-    float: right;
-    margin: auto;
+    height: 100vh;
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    border: 1px solid #ddd;
     padding: 10px;
+}
+
+/* 在原有 CSS 基础上添加以下样式 */
+
+/* 默认布局 - 无预览 */
+#main-container.no-preview {
+    display: block;
+}
+
+#main-container.no-preview #chat-container {
+    width: 100%;
+}
+
+/* 有预览时的布局 */
+#main-container.with-preview {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+}
+
+#main-container.with-preview #markdown-preview {
+    width: 50%;
+    height: 100%;
+    border-right: 1px solid #ddd;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: white;
+}
+
+#main-container.with-preview #chat-container {
+    width: 50%;
+    height: 100vh;
 }
 
 #chat-scroll-container {

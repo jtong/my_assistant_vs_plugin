@@ -15,6 +15,25 @@ class ChatViewProvider {
         const htmlPath = path.join(this._extensionUri.fsPath, 'chat', 'webview', 'chat-view.html');
         let htmlContent = fs.readFileSync(htmlPath, 'utf-8');
 
+        // 获取线程对应的agent配置
+        const thread = this.threadRepository.getThread(threadId);
+        const agentName = thread ? thread.agent : null;
+
+        // 确定是否启用预览(默认不启用)
+        let enablePreview = false;
+
+        if (agentName) {
+            try {
+                const agentConfig = this.messageHandler.agentLoader.getAgentConfig(agentName);
+                enablePreview = agentConfig?.metadata?.enablePreview === true;
+            } catch (error) {
+                console.error('Error getting agent config:', error);
+            }
+        }
+
+        const markdownPreviewScriptUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'chat', 'webview', 'markdown-preview-script.js')));
+        const markdownPreviewStyleUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'chat', 'webview', 'markdown-preivew-style.css')));
+
         const scriptUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'chat', 'webview', 'script.js')));
         const styleUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'chat', 'webview', 'style.css')));
 
@@ -22,12 +41,18 @@ class ChatViewProvider {
         const highlightJsUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'chat', 'webview', 'lib', 'highlight.min.js')));
         const highlightCssUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'chat', 'webview', 'lib', 'highlight.default.min.css')));
 
+        htmlContent = htmlContent.replace('${markdownPreviewScriptUri}', markdownPreviewScriptUri);
+        htmlContent = htmlContent.replace('${markdownPreviewStyleUri}', markdownPreviewStyleUri);
         htmlContent = htmlContent.replace('${scriptUri}', scriptUri);
         htmlContent = htmlContent.replace('${styleUri}', styleUri);
         htmlContent = htmlContent.replace('${markdownItUri}', markdownItUri);
         htmlContent = htmlContent.replace('${highlightJsUri}', highlightJsUri);
         htmlContent = htmlContent.replace('${highlightCssUri}', highlightCssUri);
-        htmlContent = htmlContent.replace('${threadId}', threadId);
+        htmlContent = htmlContent.replace('${threadId}', threadId || '');
+
+        htmlContent = htmlContent.replace('${previewClass}', enablePreview ? 'with-preview' : 'no-preview');
+        htmlContent = htmlContent.replace('${previewDisplay}', enablePreview ? '' : 'display:none');
+        htmlContent = htmlContent.replace('${enablePreview}', enablePreview);
 
         return htmlContent;
     }
@@ -212,16 +237,16 @@ class ChatViewProvider {
 
     async handleNormalResponse(response, updatedThread, panel, host_utils) {
         const botMessage = await this.addNewBotMessage(response, updatedThread, panel);
-        
+
         if (response.hasAvailableTasks()) {
             this.addAvailableTasks(botMessage, response.getAvailableTasks(), panel);
         }
 
         await this.handleNextTasks(response, updatedThread, panel, host_utils, botMessage.id);
-        
+
     }
 
-    async handleNextTasks(response, updatedThread, panel, host_utils, messageId){
+    async handleNextTasks(response, updatedThread, panel, host_utils, messageId) {
         if (response.hasNextTasks()) {
             const nextTasks = response.getNextTasks();
             for (const nextTask of nextTasks) {
@@ -229,14 +254,14 @@ class ChatViewProvider {
                 nextTask.meta = { ...nextTask.meta, messageId: messageId };
                 await this.handleThread(updatedThread, nextTask, panel);
             }
-        }   
+        }
     }
 
     async handleThread(thread, task, panel) {
         try {
             if (task.skipBotMessage) {
                 // 如果任务设置了跳过机器人消息，使用一个不添加消息的处理器
-                const silentResponseHandler = async (response, updatedThread) => { 
+                const silentResponseHandler = async (response, updatedThread) => {
 
                     if (response.hasAvailableTasks()) {
                         const botMessage = task.host_utils.threadRepository.getMessageById(thread.id, task.meta.messageId);
@@ -322,7 +347,7 @@ class ChatViewProvider {
         this.threadRepository.updateMessage(thread, botMessage.id, {
             text: botMessage.text
         });
-        
+
         return botMessage;
     }
 }

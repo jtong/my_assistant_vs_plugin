@@ -5,36 +5,45 @@
     <meta charset="UTF-8">
     <title>对话UI</title>
     <link rel="stylesheet" href="${styleUri}">
+    <link rel="stylesheet" href="${markdownPreviewStyleUri}">
     <link rel="stylesheet" href="${highlightCssUri}">
     <script src="${markdownItUri}"></script>
     <script src="${highlightJsUri}"></script>
 </head>
 
 <body>
-
-    <div id="chat-container">
-        <div id="chat-header">
-            <button id="edit-btn">编辑</button>
-            <button id="delete-selected-btn">删除选中</button>
-            <button id="done-btn" style="display:none;">退出</button>
+    <div id="main-container" class="${previewClass}">
+        <div id="markdown-preview" style="${previewDisplay}"></div>
+        <div class="paragraph-toolbar" style="${previewDisplay}">
+            <button id="select-copy-btn">复制</button>
+            <button id="ask-btn">引用</button>
         </div>
-        <div id="chat-scroll-container">
-            <div id="chat-box"></div>
-        </div>
-        <div id="chat-input-container">
-            <!-- <div id="task-buttons"></div> -->
-            <button id="add-initial-file-btn" style="display:none;">添加初始文件</button>
-            <div id="operations-container"></div>
-            <button id="retry-btn">重试</button>
-            <input type="text" id="user-input" placeholder="输入信息...">
-            <button id="send-btn">发送</button>
+        <div id="chat-container">
+            <div id="chat-header">
+                <button id="edit-btn">编辑</button>
+                <button id="delete-selected-btn">删除选中</button>
+                <button id="done-btn" style="display:none;">退出</button>
+            </div>
+            <div id="chat-scroll-container">
+                <div id="chat-box"></div>
+            </div>
+            <div id="chat-input-container">
+                <button id="add-initial-file-btn" style="display:none;">添加初始文件</button>
+                <div id="operations-container"></div>
+                <button id="retry-btn">重试</button>
+                <input type="text" id="user-input" placeholder="输入信息...">
+                <button id="send-btn">发送</button>
+            </div>
         </div>
     </div>
+
     <script>
         window.vscode = acquireVsCodeApi();
         window.threadId = '${threadId}';
+        window.enablePreview = ${enablePreview};
     </script>
     <script src="${scriptUri}"></script>
+    <script src="${markdownPreviewScriptUri}"></script>
 </body>
 
 </html>

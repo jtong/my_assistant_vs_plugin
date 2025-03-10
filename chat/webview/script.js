@@ -84,6 +84,12 @@ window.onload = function () {
     if (threadId) {
         loadThread(threadId);
     }
+
+    // 根据启用预览与否调整某些UI行为
+    if (!window.enablePreview) {
+        // 如果没有启用预览，隐藏相关按钮和功能
+        document.querySelector('.paragraph-toolbar').style.display = 'none';
+    }
 };
 
 function loadThread(threadId) {
@@ -287,6 +293,13 @@ window.addEventListener('message', event => {
             addMarkerLine(message.markerId);
             break;    
         // ...其他 case    
+
+        //markdown cases
+        case 'updateMarkdown':
+            if (window.enablePreview) {
+                updateMarkdownPreview(message);
+            }
+            break;
     }
 });
 

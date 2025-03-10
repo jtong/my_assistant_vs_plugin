@@ -38,7 +38,7 @@ input:
     - 分清webview的代码和插件的代码和agent app的代码
 
     ## 任务
-    我希望 select operation可以在tab打开的时候执行一个loader函数，调用agent对应的loader函数来更新operations
+    我希望 agents.json里配置的agent要有一个标记位，如果有，才启用左侧的preiview，否则不启用。在UI上也不显示。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

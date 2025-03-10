@@ -1,0 +1,159 @@
+
+/* Markdown preview styles */
+#markdown-preview {
+    font-family: -apple-system, system-ui, "system-ui", "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    line-height: 1.6;
+    color: #333;
+}
+
+#markdown-preview h1,
+#markdown-preview h2,
+#markdown-preview h3,
+#markdown-preview h4,
+#markdown-preview h5,
+#markdown-preview h6 {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+#markdown-preview code {
+    background-color: rgba(27,31,35,0.05);
+    border-radius: 3px;
+    font-size: 85%;
+    margin: 0;
+    padding: 0.2em 0.4em;
+}
+
+#markdown-preview pre {
+    background-color: #f6f8fa;
+    border-radius: 3px;
+    font-size: 85%;
+    line-height: 1.45;
+    overflow: auto;
+    padding: 16px;
+}
+
+#markdown-preview pre code {
+    background-color: transparent;
+    border: 0;
+    display: inline;
+    line-height: inherit;
+    margin: 0;
+    overflow: visible;
+    padding: 0;
+    word-wrap: normal;
+}
+
+.paragraph-toolbar {
+    display: none;
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    padding: 4px;
+    z-index: 1000;
+}
+
+.paragraph-toolbar button {
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 4px 8px;
+    margin: 0 2px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.paragraph-toolbar button:hover {
+    background: #e0e0e0;
+}
+
+#markdown-preview p,
+#markdown-preview h1,
+#markdown-preview h2,
+#markdown-preview h3,
+#markdown-preview h4,
+#markdown-preview h5,
+#markdown-preview h6 {
+    position: relative;
+    cursor: pointer;
+    padding: 4px;
+    margin: 8px 0;
+    border-radius: 4px;
+}
+
+/* 列表样式 */
+#markdown-preview ul,
+#markdown-preview ol {
+    position: relative;
+    cursor: pointer;
+    padding-left: 40px; /* 恢复默认缩进 */
+    margin: 8px 0;
+    border-radius: 4px;
+}
+
+#markdown-preview li {
+    position: relative;
+    cursor: pointer;
+    padding: 2px 4px;
+    margin: 2px 0;
+    border-radius: 4px;
+    display: list-item;
+}
+
+/* 嵌套列表的缩进 */
+#markdown-preview ul ul,
+#markdown-preview ul ol,
+#markdown-preview ol ul,
+#markdown-preview ol ol {
+    margin: 4px 0;
+}
+
+/* 悬停效果 */
+#markdown-preview p:hover,
+#markdown-preview h1:hover,
+#markdown-preview h2:hover,
+#markdown-preview h3:hover,
+#markdown-preview h4:hover,
+#markdown-preview h5:hover,
+#markdown-preview h6:hover,
+#markdown-preview ul:hover,
+#markdown-preview ol:hover,
+#markdown-preview li:hover {
+    background-color: rgba(0,0,0,0.03);
+}
+
+/* 选中效果 */
+#markdown-preview p.selected,
+#markdown-preview h1.selected,
+#markdown-preview h2.selected,
+#markdown-preview h3.selected,
+#markdown-preview h4.selected,
+#markdown-preview h5.selected,
+#markdown-preview h6.selected,
+#markdown-preview ul.selected,
+#markdown-preview ol.selected,
+#markdown-preview li.selected {
+    background-color: rgba(0,120,255,0.1);
+    outline: 2px solid rgba(0,120,255,0.2);
+}
+
+/* 列表样式类型 */
+#markdown-preview ul {
+    list-style-type: disc;
+}
+
+#markdown-preview ol {
+    list-style-type: decimal;
+}
+
+#markdown-preview ul ul {
+    list-style-type: circle;
+}
+
+#markdown-preview ul ul ul {
+    list-style-type: square;
+}

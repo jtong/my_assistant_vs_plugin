@@ -138,6 +138,144 @@ function activateChatExtension(context) {
     );
 
     context.subscriptions.push(
+        vscode.commands.registerCommand('myAssistant.openMarkdownChat', async (uri) => {
+            // If uri is not provided, try to get it from active editor
+            if (!uri) {
+                const editor = vscode.window.activeTextEditor;
+                if (!editor) {
+                    vscode.window.showErrorMessage('No file is currently open');
+                    return;
+                }
+                uri = editor.document.uri;
+            }
+
+            // Verify it's a markdown file
+            if (path.extname(uri.fsPath).toLowerCase() !== '.md') {
+                vscode.window.showErrorMessage('Please select a markdown file');
+                return;
+            }
+
+            // Get the list of available agents and let user select one
+            const agents = agentLoader.getAgentsList();
+            const agentName = await vscode.window.showQuickPick(
+                agents.map(agent => agent.name),
+                { placeHolder: "Select an agent for this chat" }
+            );
+
+            if (!agentName) {
+                return; // User cancelled agent selection
+            }
+
+            const document = await vscode.workspace.openTextDocument(uri);
+            const markdownContent = document.getText();
+            const fileName = path.basename(uri.fsPath);
+            const chatName = `Chat: ${fileName}`;
+
+            if (openChatPanels[chatName]) {
+                openChatPanels[chatName].reveal(vscode.ViewColumn.One);
+                openChatPanels[chatName].webview.postMessage({
+                    type: 'updateMarkdown',
+                    content: markdownContent
+                });
+            } else {
+                // Create a new thread
+                const newThreadId = 'thread_' + Date.now();
+                const newThread = threadRepository.createThread(newThreadId, chatName, agentName);
+
+                const panel = vscode.window.createWebviewPanel(
+                    'chatView',
+                    chatName,
+                    vscode.ViewColumn.One,
+                    {
+                        enableScripts: true,
+                        retainContextWhenHidden: true,
+                        localResourceRoots: [
+                            vscode.Uri.file(path.join(context.extensionPath)),
+                            vscode.Uri.file(projectRoot)
+                        ]
+                    }
+                );
+
+                panel.webview.html = chatProvider.getWebviewContent(panel.webview, newThreadId);
+
+                // 获取agent配置，决定是否发送markdown内容
+                const agentConfig = agentLoader.getAgentConfig(agentName);
+                const enablePreview = agentConfig?.metadata?.enablePreview === true;
+
+                if (enablePreview) {
+
+                    // Send the initial markdown content
+                    panel.webview.postMessage({
+                        type: 'updateMarkdown',
+                        content: markdownContent,
+                        filePath: uri.fsPath  // 添加文件路径
+                    });
+
+                    const host_utils = {
+                        getConfig: () => {
+                            const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+                            const projectRoot = workspaceFolder ? workspaceFolder.uri.fsPath : '';
+                            const projectName = workspaceFolder ? workspaceFolder.name : '';
+
+                            const aiHelperRoot = path.join(projectRoot, '.ai_helper');
+                            const chatWorkingSpaceRoot = path.join(aiHelperRoot, 'agent', 'memory_repo', 'chat_working_space');
+
+                            return {
+                                projectRoot: projectRoot,
+                                projectName: projectName,
+                                aiHelperRoot: aiHelperRoot,
+                                chatWorkingSpaceRoot: chatWorkingSpaceRoot,
+                            };
+                        },
+                        convertToWebviewUri: (absolutePath) => {
+                            const uri = vscode.Uri.file(absolutePath);
+                            return panel.webview.asWebviewUri(uri).toString();
+                        },
+                        threadRepository: threadRepository,
+                        postMessage: (message) => {
+                            panel.webview.postMessage(message);
+                        }
+                    };
+
+                    chatProvider.resolveWebviewPanel(panel, host_utils);
+                    openChatPanels[chatName] = panel;
+
+                    // Watch for changes in the markdown file
+                    const fileWatcher = vscode.workspace.createFileSystemWatcher(uri.fsPath);
+                    fileWatcher.onDidChange(async () => {
+                        const document = await vscode.workspace.openTextDocument(uri);
+                        const updatedContent = document.getText();
+                        panel.webview.postMessage({
+                            type: 'updateMarkdown',
+                            content: updatedContent
+                        });
+                    });
+
+                    panel.onDidDispose(() => {
+                        delete openChatPanels[chatName];
+                        fileWatcher.dispose();
+                    });
+
+                    // Get agent config and send operations
+                    const operations = agentConfig.operations || [];
+                    panel.webview.postMessage({
+                        type: 'loadOperations',
+                        operations: operations,
+                        currentSettings: {}
+                    });
+
+                    // Handle boot message if exists
+                    if (agentConfig && agentConfig.metadata && agentConfig.metadata.bootMessage) {
+                        const bootResponse = Response.fromJSON(agentConfig.metadata.bootMessage);
+                        chatProvider.handleNormalResponse(bootResponse, newThread, panel, host_utils);
+                    }
+                }
+
+            }
+        })
+    );
+
+    context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.openChat', async (chatName, threadId) => {
             if (openChatPanels[chatName]) {
                 openChatPanels[chatName].reveal(vscode.ViewColumn.One);
@@ -167,7 +305,7 @@ function activateChatExtension(context) {
                 const agentConfig = agentLoader.getAgentConfig(thread.agent);
                 const agent = agentLoader.loadAgentForThread(thread);
                 let operations = [];
-                
+
                 // 尝试从agent获取operations
                 if (agent && typeof agent.loadOperations === 'function') {
                     try {
@@ -180,10 +318,10 @@ function activateChatExtension(context) {
                 } else {
                     operations = agentConfig.operations || [];
                 }
-                
+
                 // 获取当前线程的设置
                 const currentSettings = threadRepository.getThreadSettings(threadId) || {};
-                
+
                 // 发送 operations 和当前设置到前端
                 panel.webview.postMessage({
                     type: 'loadOperations',
@@ -205,7 +343,7 @@ function activateChatExtension(context) {
                         chatProvider.handleNormalResponse(bootResponse, thread, panel, host_utils);
                     }
 
-                    const initTask =  new Task({
+                    const initTask = new Task({
                         name: "InitTask",
                         type: Task.TYPE_ACTION,
                         message: "",

@@ -155,6 +155,10 @@
             {
                 "command": "myAssistant.createThreadFromJson",
                 "title": "Create Chat Thread From JSON"
+            },
+            {
+                "command": "myAssistant.openMarkdownChat",
+                "title": "MyCanvas Chat"
             }
         ],
         "menus": {
