@@ -38,7 +38,16 @@ class ChatThreadRepository {
     loadThread(threadId) {
         const filePath = this.getThreadFilePath(threadId);
         if (fs.existsSync(filePath)) {
-            return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            const thread = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            
+            // 向后兼容：如果有旧式的attachments数组但没有attachment属性
+            if (thread.attachments && Array.isArray(thread.attachments) && thread.attachments.length > 0 && !thread.attachment) {
+                thread.attachment = thread.attachments[0];
+                // 可以选择删除旧的attachments属性
+                // delete thread.attachments;
+            }
+            
+            return thread;
         }
         return null;
     }
@@ -57,7 +66,6 @@ class ChatThreadRepository {
         this.saveIndex(index);
     }
 
-    // 修改 createThread 方法，同时创建 knowledge space 文件夹
     createThread(threadId, name, agentName, initialKnowledgeSpace = null) {
         const agentConfig = this.agentLoader.getAgentConfig(agentName);
         const messages = [];
@@ -215,6 +223,26 @@ class ChatThreadRepository {
             this.saveThread(thread);
             this.agentLoader.updateAgentForThread(thread);
         }
+    }
+
+    // 新增方法：设置或更新单个附件
+    setAttachment(threadId, attachment) {
+        const thread = this.loadThread(threadId);
+        if (thread) {
+            thread.attachment = attachment;
+            this.saveThread(thread);
+            return true;
+        }
+        return false;
+    }
+
+    // 新增方法：获取线程的附件
+    getAttachment(threadId) {
+        const thread = this.loadThread(threadId);
+        if (thread) {
+            return thread.attachment;
+        }
+        return null;
     }
 
     deleteMessages(threadId, messageIds) {

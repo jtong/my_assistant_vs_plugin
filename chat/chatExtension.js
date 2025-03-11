@@ -137,6 +137,153 @@ function activateChatExtension(context) {
         })
     );
 
+    // 创建并初始化面板的通用函数
+    async function createAndInitChatPanel(threadId, chatName) {
+        // 获取线程和代理信息
+        const thread = threadRepository.getThread(threadId);
+        const agentConfig = agentLoader.getAgentConfig(thread.agent);
+        
+        // 检查是否启用预览
+        const enablePreview = agentConfig?.metadata?.enablePreview === true;
+        
+        // 如果已经打开，只需要更新并显示
+        if (openChatPanels[chatName]) {
+            openChatPanels[chatName].reveal(vscode.ViewColumn.One);
+            
+            // 如果支持预览，且线程有关联的附件文件
+            if (enablePreview) {
+                const attachment = threadRepository.getAttachment(threadId);
+                if (attachment) {
+                    try {
+                        const markdownContent = fs.readFileSync(attachment.path, 'utf8');
+                        openChatPanels[chatName].webview.postMessage({
+                            type: 'updateMarkdown',
+                            content: markdownContent,
+                            filePath: attachment.path
+                        });
+                    } catch (error) {
+                        console.error('Error reading markdown attachment:', error);
+                    }
+                }
+            }
+            
+            return openChatPanels[chatName];
+        }
+
+        // 创建新的面板
+        const panel = vscode.window.createWebviewPanel(
+            'chatView',
+            chatName,
+            vscode.ViewColumn.One,
+            {
+                enableScripts: true,
+                retainContextWhenHidden: true,
+                localResourceRoots: [
+                    vscode.Uri.file(path.join(context.extensionPath)),
+                    vscode.Uri.file(projectRoot)
+                ]
+            }
+        );
+
+        panel.webview.html = chatProvider.getWebviewContent(panel.webview, threadId);
+        
+        const host_utils = createHostUtils(panel, threadRepository);
+        chatProvider.resolveWebviewPanel(panel, host_utils);
+        
+        // 如果有预览且线程有关联的附件文件
+        if (enablePreview) {
+            const attachment = threadRepository.getAttachment(threadId);
+            if (attachment) {
+                try {
+                    const markdownContent = fs.readFileSync(attachment.path, 'utf8');
+                    panel.webview.postMessage({
+                        type: 'updateMarkdown',
+                        content: markdownContent,
+                        filePath: attachment.path
+                    });
+                    
+                    // 设置文件监听
+                    const fileWatcher = vscode.workspace.createFileSystemWatcher(attachment.path);
+                    fileWatcher.onDidChange(async () => {
+                        try {
+                            const updatedContent = fs.readFileSync(attachment.path, 'utf8');
+                            panel.webview.postMessage({
+                                type: 'updateMarkdown',
+                                content: updatedContent
+                            });
+                        } catch (error) {
+                            console.error('Error reading updated markdown:', error);
+                        }
+                    });
+                    
+                    panel.onDidDispose(() => {
+                        fileWatcher.dispose();
+                    });
+                } catch (error) {
+                    console.error('Error reading markdown attachment:', error);
+                }
+            }
+        }
+
+        // 加载agent操作
+        const agent = agentLoader.loadAgentForThread(thread);
+        let operations = [];
+
+        // 尝试从agent获取operations
+        if (agent && typeof agent.loadOperations === 'function') {
+            try {
+                operations = await agent.loadOperations(thread) || [];
+            } catch (error) {
+                console.error('Error loading operations from agent:', error);
+                // 如果从agent加载失败，退回到使用配置中的operations
+                operations = agentConfig.operations || [];
+            }
+        } else {
+            operations = agentConfig.operations || [];
+        }
+
+        // 获取当前线程的设置
+        const currentSettings = threadRepository.getThreadSettings(threadId) || {};
+
+        // 发送 operations 和当前设置到前端
+        panel.webview.postMessage({
+            type: 'loadOperations',
+            operations: operations,
+            currentSettings: currentSettings
+        });
+
+        openChatPanels[chatName] = panel;
+
+        panel.onDidDispose(() => {
+            delete openChatPanels[chatName];
+        });
+
+        // 处理 bootMessage 和 bootTASK
+        const messagesAfterLastMarker = threadRepository.getMessagesAfterLastMarker(thread);
+        if (messagesAfterLastMarker.length === 0 && agentConfig) {
+            if (agentConfig.metadata && agentConfig.metadata.bootMessage) {
+                const bootResponse = Response.fromJSON(agentConfig.metadata.bootMessage);
+                chatProvider.handleNormalResponse(bootResponse, thread, panel, host_utils);
+            }
+
+            if (agentConfig.metadata && agentConfig.metadata.initTask) {
+                const initTask = new Task({
+                    name: "InitTask",
+                    type: Task.TYPE_ACTION,
+                    message: "",
+                    meta: {},
+                    host_utils,
+                    skipUserMessage: true,
+                    skipBotMessage: false
+                });
+    
+                chatProvider.handleThread(thread, initTask, panel);
+            }
+        }
+        
+        return panel;
+    }
+
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.openMarkdownChat', async (uri) => {
             // If uri is not provided, try to get it from active editor
@@ -166,198 +313,47 @@ function activateChatExtension(context) {
                 return; // User cancelled agent selection
             }
 
+            // 检查agent是否支持预览
+            const agentConfig = agentLoader.getAgentConfig(agentName);
+            const enablePreview = agentConfig?.metadata?.enablePreview === true;
+            
+            if (!enablePreview) {
+                vscode.window.showWarningMessage('Selected agent does not support preview mode.');
+            }
+
+            // 读取markdown文件内容
             const document = await vscode.workspace.openTextDocument(uri);
             const markdownContent = document.getText();
             const fileName = path.basename(uri.fsPath);
             const chatName = `Chat: ${fileName}`;
 
-            if (openChatPanels[chatName]) {
-                openChatPanels[chatName].reveal(vscode.ViewColumn.One);
-                openChatPanels[chatName].webview.postMessage({
-                    type: 'updateMarkdown',
-                    content: markdownContent
-                });
-            } else {
-                // Create a new thread
-                const newThreadId = 'thread_' + Date.now();
-                const newThread = threadRepository.createThread(newThreadId, chatName, agentName);
-
-                const panel = vscode.window.createWebviewPanel(
-                    'chatView',
-                    chatName,
-                    vscode.ViewColumn.One,
-                    {
-                        enableScripts: true,
-                        retainContextWhenHidden: true,
-                        localResourceRoots: [
-                            vscode.Uri.file(path.join(context.extensionPath)),
-                            vscode.Uri.file(projectRoot)
-                        ]
-                    }
-                );
-
-                panel.webview.html = chatProvider.getWebviewContent(panel.webview, newThreadId);
-
-                // 获取agent配置，决定是否发送markdown内容
-                const agentConfig = agentLoader.getAgentConfig(agentName);
-                const enablePreview = agentConfig?.metadata?.enablePreview === true;
-
-                if (enablePreview) {
-
-                    // Send the initial markdown content
-                    panel.webview.postMessage({
-                        type: 'updateMarkdown',
-                        content: markdownContent,
-                        filePath: uri.fsPath  // 添加文件路径
-                    });
-
-                    const host_utils = {
-                        getConfig: () => {
-                            const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-                            const projectRoot = workspaceFolder ? workspaceFolder.uri.fsPath : '';
-                            const projectName = workspaceFolder ? workspaceFolder.name : '';
-
-                            const aiHelperRoot = path.join(projectRoot, '.ai_helper');
-                            const chatWorkingSpaceRoot = path.join(aiHelperRoot, 'agent', 'memory_repo', 'chat_working_space');
-
-                            return {
-                                projectRoot: projectRoot,
-                                projectName: projectName,
-                                aiHelperRoot: aiHelperRoot,
-                                chatWorkingSpaceRoot: chatWorkingSpaceRoot,
-                            };
-                        },
-                        convertToWebviewUri: (absolutePath) => {
-                            const uri = vscode.Uri.file(absolutePath);
-                            return panel.webview.asWebviewUri(uri).toString();
-                        },
-                        threadRepository: threadRepository,
-                        postMessage: (message) => {
-                            panel.webview.postMessage(message);
-                        }
-                    };
-
-                    chatProvider.resolveWebviewPanel(panel, host_utils);
-                    openChatPanels[chatName] = panel;
-
-                    // Watch for changes in the markdown file
-                    const fileWatcher = vscode.workspace.createFileSystemWatcher(uri.fsPath);
-                    fileWatcher.onDidChange(async () => {
-                        const document = await vscode.workspace.openTextDocument(uri);
-                        const updatedContent = document.getText();
-                        panel.webview.postMessage({
-                            type: 'updateMarkdown',
-                            content: updatedContent
-                        });
-                    });
-
-                    panel.onDidDispose(() => {
-                        delete openChatPanels[chatName];
-                        fileWatcher.dispose();
-                    });
-
-                    // Get agent config and send operations
-                    const operations = agentConfig.operations || [];
-                    panel.webview.postMessage({
-                        type: 'loadOperations',
-                        operations: operations,
-                        currentSettings: {}
-                    });
-
-                    // Handle boot message if exists
-                    if (agentConfig && agentConfig.metadata && agentConfig.metadata.bootMessage) {
-                        const bootResponse = Response.fromJSON(agentConfig.metadata.bootMessage);
-                        chatProvider.handleNormalResponse(bootResponse, newThread, panel, host_utils);
-                    }
-                }
-
-            }
+            // 创建新线程
+            const newThreadId = 'thread_' + Date.now();
+            const newThread = threadRepository.createThread(newThreadId, chatName, agentName);
+            
+            // 创建附件信息
+            const fileStats = fs.statSync(uri.fsPath);
+            const attachment = {
+                id: 'att_' + Date.now(),
+                type: 'markdown',
+                name: fileName,
+                path: uri.fsPath,
+                lastModified: fileStats.mtime.getTime(),
+                size: fileStats.size
+            };
+            
+            // 使用 setAttachment 方法保存附件
+            threadRepository.setAttachment(newThreadId, attachment);
+            
+            // 初始化并打开聊天面板
+            listProvider.refresh();
+            await createAndInitChatPanel(newThreadId, chatName);
         })
     );
 
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.openChat', async (chatName, threadId) => {
-            if (openChatPanels[chatName]) {
-                openChatPanels[chatName].reveal(vscode.ViewColumn.One);
-            } else {
-                const panel = vscode.window.createWebviewPanel(
-                    'chatView',
-                    chatName,
-                    vscode.ViewColumn.One,
-                    {
-                        enableScripts: true,
-                        retainContextWhenHidden: true,
-                        localResourceRoots: [
-                            vscode.Uri.file(path.join(context.extensionPath)),
-                            vscode.Uri.file(projectRoot)
-                        ]
-                    }
-                );
-
-                panel.webview.html = chatProvider.getWebviewContent(panel.webview, threadId);
-
-                const host_utils = createHostUtils(panel, threadRepository);
-
-                chatProvider.resolveWebviewPanel(panel, host_utils);
-
-                // 获取线程和代理信息
-                const thread = threadRepository.getThread(threadId);
-                const agentConfig = agentLoader.getAgentConfig(thread.agent);
-                const agent = agentLoader.loadAgentForThread(thread);
-                let operations = [];
-
-                // 尝试从agent获取operations
-                if (agent && typeof agent.loadOperations === 'function') {
-                    try {
-                        operations = await agent.loadOperations(thread) || [];
-                    } catch (error) {
-                        console.error('Error loading operations from agent:', error);
-                        // 如果从agent加载失败，退回到使用配置中的operations
-                        operations = agentConfig.operations || [];
-                    }
-                } else {
-                    operations = agentConfig.operations || [];
-                }
-
-                // 获取当前线程的设置
-                const currentSettings = threadRepository.getThreadSettings(threadId) || {};
-
-                // 发送 operations 和当前设置到前端
-                panel.webview.postMessage({
-                    type: 'loadOperations',
-                    operations: operations,
-                    currentSettings: currentSettings
-                });
-
-                openChatPanels[chatName] = panel;
-
-                panel.onDidDispose(() => {
-                    delete openChatPanels[chatName];
-                });
-
-                // 处理 bootMessage 和 bootTASK，建议两者只能存在一个
-                const messagesAfterLastMarker = threadRepository.getMessagesAfterLastMarker(thread);
-                if (messagesAfterLastMarker.length === 0 && agentConfig) {
-                    if (agentConfig.metadata && agentConfig.metadata.bootMessage) { // 如果配置了 bootMessage
-                        const bootResponse = Response.fromJSON(agentConfig.metadata.bootMessage);
-                        chatProvider.handleNormalResponse(bootResponse, thread, panel, host_utils);
-                    }
-
-                    const initTask = new Task({
-                        name: "InitTask",
-                        type: Task.TYPE_ACTION,
-                        message: "",
-                        meta: {
-                        },
-                        host_utils,
-                        skipUserMessage: true,
-                        skipBotMessage: false
-                    });
-
-                    chatProvider.handleThread(thread, initTask, panel);
-
-                }
-            }
+            await createAndInitChatPanel(threadId, chatName);
         })
     );
 
@@ -470,6 +466,15 @@ function activateChatExtension(context) {
                     threadData.agent,
                     threadData.knowledge_space
                 );
+
+                // 处理附件信息
+                if (threadData.attachment) {
+                    // 如果有单个附件，使用setAttachment方法
+                    threadRepository.setAttachment(newThreadId, threadData.attachment);
+                } else if (threadData.attachments && Array.isArray(threadData.attachments) && threadData.attachments.length > 0) {
+                    // 向后兼容：如果有旧格式的attachments数组，取第一个作为attachment
+                    threadRepository.setAttachment(newThreadId, threadData.attachments[0]);
+                }
 
                 // 更新所有消息的 threadId
                 const messages = threadData.messages.map(msg => ({
