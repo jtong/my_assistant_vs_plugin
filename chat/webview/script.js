@@ -1,4 +1,5 @@
 let isBotResponding = false;
+let isAutoScrollEnabled = true; // 自动滚屏状态，默认为ON
 
 const md = window.markdownit({
     highlight: function (str, lang) {
@@ -84,6 +85,23 @@ window.onload = function () {
     if (threadId) {
         loadThread(threadId);
     }
+
+    const toggleScrollBtn = document.getElementById('toggle-scroll-btn');
+    toggleScrollBtn.addEventListener('click', () => {
+        isAutoScrollEnabled = !isAutoScrollEnabled; // 切换状态
+
+        // 更新按钮文本和提示
+        if (isAutoScrollEnabled) {
+            toggleScrollBtn.textContent = 'Auto Scroll: ON';
+            toggleScrollBtn.title = 'Turn Auto-Scroll OFF';
+            toggleScrollBtn.classList.remove('auto-scroll-off'); // 可选：移除关闭状态的样式
+
+        } else {
+            toggleScrollBtn.textContent = 'Auto Scroll: OFF';
+            toggleScrollBtn.title = 'Turn Auto-Scroll ON';
+            toggleScrollBtn.classList.add('auto-scroll-off'); // 可选：添加关闭状态的样式
+        }
+    });
 
     // 根据启用预览与否调整某些UI行为
     if (!window.enablePreview) {
@@ -492,7 +510,7 @@ function displayBotMessage(message, isStreaming = false) {
     }
 
     chatBox.appendChild(messageElement);
-    messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' }); 
 }
 
 function addTaskButtons(container, availableTasks) {
@@ -547,7 +565,9 @@ function updateBotMessage(messageId, text, availableTasks) {
             });
             container.appendChild(taskContainer);
         }
-        messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        if (isAutoScrollEnabled) { // 检查状态
+            messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
     }
 }
 

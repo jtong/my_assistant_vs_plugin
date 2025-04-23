@@ -12,7 +12,7 @@ project:
       - node_modules/@(.*)
       - node_modules/!(ai-agent-response)
       - ".ai_helper/agent/chat/node_modules/!(ai-agent-response|@jtong)"
-      - ".ai_helper/agent/chat/node_modules/!(@jtong/knowledge_query)"
+      # - ".ai_helper/agent/chat/node_modules/!(@jtong/knowledge_query)"
       - config.yml
       - "**/*.png"
       - "**/.DS_Store"
@@ -38,7 +38,7 @@ input:
     - 分清webview的代码和插件的代码和agent app的代码
 
     ## 任务
-    我希望 不要设置成attachments，我们就一个附件
+    我希望 支持点击停止生成的按钮，点下后，就停止response输出。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:
