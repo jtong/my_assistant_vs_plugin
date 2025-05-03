@@ -1,5 +1,6 @@
 let isBotResponding = false;
 let isAutoScrollEnabled = true; // 自动滚屏状态，默认为ON
+let isGenerating = false; // 标记是否正在生成响应
 
 const md = window.markdownit({
     highlight: function (str, lang) {
@@ -57,6 +58,8 @@ function deleteSelectedMessages() {
 document.getElementById('edit-btn').addEventListener('click', toggleEditMode);
 document.getElementById('done-btn').addEventListener('click', toggleEditMode);
 document.getElementById('delete-selected-btn').addEventListener('click', deleteSelectedMessages);
+document.getElementById('stop-btn').addEventListener('click', stopGenerationHandler);
+
 
 
 document.getElementById('send-btn').addEventListener('click', sendMessageHandler);
@@ -69,6 +72,7 @@ document.getElementById('user-input').addEventListener('keydown', function (even
 });
 document.getElementById('retry-btn').addEventListener('click', retryMessageHandler);
 
+
 function retryMessageHandler() {
     if (isBotResponding) return;  // 如果 bot 正在回复，不允许重试
 
@@ -78,6 +82,29 @@ function retryMessageHandler() {
         threadId: window.threadId
     };
     window.vscode.postMessage(message);
+}
+
+function stopGenerationHandler() {
+    if (isGenerating) {
+        window.vscode.postMessage({
+            type: 'stopGeneration',
+            threadId: window.threadId
+        });
+        
+        // 立即更新UI状态，不等待后端响应
+        isGenerating = false;
+        isBotResponding = false;
+        hideStopButton();
+    }
+}
+
+// 显示和隐藏停止按钮的函数
+function showStopButton() {
+    document.getElementById('stop-btn').style.display = 'inline-block';
+}
+
+function hideStopButton() {
+    document.getElementById('stop-btn').style.display = 'none';
 }
 
 window.onload = function () {
@@ -266,14 +293,18 @@ window.addEventListener('message', event => {
             break;
         case 'addBotMessage':
             displayBotMessage(message.message, message.isStreaming);
+            isGenerating = true;
+            showStopButton();
             break;
         case 'updateBotMessage':
             updateBotMessage(message.messageId, message.text, message.availableTasks);
             break;
         case 'botResponseComplete':
             isBotResponding = false;  // 重置标志，表示 bot 回复完成
+            isGenerating = false;     // 重置生成标志
+            hideStopButton();         // 隐藏停止按钮
             addEditButtons();
-            break;
+            break;        
         case 'removeLastBotMessage':
             removeLastBotMessage();
             break;
@@ -618,8 +649,9 @@ function sendMessageHandler() {
     const userInput_value = userInput.value.trim();
 
     if (userInput_value) {
+
         doSendMessage(userInput_value);
-            userInput.value = '';
+        userInput.value = '';
     }
 }
 

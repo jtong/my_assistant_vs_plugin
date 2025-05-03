@@ -9,6 +9,7 @@ class ChatViewProvider {
         this._extensionUri = extensionUri;
         this.threadRepository = threadRepository;
         this.messageHandler = messageHandler;
+        this.stopGenerationFlags = new Map(); // 添加停止标志Map，跟踪每个线程的停止状态
     }
 
     getWebviewContent(webview, threadId) {
@@ -98,8 +99,19 @@ class ChatViewProvider {
                 case 'openAttachedFile':
                     this.handleOpenAttachedFile(message);
                     break;
+                case 'stopGeneration':
+                    this.handleStopGeneration(threadId, panel);
+                    break;
             }
         });
+    }
+
+    handleStopGeneration(threadId, panel) {
+        this.stopGenerationFlags.set(threadId, true);
+        panel.webview.postMessage({
+            type: 'botResponseComplete'
+        });
+        console.log(`Generation stopped for thread: ${threadId}`);
     }
 
     async handleSelectInitialFile(threadId, panel) {
@@ -292,9 +304,11 @@ class ChatViewProvider {
                 message: errorMessage
             });
         } finally {
-            panel.webview.postMessage({
-                type: 'botResponseComplete'
-            });
+            setTimeout(() => {
+                panel.webview.postMessage({
+                    type: 'botResponseComplete'
+                });
+            }, 500);
         }
     }
 
@@ -312,6 +326,9 @@ class ChatViewProvider {
 
         this.threadRepository.addMessage(thread, botMessage);
 
+        // 重置停止标志
+        this.stopGenerationFlags.delete(thread.id);
+
         if (response.isStream()) {
             panel.webview.postMessage({
                 type: 'addBotMessage',
@@ -320,6 +337,12 @@ class ChatViewProvider {
 
             try {
                 for await (const chunk of response.getStream()) {
+                    // 检查停止标志，如果设置了就停止处理
+                    if (this.stopGenerationFlags.get(thread.id)) {
+                        console.log('Stream processing stopped by user');
+                        break;
+                    }
+
                     botMessage.text += chunk;
                     panel.webview.postMessage({
                         type: 'updateBotMessage',
@@ -329,12 +352,17 @@ class ChatViewProvider {
                 }
             } catch (streamError) {
                 console.error('Error in stream processing:', streamError);
-                botMessage.text += ' An error occurred during processing.';
-                panel.webview.postMessage({
-                    type: 'updateBotMessage',
-                    messageId: botMessage.id,
-                    text: ' An error occurred during processing.'
-                });
+                if (!this.stopGenerationFlags.get(thread.id)) {
+                    botMessage.text += ' An error occurred during processing.';
+                    panel.webview.postMessage({
+                        type: 'updateBotMessage',
+                        messageId: botMessage.id,
+                        text: ' An error occurred during processing.'
+                    });
+                }
+            } finally {
+                // 清理停止标志
+                this.stopGenerationFlags.delete(thread.id);
             }
         } else {
             botMessage.text = response.getFullMessage();
@@ -350,6 +378,7 @@ class ChatViewProvider {
 
         return botMessage;
     }
+
 }
 
 module.exports = ChatViewProvider;

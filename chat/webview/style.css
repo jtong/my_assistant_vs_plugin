@@ -125,6 +125,20 @@ body {
 }
 
 /* 在现有的 CSS 代码后添加 */
+#stop-btn {
+    width: 10%;
+    padding: 10px;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: none; /* 默认隐藏 */
+}
+
+#stop-btn:hover {
+    background-color: #d32f2f;
+}
+
 #task-buttons {
     margin-bottom: 10px;
 }
