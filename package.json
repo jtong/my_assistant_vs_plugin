@@ -159,6 +159,11 @@
             {
                 "command": "myAssistant.openMarkdownChat",
                 "title": "MyCanvas Chat"
+            },
+            {
+                "command": "myAssistant.unescapeClipboard",
+                "title": "Unescape Clipboard Content",
+                "category": "My Assistant Util"
             }
         ],
         "menus": {

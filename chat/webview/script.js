@@ -461,6 +461,11 @@ function createMessageElement(message) {
     messageElement.classList.add(message.sender);
     messageElement.setAttribute('data-message-id', message.id);
 
+    // 处理自定义背景色
+    if (message.meta && message.meta._webview && message.meta._webview.message_bg_color) {
+        messageElement.style.backgroundColor = message.meta._webview.message_bg_color;
+    }
+    
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.className = 'message-checkbox';
