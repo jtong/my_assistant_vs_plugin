@@ -38,7 +38,7 @@ input:
     - 分清webview的代码和插件的代码和agent app的代码
 
     ## 任务
-    我希望 支持一个命令，可以把打开的文件中选中的文本，按照字符串处理，贴回到原位，即\n\r之类的转义符被正确的转义后贴回原位
+    我希望 当Agent没有 generateReply 函数的时候，一切插件对Agent调用都走 executeTask 接口。只是会包装 Task.TYPE_MESSAGE 的任务，如果重试的话meta里会有_ui_action属性，标记为retry
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

@@ -54,7 +54,7 @@ class AgentLoader {
         return this.config.agents.find(a => a.name === name);
     }
 
-    loadAgent(name) {
+    async loadAgent(name) {
         if (this.loadedAgents[name]) {
             return this.loadedAgents[name];
         }
@@ -65,7 +65,17 @@ class AgentLoader {
         }
 
         const AgentClass = require(path.resolve(path.dirname(this.configPath), agentConfig.path));
-        const agent = new AgentClass(agentConfig.metadata, this.mergeSettings(agentConfig.settings, this.globalSettings));
+        
+        // 检查是否有 create 静态方法
+        let agent;
+        if (typeof AgentClass.create === 'function') {
+            // 如果有 create 静态方法，使用 await 调用
+            agent = await AgentClass.create(agentConfig.metadata, this.mergeSettings(agentConfig.settings, this.globalSettings));
+        } else {
+            // 否则使用构造函数
+            agent = new AgentClass(agentConfig.metadata, this.mergeSettings(agentConfig.settings, this.globalSettings));
+        }
+        
         this.loadedAgents[name] = agent;
         return agent;
     }
@@ -82,9 +92,11 @@ class AgentLoader {
         }));
     }
 
-    filterAgents(filterFn) {
+    // 除了market好像没地方用
+    async filterAgents(filterFn) {
         const filteredAgents = this.config.agents.filter(filterFn);
-        return filteredAgents.map(agent => this.loadAgent(agent.name));
+        // 使用 Promise.all 处理多个异步操作
+        return Promise.all(filteredAgents.map(agent => this.loadAgent(agent.name)));
     }
 
     updateSettings(newSettings) {
@@ -92,7 +104,7 @@ class AgentLoader {
         this.clearLoadedAgents();
     }
 
-    loadAgentForThread(thread) {
+    async loadAgentForThread(thread) {
         const key = `${thread.id}:${thread.agent}`;
 
         if (this.threadAgents[key]) {
@@ -110,7 +122,15 @@ class AgentLoader {
         // 只有当 thread 有 settings 时才合并
         const finalSettings = thread.settings ? { ...mergedSettings, ...thread.settings } : mergedSettings;
 
-        const agent = new AgentClass(agentConfig.metadata, finalSettings);
+        // 检查是否有 create 静态方法
+        let agent;
+        if (typeof AgentClass.create === 'function') {
+            // 如果有 create 静态方法，使用 await 调用
+            agent = await AgentClass.create(agentConfig.metadata, finalSettings);
+        } else {
+            // 否则使用构造函数
+            agent = new AgentClass(agentConfig.metadata, finalSettings);
+        }
 
         this.threadAgents[key] = agent;
         return agent;

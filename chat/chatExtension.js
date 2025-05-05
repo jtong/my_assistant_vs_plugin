@@ -226,7 +226,7 @@ function activateChatExtension(context) {
         }
 
         // 加载agent操作
-        const agent = agentLoader.loadAgentForThread(thread);
+        const agent = await agentLoader.loadAgentForThread(thread);
         let operations = [];
 
         // 尝试从agent获取operations

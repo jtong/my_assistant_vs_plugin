@@ -13,7 +13,7 @@ class SettingsEditorProvider {
         if (settings === undefined) {
             const thread = this.threadRepository.getThread(threadId);
             if (thread && thread.agent) {
-                const agent = this.agentLoader.loadAgentForThread(thread);
+                const agent = await this.agentLoader.loadAgentForThread(thread);
                 settings = agent.settings || {};
                 this.threadRepository.updateThreadSettings(thread, settings);
             }

@@ -8,7 +8,7 @@ class JobTaskHandler {
     }
 
     async handleJobTask(thread, task) {
-        const agent = this.agentLoader.loadAgentForThread(thread);
+        const agent = await this.agentLoader.loadAgentForThread(thread);
         let response = await agent.executeTask(task, thread);
         return response;
     }
@@ -27,7 +27,7 @@ class JobTaskHandler {
         if (thread) {
             const job = thread.jobs.find(j => j.index === jobIndex);
             if (job) {
-                const agent = this.agentLoader.loadAgentForThread(thread);
+                const agent = await this.agentLoader.loadAgentForThread(thread);
 
                 // 从 job 的 AvailableTask 获取 Task
                 const task = job.availableTask.task;

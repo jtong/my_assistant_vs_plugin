@@ -168,6 +168,10 @@ class ChatViewProvider {
         const thread = this.threadRepository.getThread(threadId);
         const lastUserMessage = thread.messages[thread.messages.length - 1].text;
         const retryTask = this.buildMessageTask(lastUserMessage, thread, host_utils);
+        
+        // 添加重试标记到任务的 meta 中
+        retryTask.meta._ui_action = "retry";
+        
         await this.handleThread(thread, retryTask, panel);
     }
 

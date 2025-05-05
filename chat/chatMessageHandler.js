@@ -8,12 +8,14 @@ class ChatMessageHandler {
     }
 
     async handleTask(thread, task, responseHandler) {
-        const agent = this.agentLoader.loadAgentForThread(thread);
+        // 这里使用 await 加载 agent
+        const agent = await this.agentLoader.loadAgentForThread(thread);
         let response;
 
-        if (task.type === Task.TYPE_MESSAGE) {
+        if (task.type === Task.TYPE_MESSAGE && typeof agent.generateReply === 'function') {
             response = await agent.generateReply(thread, task.host_utils);
         } else {
+            // 如果没有 generateReply 方法或任务不是消息类型，则使用 executeTask
             response = await agent.executeTask(task, thread);
         }
 
