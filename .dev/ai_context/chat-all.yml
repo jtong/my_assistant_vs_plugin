@@ -8,7 +8,9 @@ project:
       - "node_modules/**"
       - "chat/**"
       - "*.*"
+      - ex_command/**
     - ignore:
+      - .ai_helper
       - node_modules/@(.*)
       - node_modules/!(ai-agent-response)
       - ".ai_helper/agent/chat/node_modules/!(ai-agent-response|@jtong)"
@@ -38,7 +40,7 @@ input:
     - 分清webview的代码和插件的代码和agent app的代码
 
     ## 任务
-    我希望 当Agent没有 generateReply 函数的时候，一切插件对Agent调用都走 executeTask 接口。只是会包装 Task.TYPE_MESSAGE 的任务，如果重试的话meta里会有_ui_action属性，标记为retry
+    我希望 依赖 chat/ex_command/AIGenFileParser.js 的代码，写一个新命令，从剪切板读入要解析的字符串，然后以vscode当前项目根路径为相对路径执行，执行代码参考 chat/ex_command/example.js
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

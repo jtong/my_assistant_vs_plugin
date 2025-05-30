@@ -21,6 +21,7 @@
         "agentLoader.js",
         "logger.js",
         "chat/**",
+        "ex_command/**",
         "job/**",
         "agent_marketplace/**",
         "app/**",
@@ -163,6 +164,11 @@
             {
                 "command": "myAssistant.unescapeClipboard",
                 "title": "Unescape Clipboard Content",
+                "category": "My Assistant Util"
+            },
+            {
+                "command": "myAssistant.applyAIGenFilesFromClipboard",
+                "title": "Apply AI Gen Files from Clipboard",
                 "category": "My Assistant Util"
             }
         ],
