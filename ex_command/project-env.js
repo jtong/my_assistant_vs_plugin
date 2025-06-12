@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { getProjectEnv } = require('./project-env');
 
 // 配置文件路径
 const CONFIG_FILE = path.join(os.homedir(), '.prompt-context-builder-env');

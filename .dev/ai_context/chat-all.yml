@@ -40,7 +40,7 @@ input:
     - 分清webview的代码和插件的代码和agent app的代码
 
     ## 任务
-    我希望 依赖 chat/ex_command/AIGenFileParser.js 的代码，写一个新命令，从剪切板读入要解析的字符串，然后以vscode当前项目根路径为相对路径执行，执行代码参考 chat/ex_command/example.js
+    我希望 解决一下这个问题：为什么我改了command名，改成了“myAssistant.applyAIGenFilesFromClipboard”。但是重新启动运行后，执行这个命令，报找不到这个命令
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

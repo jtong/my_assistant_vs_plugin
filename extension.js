@@ -26,7 +26,9 @@ function activate(context) {
 
     activeAppExtention(context);
 
+    console.log('Ex Command activating...');
     registerExtendedCommands(context);
+    console.log('Ex Command activated successfully');
 
 }
 
