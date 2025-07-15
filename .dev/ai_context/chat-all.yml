@@ -40,7 +40,7 @@ input:
     - 分清webview的代码和插件的代码和agent app的代码
 
     ## 任务
-    我希望 解决一下这个问题：为什么我改了command名，改成了“myAssistant.applyAIGenFilesFromClipboard”。但是重新启动运行后，执行这个命令，报找不到这个命令
+    我希望 可以给thread的message挂载一个文件，然后每次agent可以读取这个文件作为内容
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

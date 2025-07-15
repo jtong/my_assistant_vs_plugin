@@ -340,7 +340,10 @@ window.addEventListener('message', event => {
             break;
         case 'markerAdded':
             addMarkerLine(message.markerId);
-            break;    
+            break;  
+        case 'triggerRetry':
+            retryMessageHandler();
+            break;       
         // ...其他 case    
 
         //markdown cases

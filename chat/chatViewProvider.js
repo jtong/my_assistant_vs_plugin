@@ -215,8 +215,8 @@ class ChatViewProvider {
     }
 
     handleOpenAttachedFile(message) {
-        const { filePath } = message;
-        const absoluteFilePath = path.join(this.threadRepository.storagePath, filePath);
+        const { threadId, filePath } = message;
+        const absoluteFilePath = path.join(this.threadRepository.storagePath, threadId, filePath);
         if (fs.existsSync(absoluteFilePath)) {
             vscode.window.showTextDocument(vscode.Uri.file(absoluteFilePath));
         } else {

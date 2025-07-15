@@ -4,24 +4,24 @@
 - [x] 重新加载agents
 - [x] 打印日志
 - [x] 把输出路径从ai_helper改成.ai_helper
-- [ ] filter 掉virtualMessage不生成chat history
+- [x] filter 掉virtualMessage不生成chat history
 - [ ] 刷新的时候，删除所有已经require的agent的缓存，避免重启
 - [ ] 列表改成倒序排，最新的在最上面
 - [ ] 下面的operations应该替代的是 /xxx 的体验
-- [ ] 加一个async的初始化函数
+- [x] 加一个async的初始化函数
 - [ ] filePath不要在发送时复制，而应该在init时复制
 - [ ] 复制和展示选中应该是一个功能，当然复制这个环节可以切换为其他Action，而展示选中也可以换成其他展示策略
 - [ ] 文件部分应该专门写个文档，可以用的地方有三个：手动上传、自动更新、引用标记
-- [ ] 默认走executeTask的文档
-- [ ] 重试的文档跟新，加入meta里_ui_action
+- [x] 默认走executeTask的文档
+- [ ] 重试的文档跟新，加入meta里 _ui_action
 - [ ] markdown的文档
-- [ ] 支持转字符串的命令
-- [ ] 支持剪切板里读取然后生成的命令
+- [x] 支持转字符串的命令
+- [ ] operation并不是setting里有值了都会用
 
 ## known issue
 
 - [ ] 发送消息时会再复制一次，因为源文件和目标文件路径一致，所以啥也没发生。但这个逻辑有问题
-
+- [ ] 
 
 ## bug
 
