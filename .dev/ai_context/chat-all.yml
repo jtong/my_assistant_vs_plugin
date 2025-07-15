@@ -40,7 +40,9 @@ input:
     - 分清webview的代码和插件的代码和agent app的代码
 
     ## 任务
-    我希望 可以给thread的message挂载一个文件，然后每次agent可以读取这个文件作为内容
+    我希望 把现有的前端的 updateBotMessage 消息改成 appendBotMessage ，因为他实际上是在append。
+    再专门写一个 updateBotMessage 的方法来更新消息。这个是完全替换，而不是append。
+    但是他里面还支持添加AvailableTask，这个要单独提出来搞成一个消息和方法。这样插件端进行addAvailableTasks的时候，就可以使用这个消息，而不需要与appendBotMessage耦合。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

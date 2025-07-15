@@ -282,6 +282,75 @@ function showFileSelectedHint(fileName) {
     }
 }
 
+function appendBotMessage(messageId, text) {
+    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (messageElement) {
+        const textContainer = messageElement.querySelector('.message-text');
+        if (textContainer && text !== undefined && text !== null) {
+            // 更新存储的原始文本
+            messageElement.setAttribute('data-original-text', messageElement.getAttribute('data-original-text') + text);
+
+            const isHtml = messageElement.getAttribute('data-is-html') === 'true';
+            if (isHtml) {
+                textContainer.innerHTML = messageElement.getAttribute('data-original-text');
+            } else {
+                textContainer.innerHTML = renderMarkdown(messageElement.getAttribute('data-original-text'));
+            }
+        }
+
+        if (isAutoScrollEnabled) {
+            messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+    }
+}
+
+function updateBotMessage(messageId, text) {
+    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (messageElement) {
+        const textContainer = messageElement.querySelector('.message-text');
+        if (textContainer && text !== undefined && text !== null) {
+            // 完全替换存储的原始文本
+            messageElement.setAttribute('data-original-text', text);
+
+            const isHtml = messageElement.getAttribute('data-is-html') === 'true';
+            if (isHtml) {
+                textContainer.innerHTML = text;
+            } else {
+                textContainer.innerHTML = renderMarkdown(text);
+            }
+        }
+
+        if (isAutoScrollEnabled) {
+            messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+    }
+}
+
+function addAvailableTasksToMessage(messageId, availableTasks) {
+    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (messageElement && availableTasks && availableTasks.length > 0) {
+        const container = messageElement.querySelector('.message-container');
+        
+        // 移除旧的任务按钮容器（如果存在）
+        const oldTaskContainer = container.querySelector('.task-buttons-container');
+        if (oldTaskContainer) {
+            container.removeChild(oldTaskContainer);
+        }
+        
+        // 添加新的任务按钮
+        const taskContainer = document.createElement('div');
+        taskContainer.className = 'task-buttons-container';
+        availableTasks.forEach(availableTask => {
+            const button = document.createElement('button');
+            button.textContent = availableTask.name;
+            button.className = 'task-button';
+            button.addEventListener('click', () => executeTask(availableTask.task));
+            taskContainer.appendChild(button);
+        });
+        container.appendChild(taskContainer);
+    }
+}
+
 window.addEventListener('message', event => {
     const message = event.data;
     switch (message.type) {
@@ -296,13 +365,19 @@ window.addEventListener('message', event => {
             isGenerating = true;
             showStopButton();
             break;
+        case 'appendBotMessage':
+            appendBotMessage(message.messageId, message.text);
+            break;
         case 'updateBotMessage':
-            updateBotMessage(message.messageId, message.text, message.availableTasks);
+            updateBotMessage(message.messageId, message.text);
+            break;
+        case 'addAvailableTasks':
+            addAvailableTasksToMessage(message.messageId, message.availableTasks);
             break;
         case 'botResponseComplete':
-            isBotResponding = false;  // 重置标志，表示 bot 回复完成
-            isGenerating = false;     // 重置生成标志
-            hideStopButton();         // 隐藏停止按钮
+            isBotResponding = false;
+            isGenerating = false;
+            hideStopButton();
             addEditButtons();
             break;        
         case 'removeLastBotMessage':
@@ -567,49 +642,6 @@ function addTaskButtons(container, availableTasks) {
     container.querySelector('.message-container').appendChild(taskContainer);
 }
 
-
-
-function updateBotMessage(messageId, text, availableTasks) {
-    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-    if (messageElement) {
-        const textContainer = messageElement.querySelector('.message-text');
-        if (textContainer && text !== undefined && text !== null) {
-            // 更新存储的原始文本
-            messageElement.setAttribute('data-original-text', messageElement.getAttribute('data-original-text') + text);
-
-            const isHtml = messageElement.getAttribute('data-is-html') === 'true';
-            if (isHtml) {
-                textContainer.innerHTML = messageElement.getAttribute('data-original-text');
-            } else {
-                textContainer.innerHTML = renderMarkdown(messageElement.getAttribute('data-original-text'));
-            }
-        }
-
-        const container = messageElement.querySelector('.message-container');
-        // 移除旧的任务按钮容器（如果存在）
-        const oldTaskContainer = container.querySelector('.task-buttons-container');
-        if (oldTaskContainer) {
-            container.removeChild(oldTaskContainer);
-        }
-        // 添加新的任务按钮
-        if (availableTasks && availableTasks.length > 0) {
-            const taskContainer = document.createElement('div');
-            taskContainer.className = 'task-buttons-container';
-            availableTasks.forEach(availableTask => {
-                const button = document.createElement('button');
-                button.textContent = availableTask.name;
-                button.className = 'task-button';
-                button.addEventListener('click', () => executeTask(availableTask.task));
-                taskContainer.appendChild(button);
-            });
-            container.appendChild(taskContainer);
-        }
-        if (isAutoScrollEnabled) { // 检查状态
-            messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }
-    }
-}
-
 function displayThread(thread) {
     const chatBox = document.getElementById('chat-box');
     chatBox.innerHTML = ''; // 清除现有消息
@@ -713,6 +745,3 @@ function executeTask(task) {
         window.vscode.postMessage(message);
     }
 }
-
-
-

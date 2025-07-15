@@ -244,8 +244,10 @@ class ChatViewProvider {
         })
         const thread = this.threadRepository.getThread(message.threadId);
         this.threadRepository.updateMessage(thread, message.id, message);
+        
+        // 使用独立的 addAvailableTasks 消息
         panel.webview.postMessage({
-            type: 'updateBotMessage',
+            type: 'addAvailableTasks',
             messageId: message.id,
             availableTasks: availableTasks
         });
@@ -255,6 +257,7 @@ class ChatViewProvider {
         const botMessage = await this.addNewBotMessage(response, updatedThread, panel);
 
         if (response.hasAvailableTasks()) {
+            // 使用新的独立方法
             this.addAvailableTasks(botMessage, response.getAvailableTasks(), panel);
         }
 
@@ -348,8 +351,9 @@ class ChatViewProvider {
                     }
 
                     botMessage.text += chunk;
+                    // 使用 appendBotMessage 而不是 updateBotMessage
                     panel.webview.postMessage({
-                        type: 'updateBotMessage',
+                        type: 'appendBotMessage',
                         messageId: botMessage.id,
                         text: chunk
                     });
@@ -358,8 +362,9 @@ class ChatViewProvider {
                 console.error('Error in stream processing:', streamError);
                 if (!this.stopGenerationFlags.get(thread.id)) {
                     botMessage.text += ' An error occurred during processing.';
+                    // 使用 appendBotMessage
                     panel.webview.postMessage({
-                        type: 'updateBotMessage',
+                        type: 'appendBotMessage',
                         messageId: botMessage.id,
                         text: ' An error occurred during processing.'
                     });
