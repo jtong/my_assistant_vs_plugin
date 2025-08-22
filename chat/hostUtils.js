@@ -24,11 +24,17 @@ function createHostUtils(panel, threadRepository) {
             const uri = vscode.Uri.file(absolutePath);
             return panel.webview.asWebviewUri(uri).toString();
         },
+        getImageUri: (relativeImagePath) => {
+            const absolutePath = path.join(threadRepository.storagePath, relativeImagePath);
+            const uri = vscode.Uri.file(absolutePath);
+            return panel.webview.asWebviewUri(uri).toString();
+        },
         threadRepository: threadRepository,
         postMessage: (message) => {
             panel.webview.postMessage(message);
         }
     };
 }
+
 
 module.exports = createHostUtils;

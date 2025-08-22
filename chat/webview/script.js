@@ -1,6 +1,35 @@
 let isBotResponding = false;
 let isAutoScrollEnabled = true; // 自动滚屏状态，默认为ON
 let isGenerating = false; // 标记是否正在生成响应
+let selectedImage = null;
+
+document.getElementById('add-image-btn').addEventListener('click', () => {
+    document.getElementById('image-upload').click();
+});
+
+document.getElementById('image-upload').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+        selectedImage = file;
+        showImageSelectedHint(file.name);
+    }
+});
+
+function showImageSelectedHint(fileName) {
+    const hintElement = document.getElementById('image-selected-hint');
+    if (!hintElement) {
+        const newHintElement = document.createElement('div');
+        newHintElement.id = 'image-selected-hint';
+        newHintElement.textContent = `已选图片：${fileName}`;
+        const userInput = document.getElementById('add-image-btn');
+        userInput.parentNode.insertBefore(newHintElement, userInput.nextSibling);
+    } else {
+        hintElement.textContent = `已选图片：${fileName}`;
+    }
+}
+
+
+
 
 const md = window.markdownit({
     highlight: function (str, lang) {
@@ -564,6 +593,7 @@ function createMessageElement(message) {
         textContainer.innerHTML = renderMarkdown(message.text);
     }
 
+    // 处理文件附件
     if (message.filePath) {
         const fileLink = document.createElement('a');
         fileLink.href = '#';
@@ -578,6 +608,28 @@ function createMessageElement(message) {
         });
         textContainer.appendChild(fileLink);
         textContainer.appendChild(document.createElement('br')); // 换行
+    }
+
+    // 处理图片附件
+    if (message.imagePath) {
+        const imageContainer = document.createElement('div');
+        imageContainer.className = 'message-image-container';
+        
+        const image = document.createElement('img');
+        image.src = message.imageUri; // 使用转换后的URI
+        image.className = 'message-image';
+        image.alt = '用户上传的图片';
+        image.addEventListener('click', () => {
+            // 打开图片
+            window.vscode.postMessage({
+                type: 'openImage',
+                threadId: window.threadId,
+                imagePath: message.imagePath
+            });
+        });
+        
+        imageContainer.appendChild(image);
+        container.appendChild(imageContainer);
     }
 
     container.appendChild(textContainer);
@@ -688,10 +740,40 @@ function sendMessageHandler() {
     const userInput = document.getElementById('user-input');
     const userInput_value = userInput.value.trim();
 
-    if (userInput_value) {
+    if (userInput_value || selectedImage) {
+        const message = {
+            type: 'sendMessage',
+            threadId: window.threadId,
+            message: userInput_value
+        };
 
-        doSendMessage(userInput_value);
-        userInput.value = '';
+        // 处理图片
+        if (selectedImage) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                message.imageData = {
+                    name: selectedImage.name,
+                    type: selectedImage.type,
+                    data: e.target.result
+                };
+                window.vscode.postMessage(message);
+                
+                // 清除已选择的图片
+                selectedImage = null;
+                const hintElement = document.getElementById('image-selected-hint');
+                if (hintElement) {
+                    hintElement.remove();
+                }
+                
+                userInput.value = '';
+            };
+            reader.readAsDataURL(selectedImage);
+        } else {
+            window.vscode.postMessage(message);
+            userInput.value = '';
+        }
+        
+        isBotResponding = true;  // 设置标志，表示 bot 开始回复
     }
 }
 

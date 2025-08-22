@@ -40,7 +40,7 @@ class ChatMessageHandler {
         }
     }
 
-    addUserMessageToThread(thread, userMessage, filePath = null) {
+    addUserMessageToThread(thread, userMessage, filePath = null, imagePath = null) {
         const newMessage = {
             id: 'msg_' + Date.now(),
             sender: 'user',
@@ -48,14 +48,19 @@ class ChatMessageHandler {
             timestamp: Date.now(),
             threadId: thread.id
         };
-    
+
         if (filePath) {
             newMessage.filePath = filePath;
         }
-    
+
+        if (imagePath) {
+            newMessage.imagePath = imagePath;
+        }
+
         this.threadRepository.addMessage(thread, newMessage);
         return this.threadRepository.getThread(thread.id);
     }
+
 }
 
 module.exports = ChatMessageHandler;

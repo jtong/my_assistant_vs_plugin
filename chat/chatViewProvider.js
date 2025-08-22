@@ -102,10 +102,22 @@ class ChatViewProvider {
                 case 'stopGeneration':
                     this.handleStopGeneration(threadId, panel);
                     break;
+                case 'openImage':
+                    this.handleOpenImage(message);
+                    break;
             }
         });
     }
 
+    handleOpenImage(message) {
+        const { threadId, imagePath } = message;
+        const absoluteImagePath = path.join(this.threadRepository.storagePath, imagePath);
+        if (fs.existsSync(absoluteImagePath)) {
+            vscode.commands.executeCommand('vscode.open', vscode.Uri.file(absoluteImagePath));
+        } else {
+            vscode.window.showErrorMessage('图片不存在或已被删除。');
+        }
+    }
     handleStopGeneration(threadId, panel) {
         this.stopGenerationFlags.set(threadId, true);
         panel.webview.postMessage({
@@ -134,6 +146,8 @@ class ChatViewProvider {
 
     async handleSendMessage(message, threadId, panel, host_utils) {
         let thread = this.threadRepository.getThread(threadId);
+
+        // 处理文件附件
         if (message.filePath) {
             const selectedFileUri = message.filePath;
             const fileName = path.basename(selectedFileUri);
@@ -147,15 +161,43 @@ class ChatViewProvider {
             message.filePath = relativeFilePath;
         }
 
-        const updatedThread = this.messageHandler.addUserMessageToThread(thread, message.message, message.filePath);
+        // 处理图片数据
+        if (message.imageData) {
+            const threadFolder = path.join(this.threadRepository.storagePath, thread.id);
+            if (!fs.existsSync(threadFolder)) {
+                fs.mkdirSync(threadFolder, { recursive: true });
+            }
+
+            // 创建唯一文件名
+            const timestamp = Date.now();
+            const imageName = `image_${timestamp}_${message.imageData.name}`;
+            const imagePath = path.join(threadFolder, imageName);
+
+            // 将base64数据转换为图片文件
+            const imageDataParts = message.imageData.data.split(',');
+            const imageBuffer = Buffer.from(imageDataParts[1], 'base64');
+            fs.writeFileSync(imagePath, imageBuffer);
+
+            // 存储相对路径
+            const relativeImagePath = path.relative(this.threadRepository.storagePath, imagePath);
+            message.imagePath = relativeImagePath;
+
+            // 删除base64数据以减少存储和传输负担
+            delete message.imageData;
+        }
+
+        const updatedThread = this.messageHandler.addUserMessageToThread(thread, message.message, message.filePath, message.imagePath);
         const userMessage = updatedThread.messages[updatedThread.messages.length - 1];
+
         panel.webview.postMessage({
             type: 'addUserMessage',
             message: userMessage
         });
+
         const messageTask = this.buildMessageTask(userMessage.text, updatedThread, host_utils);
         await this.handleThread(updatedThread, messageTask, panel);
     }
+
 
     async handleRetryMessage(threadId, panel, host_utils) {
         const removedMessages = this.threadRepository.removeMessagesAfterLastUser(threadId);
@@ -168,10 +210,10 @@ class ChatViewProvider {
         const thread = this.threadRepository.getThread(threadId);
         const lastUserMessage = thread.messages[thread.messages.length - 1].text;
         const retryTask = this.buildMessageTask(lastUserMessage, thread, host_utils);
-        
+
         // 添加重试标记到任务的 meta 中
         retryTask.meta._ui_action = "retry";
-        
+
         await this.handleThread(thread, retryTask, panel);
     }
 
@@ -244,7 +286,7 @@ class ChatViewProvider {
         })
         const thread = this.threadRepository.getThread(message.threadId);
         this.threadRepository.updateMessage(thread, message.id, message);
-        
+
         // 使用独立的 addAvailableTasks 消息
         panel.webview.postMessage({
             type: 'addAvailableTasks',
@@ -330,6 +372,7 @@ class ChatViewProvider {
             meta: response.getMeta(),
             isVirtual: response.getMeta()?.isVirtual || false
         };
+        
 
         this.threadRepository.addMessage(thread, botMessage);
 

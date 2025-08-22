@@ -409,3 +409,36 @@ body {
     font-size: 12px;
     color: #007ACC;
 }
+
+.message-image-container {
+    margin-top: 10px;
+    max-width: 100%;
+}
+
+.message-image {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#add-image-btn {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-right: 5px;
+    font-size: 16px;
+    padding: 5px 10px;
+}
+
+#add-image-btn:hover {
+    background-color: #e0e0e0;
+}
+
+#image-selected-hint {
+    color: #4CAF50;
+    font-size: 12px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
