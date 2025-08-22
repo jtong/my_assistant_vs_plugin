@@ -40,7 +40,7 @@ class ChatMessageHandler {
         }
     }
 
-    addUserMessageToThread(thread, userMessage, filePath = null, imagePath = null) {
+    addUserMessageToThread(thread, userMessage, filePath = null, imagePath = null, imageUri = null) {
         const newMessage = {
             id: 'msg_' + Date.now(),
             sender: 'user',
@@ -55,6 +55,7 @@ class ChatMessageHandler {
 
         if (imagePath) {
             newMessage.imagePath = imagePath;
+            newMessage.imageUri = imageUri; // 添加转换后的URI
         }
 
         this.threadRepository.addMessage(thread, newMessage);

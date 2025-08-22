@@ -111,7 +111,7 @@ class ChatViewProvider {
 
     handleOpenImage(message) {
         const { threadId, imagePath } = message;
-        const absoluteImagePath = path.join(this.threadRepository.storagePath, imagePath);
+        const absoluteImagePath = path.join(this.threadRepository.storagePath, threadId, imagePath);
         if (fs.existsSync(absoluteImagePath)) {
             vscode.commands.executeCommand('vscode.open', vscode.Uri.file(absoluteImagePath));
         } else {
@@ -179,14 +179,17 @@ class ChatViewProvider {
             fs.writeFileSync(imagePath, imageBuffer);
 
             // 存储相对路径
-            const relativeImagePath = path.relative(this.threadRepository.storagePath, imagePath);
-            message.imagePath = relativeImagePath;
+            message.imagePath = imageName; // 只保存图片文件名作为相对路径
+            
+            // 提前转换URI并添加到消息中供前端使用
+            message.imageUri = host_utils.getImageUri(thread.id, imageName);
 
             // 删除base64数据以减少存储和传输负担
             delete message.imageData;
         }
 
-        const updatedThread = this.messageHandler.addUserMessageToThread(thread, message.message, message.filePath, message.imagePath);
+
+        const updatedThread = this.messageHandler.addUserMessageToThread(thread, message.message, message.filePath, message.imagePath, message.imageUri);
         const userMessage = updatedThread.messages[updatedThread.messages.length - 1];
 
         panel.webview.postMessage({
@@ -372,7 +375,7 @@ class ChatViewProvider {
             meta: response.getMeta(),
             isVirtual: response.getMeta()?.isVirtual || false
         };
-        
+
 
         this.threadRepository.addMessage(thread, botMessage);
 

@@ -7,7 +7,7 @@ document.getElementById('add-image-btn').addEventListener('click', () => {
     document.getElementById('image-upload').click();
 });
 
-document.getElementById('image-upload').addEventListener('change', function(event) {
+document.getElementById('image-upload').addEventListener('change', function (event) {
     const file = event.target.files[0];
     if (file && file.type.startsWith('image/')) {
         selectedImage = file;
@@ -119,7 +119,7 @@ function stopGenerationHandler() {
             type: 'stopGeneration',
             threadId: window.threadId
         });
-        
+
         // 立即更新UI状态，不等待后端响应
         isGenerating = false;
         isBotResponding = false;
@@ -225,8 +225,8 @@ function addEditButtons() {
                 buttonContainer.appendChild(cancelBtn);
 
                 editWrapper.appendChild(buttonContainer);
-                
-                
+
+
 
                 container.insertBefore(editWrapper, textContainer);
                 textContainer.style.display = 'none';
@@ -359,13 +359,13 @@ function addAvailableTasksToMessage(messageId, availableTasks) {
     const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
     if (messageElement && availableTasks && availableTasks.length > 0) {
         const container = messageElement.querySelector('.message-container');
-        
+
         // 移除旧的任务按钮容器（如果存在）
         const oldTaskContainer = container.querySelector('.task-buttons-container');
         if (oldTaskContainer) {
             container.removeChild(oldTaskContainer);
         }
-        
+
         // 添加新的任务按钮
         const taskContainer = document.createElement('div');
         taskContainer.className = 'task-buttons-container';
@@ -408,7 +408,7 @@ window.addEventListener('message', event => {
             isGenerating = false;
             hideStopButton();
             addEditButtons();
-            break;        
+            break;
         case 'removeLastBotMessage':
             removeLastBotMessage();
             break;
@@ -444,10 +444,10 @@ window.addEventListener('message', event => {
             break;
         case 'markerAdded':
             addMarkerLine(message.markerId);
-            break;  
+            break;
         case 'triggerRetry':
             retryMessageHandler();
-            break;       
+            break;
         // ...其他 case    
 
         //markdown cases
@@ -465,7 +465,7 @@ function addMarkerLine(markerId) {
     const markerLine = document.createElement('div');
     markerLine.className = 'marker-line';
     markerLine.setAttribute('data-marker-id', markerId);
-    
+
     const chatBox = document.getElementById('chat-box');
     chatBox.appendChild(markerLine);
 }
@@ -505,7 +505,7 @@ function displayOperations(operations) {
                 debugger;
                 currentValue = JSON.stringify(currentValue);
             }
-            select.value = currentValue || (typeof operation.options[0] === 'string' ? operation.options[0] : 
+            select.value = currentValue || (typeof operation.options[0] === 'string' ? operation.options[0] :
                 (typeof operation.options[0].value === 'object' ? JSON.stringify(operation.options[0].value) : operation.options[0].value));
 
             // 监听选择变化事件
@@ -572,7 +572,7 @@ function createMessageElement(message) {
     if (message.meta && message.meta._webview && message.meta._webview.message_bg_color) {
         messageElement.style.backgroundColor = message.meta._webview.message_bg_color;
     }
-    
+
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.className = 'message-checkbox';
@@ -614,7 +614,7 @@ function createMessageElement(message) {
     if (message.imagePath) {
         const imageContainer = document.createElement('div');
         imageContainer.className = 'message-image-container';
-        
+
         const image = document.createElement('img');
         image.src = message.imageUri; // 使用转换后的URI
         image.className = 'message-image';
@@ -627,7 +627,7 @@ function createMessageElement(message) {
                 imagePath: message.imagePath
             });
         });
-        
+
         imageContainer.appendChild(image);
         container.appendChild(imageContainer);
     }
@@ -641,14 +641,14 @@ function createMessageElement(message) {
         if (!document.getElementById('chat-container').classList.contains('edit-mode')) {
             return;
         }
-        
+
         // 如果点击的是按钮、链接或复选框本身，不触发选中效果
-        if (event.target.tagName === 'BUTTON' || 
-            event.target.tagName === 'A' || 
+        if (event.target.tagName === 'BUTTON' ||
+            event.target.tagName === 'A' ||
             event.target.className === 'message-checkbox') {
             return;
         }
-        
+
         // 切换复选框的状态
         const checkbox = messageElement.querySelector('.message-checkbox');
         checkbox.checked = !checkbox.checked;
@@ -676,7 +676,7 @@ function displayBotMessage(message, isStreaming = false) {
     }
 
     chatBox.appendChild(messageElement);
-    messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' }); 
+    messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
 
 function addTaskButtons(container, availableTasks) {
@@ -722,7 +722,7 @@ function attachFilePathToMessage(message) {
     }
 }
 
-function doSendMessage(message_text){
+function doSendMessage(message_text) {
     isBotResponding = true;  // 设置标志，表示 bot 开始回复
     const message = {
         type: 'sendMessage',
@@ -750,21 +750,21 @@ function sendMessageHandler() {
         // 处理图片
         if (selectedImage) {
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 message.imageData = {
                     name: selectedImage.name,
                     type: selectedImage.type,
                     data: e.target.result
                 };
                 window.vscode.postMessage(message);
-                
+
                 // 清除已选择的图片
                 selectedImage = null;
                 const hintElement = document.getElementById('image-selected-hint');
                 if (hintElement) {
                     hintElement.remove();
                 }
-                
+
                 userInput.value = '';
             };
             reader.readAsDataURL(selectedImage);
@@ -772,7 +772,7 @@ function sendMessageHandler() {
             window.vscode.postMessage(message);
             userInput.value = '';
         }
-        
+
         isBotResponding = true;  // 设置标志，表示 bot 开始回复
     }
 }
@@ -818,7 +818,7 @@ function executeTask(task) {
 
     if (task.type === 'message') {
         doSendMessage(task.message);
-    }else{
+    } else {
         const message = {
             type: 'executeTask',
             threadId: window.threadId,
