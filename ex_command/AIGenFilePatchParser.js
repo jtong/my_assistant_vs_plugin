@@ -20,7 +20,8 @@ class AIGenFilePatchParser {
                 filesProcessed: 0,
                 filesCreated: 0,
                 filesUpdated: 0,
-                patchItemsApplied: 0
+                patchItemsApplied: 0,
+                patchItemsFailed: 0
             }
         };
 
@@ -30,14 +31,36 @@ class AIGenFilePatchParser {
             for (const filePatch of filePatches) {
                 try {
                     const result = this.processFilePatch(filePatch);
-                    results.success.push({
-                        path: filePatch.path,
-                        action: result.action,
-                        patchItemsApplied: result.patchItemsApplied
-                    });
+                    
+                    if (result.errors.length > 0) {
+                        // 文件处理部分成功，记录成功和失败的信息
+                        results.success.push({
+                            path: filePatch.path,
+                            action: result.action,
+                            patchItemsApplied: result.patchItemsApplied
+                        });
+                        
+                        // 添加具体的patch_item错误
+                        result.errors.forEach(error => {
+                            results.errors.push({
+                                path: filePatch.path,
+                                error: error.message,
+                                patchItemIndex: error.patchItemIndex,
+                                searchPattern: error.searchPattern
+                            });
+                        });
+                    } else {
+                        // 文件处理完全成功
+                        results.success.push({
+                            path: filePatch.path,
+                            action: result.action,
+                            patchItemsApplied: result.patchItemsApplied
+                        });
+                    }
 
                     results.stats.filesProcessed++;
                     results.stats.patchItemsApplied += result.patchItemsApplied;
+                    results.stats.patchItemsFailed += result.patchItemsFailed;
                     
                     if (result.action === 'created') {
                         results.stats.filesCreated++;
@@ -45,6 +68,7 @@ class AIGenFilePatchParser {
                         results.stats.filesUpdated++;
                     }
                 } catch (error) {
+                    // 整个文件处理失败（例如文件无法创建等系统级错误）
                     results.errors.push({
                         path: filePatch.path,
                         error: error.message
@@ -160,6 +184,8 @@ class AIGenFilePatchParser {
         let fileExists = fs.existsSync(fullPath);
         let fileContent = '';
         let patchItemsApplied = 0;
+        let patchItemsFailed = 0;
+        const errors = [];
 
         // 如果文件存在，读取内容
         if (fileExists) {
@@ -173,35 +199,63 @@ class AIGenFilePatchParser {
 
         // 处理所有的替换操作
         const replaceItems = filePatch.patchItems.filter(item => item.type === 'replace');
-        for (const item of replaceItems) {
-            const originalContent = fileContent;
-            fileContent = this.applyReplace(fileContent, item.search, item.replace);
-            if (fileContent !== originalContent) {
-                patchItemsApplied++;
-            } else {
-                throw new Error(`Search pattern not found or not unique: ${item.search.substring(0, 50)}...`);
+        for (let i = 0; i < replaceItems.length; i++) {
+            const item = replaceItems[i];
+            try {
+                const originalContent = fileContent;
+                fileContent = this.applyReplace(fileContent, item.search, item.replace);
+                if (fileContent !== originalContent) {
+                    patchItemsApplied++;
+                } else {
+                    patchItemsFailed++;
+                    errors.push({
+                        message: `Search pattern not found: ${item.search.substring(0, 50)}...`,
+                        patchItemIndex: i,
+                        searchPattern: item.search
+                    });
+                }
+            } catch (error) {
+                patchItemsFailed++;
+                errors.push({
+                    message: error.message,
+                    patchItemIndex: i,
+                    searchPattern: item.search
+                });
             }
         }
 
         // 处理所有的插入操作
         const insertItems = filePatch.patchItems.filter(item => item.type === 'insert');
         for (const item of insertItems) {
-            if (!fileExists && fileContent === '') {
-                // 新文件创建
-                fileContent = item.content;
-            } else {
-                // 追加到文件末尾
-                fileContent += (fileContent.endsWith('\n') ? '' : '\n') + item.content;
+            try {
+                if (!fileExists && fileContent === '') {
+                    // 新文件创建
+                    fileContent = item.content;
+                } else {
+                    // 追加到文件末尾
+                    fileContent += (fileContent.endsWith('\n') ? '' : '\n') + item.content;
+                }
+                patchItemsApplied++;
+            } catch (error) {
+                patchItemsFailed++;
+                errors.push({
+                    message: `Insert operation failed: ${error.message}`,
+                    patchItemIndex: -1,
+                    searchPattern: null
+                });
             }
-            patchItemsApplied++;
         }
 
-        // 写入文件
-        fs.writeFileSync(fullPath, fileContent, 'utf8');
+        // 只有当有成功的操作时才写入文件
+        if (patchItemsApplied > 0) {
+            fs.writeFileSync(fullPath, fileContent, 'utf8');
+        }
 
         return {
             action: fileExists ? 'updated' : 'created',
-            patchItemsApplied: patchItemsApplied
+            patchItemsApplied: patchItemsApplied,
+            patchItemsFailed: patchItemsFailed,
+            errors: errors
         };
     }
 

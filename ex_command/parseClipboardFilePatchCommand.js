@@ -67,7 +67,26 @@ async function parseClipboardFilePatchCommand() {
         // 3. 执行解析和文件补丁应用
         const results = parser.parseAndApply(clipboardText);
 
-        // 4. 显示结果
+        // 4. 检查是否有多匹配错误，生成提示词
+        const multipleMatchErrors = results.errors.filter(error => 
+            error.error && error.error.includes('multiple times'));
+        
+        if (multipleMatchErrors.length > 0) {
+            const promptForAI = generateMultipleMatchPrompt(clipboardText, multipleMatchErrors, parser);
+            
+            // 将提示词复制到剪贴板
+            await vscode.env.clipboard.writeText(promptForAI);
+            
+            // 显示错误信息和提示
+            const errorMessage = `发现 ${multipleMatchErrors.length} 个补丁有多个匹配项:\n` +
+                multipleMatchErrors.map(error => `- ${error.path}: ${error.error}`).join('\n') +
+                '\n\n已生成AI提示词并复制到剪贴板，请使用更多上下文重新生成补丁。';
+            
+            vscode.window.showWarningMessage(errorMessage);
+            return;
+        }
+
+        // 5. 显示结果（如果没有多匹配错误）
         let resultMessage = `文件补丁处理完成!\n`;
         resultMessage += `总计处理: ${results.stats.filesProcessed} 个文件\n`;
         resultMessage += `新建: ${results.stats.filesCreated} 个\n`;
@@ -109,6 +128,72 @@ async function parseClipboardFilePatchCommand() {
         console.error('处理剪贴板文件补丁时出错:', error);
         vscode.window.showErrorMessage(`处理失败: ${error.message}`);
     }
+}
+
+/**
+ * 生成多匹配错误的AI提示词
+ * @param {string} originalInput - 原始输入
+ * @param {Array} multipleMatchErrors - 多匹配错误数组
+ * @param {AIGenFilePatchParser} parser - 解析器实例
+ * @returns {string} 生成的提示词
+ */
+function generateMultipleMatchPrompt(originalInput, multipleMatchErrors, parser) {
+    // 提取原始文件补丁
+    const filePatches = parser.extractFilePatches(originalInput);
+    
+    // 按文件路径分组错误
+    const errorsByFile = {};
+    for (const error of multipleMatchErrors) {
+        if (!errorsByFile[error.path]) {
+            errorsByFile[error.path] = [];
+        }
+        errorsByFile[error.path].push(error);
+    }
+    
+    // 找到有问题的文件补丁项
+    const problematicPatches = [];
+    
+    for (const [filePath, errors] of Object.entries(errorsByFile)) {
+        const filePatch = filePatches.find(patch => patch.path === filePath);
+        if (filePatch) {
+            // 只保留导致多匹配的替换操作
+            const problematicItems = [];
+            
+            for (const error of errors) {
+                if (error.patchItemIndex !== undefined && error.patchItemIndex >= 0) {
+                    const replaceItems = filePatch.patchItems.filter(item => item.type === 'replace');
+                    if (error.patchItemIndex < replaceItems.length) {
+                        problematicItems.push(replaceItems[error.patchItemIndex]);
+                    }
+                }
+            }
+            
+            if (problematicItems.length > 0) {
+                problematicPatches.push({
+                    path: filePatch.path,
+                    patchItems: problematicItems
+                });
+            }
+        }
+    }
+    
+    // 生成提示词
+    let prompt = `以下文件补丁在执行时发现多个匹配项，请提供更多上下文来缩小搜索范围：\n\n`;
+    
+    for (const patch of problematicPatches) {
+        prompt += `<ai_gen:file_patch path="${patch.path}">\n`;
+        
+        for (const item of patch.patchItems) {
+            prompt += `<patch_item>\n`;
+            prompt += `<search>${item.search}</search>\n`;
+            prompt += `<replace>${item.replace}</replace>\n`;
+            prompt += `</patch_item>\n`;
+        }
+        
+        prompt += `</ai_gen:file_patch>\n\n`;
+    }
+    
+    return prompt;
 }
 
 module.exports = parseClipboardFilePatchCommand;
