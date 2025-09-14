@@ -40,8 +40,7 @@ input:
     - 分清webview的代码和插件的代码和agent app的代码
 
     ## 任务
-    我希望 applyAIGenFilePatchesFromClipboard 执行的时候，如果search的时候超过了一个匹配，就导出一个提示词，反馈给AI，说明哪个patch有多个匹配，让AI给出更多上下文文本来缩小范围。
-    提示词就直接按照ai_gen:file_patch的格式把没有替换成功的给放进提示词就好了，对AI来说，也只能扩展搜索文本，包含更多周围的代码。不要啰嗦。
+    我希望 applyAIGenFilePatchesFromClipboard 执行的时候，如果search的时候没有匹配到内容，那就标记为未匹配，也加入到提示词里。只是告知AI这些是没匹配到的。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

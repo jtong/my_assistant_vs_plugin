@@ -67,26 +67,39 @@ async function parseClipboardFilePatchCommand() {
         // 3. 执行解析和文件补丁应用
         const results = parser.parseAndApply(clipboardText);
 
-        // 4. 检查是否有多匹配错误，生成提示词
+        // 4. 检查是否有问题错误（多匹配或未匹配），生成提示词
         const multipleMatchErrors = results.errors.filter(error => 
             error.error && error.error.includes('multiple times'));
         
-        if (multipleMatchErrors.length > 0) {
-            const promptForAI = generateMultipleMatchPrompt(clipboardText, multipleMatchErrors, parser);
+        const notFoundErrors = results.errors.filter(error => 
+            error.error && error.error.includes('not found'));
+        
+        if (multipleMatchErrors.length > 0 || notFoundErrors.length > 0) {
+            const promptForAI = generateErrorPrompt(clipboardText, multipleMatchErrors, notFoundErrors, parser);
             
             // 将提示词复制到剪贴板
             await vscode.env.clipboard.writeText(promptForAI);
             
             // 显示错误信息和提示
-            const errorMessage = `发现 ${multipleMatchErrors.length} 个补丁有多个匹配项:\n` +
-                multipleMatchErrors.map(error => `- ${error.path}: ${error.error}`).join('\n') +
-                '\n\n已生成AI提示词并复制到剪贴板，请使用更多上下文重新生成补丁。';
+            let errorMessage = '';
+            if (multipleMatchErrors.length > 0) {
+                errorMessage += `发现 ${multipleMatchErrors.length} 个补丁有多个匹配项:\n` +
+                    multipleMatchErrors.map(error => `- ${error.path}: ${error.error}`).join('\n');
+            }
+            
+            if (notFoundErrors.length > 0) {
+                if (errorMessage) errorMessage += '\n\n';
+                errorMessage += `发现 ${notFoundErrors.length} 个补丁未找到匹配项:\n` +
+                    notFoundErrors.map(error => `- ${error.path}: ${error.error}`).join('\n');
+            }
+            
+            errorMessage += '\n\n已生成AI提示词并复制到剪贴板，请使用更多上下文重新生成补丁。';
             
             vscode.window.showWarningMessage(errorMessage);
             return;
         }
 
-        // 5. 显示结果（如果没有多匹配错误）
+        // 5. 显示结果（如果没有匹配问题）
         let resultMessage = `文件补丁处理完成!\n`;
         resultMessage += `总计处理: ${results.stats.filesProcessed} 个文件\n`;
         resultMessage += `新建: ${results.stats.filesCreated} 个\n`;
@@ -131,23 +144,34 @@ async function parseClipboardFilePatchCommand() {
 }
 
 /**
- * 生成多匹配错误的AI提示词
+ * 生成包含多匹配和未匹配错误的AI提示词
  * @param {string} originalInput - 原始输入
  * @param {Array} multipleMatchErrors - 多匹配错误数组
+ * @param {Array} notFoundErrors - 未匹配错误数组
  * @param {AIGenFilePatchParser} parser - 解析器实例
  * @returns {string} 生成的提示词
  */
-function generateMultipleMatchPrompt(originalInput, multipleMatchErrors, parser) {
+function generateErrorPrompt(originalInput, multipleMatchErrors, notFoundErrors, parser) {
     // 提取原始文件补丁
     const filePatches = parser.extractFilePatches(originalInput);
     
-    // 按文件路径分组错误
+    // 按文件路径分组所有错误
     const errorsByFile = {};
+    
+    // 处理多匹配错误
     for (const error of multipleMatchErrors) {
         if (!errorsByFile[error.path]) {
-            errorsByFile[error.path] = [];
+            errorsByFile[error.path] = { multipleMatch: [], notFound: [] };
         }
-        errorsByFile[error.path].push(error);
+        errorsByFile[error.path].multipleMatch.push(error);
+    }
+    
+    // 处理未匹配错误
+    for (const error of notFoundErrors) {
+        if (!errorsByFile[error.path]) {
+            errorsByFile[error.path] = { multipleMatch: [], notFound: [] };
+        }
+        errorsByFile[error.path].notFound.push(error);
     }
     
     // 找到有问题的文件补丁项
@@ -156,14 +180,32 @@ function generateMultipleMatchPrompt(originalInput, multipleMatchErrors, parser)
     for (const [filePath, errors] of Object.entries(errorsByFile)) {
         const filePatch = filePatches.find(patch => patch.path === filePath);
         if (filePatch) {
-            // 只保留导致多匹配的替换操作
             const problematicItems = [];
             
-            for (const error of errors) {
+            // 处理多匹配错误的项
+            for (const error of errors.multipleMatch) {
                 if (error.patchItemIndex !== undefined && error.patchItemIndex >= 0) {
                     const replaceItems = filePatch.patchItems.filter(item => item.type === 'replace');
                     if (error.patchItemIndex < replaceItems.length) {
-                        problematicItems.push(replaceItems[error.patchItemIndex]);
+                        problematicItems.push({
+                            ...replaceItems[error.patchItemIndex],
+                            errorType: 'multiple_match',
+                            errorMessage: error.error
+                        });
+                    }
+                }
+            }
+            
+            // 处理未匹配错误的项
+            for (const error of errors.notFound) {
+                if (error.patchItemIndex !== undefined && error.patchItemIndex >= 0) {
+                    const replaceItems = filePatch.patchItems.filter(item => item.type === 'replace');
+                    if (error.patchItemIndex < replaceItems.length) {
+                        problematicItems.push({
+                            ...replaceItems[error.patchItemIndex],
+                            errorType: 'not_found',
+                            errorMessage: error.error
+                        });
                     }
                 }
             }
@@ -178,13 +220,15 @@ function generateMultipleMatchPrompt(originalInput, multipleMatchErrors, parser)
     }
     
     // 生成提示词
-    let prompt = `以下文件补丁在执行时发现多个匹配项，请提供更多上下文来缩小搜索范围：\n\n`;
+    let prompt = `以下文件补丁在执行时遇到了匹配问题，请根据问题类型提供相应的解决方案：\n\n`;
     
     for (const patch of problematicPatches) {
         prompt += `<ai_gen:file_patch path="${patch.path}">\n`;
         
         for (const item of patch.patchItems) {
             prompt += `<patch_item>\n`;
+            prompt += `<!-- 错误类型: ${item.errorType === 'multiple_match' ? '多个匹配项' : '未找到匹配项'} -->\n`;
+            prompt += `<!-- 错误详情: ${item.errorMessage} -->\n`;
             prompt += `<search>${item.search}</search>\n`;
             prompt += `<replace>${item.replace}</replace>\n`;
             prompt += `</patch_item>\n`;
@@ -192,6 +236,10 @@ function generateMultipleMatchPrompt(originalInput, multipleMatchErrors, parser)
         
         prompt += `</ai_gen:file_patch>\n\n`;
     }
+    
+    prompt += `请根据错误类型调整补丁：\n`;
+    prompt += `1. 对于"多个匹配项"的情况，请添加更多上下文信息使搜索模式更加精确和唯一。\n`;
+    prompt += `2. 对于"未找到匹配项"的情况，请检查搜索模式是否正确，或提供替代的匹配方式。\n`;
     
     return prompt;
 }
