@@ -40,7 +40,192 @@ input:
     - 分清webview的代码和插件的代码和agent app的代码
 
     ## 任务
-    我希望 messag 的 imagePath 是相对于 thread folder，也就是id不需要是路径的一部分
+    我希望 添加一个Ex command，可以处理剪切板里<ai_gen:file_patch>标签。其格式符合下面提示词输出的内容：
+    ````
+    ## 文件补丁代码输出格式要求
+
+    当您需要对现有文件进行修改或创建新文件时，请严格按照以下格式执行：
+
+    ### 输出格式：
+
+    **替换操作格式：**
+    ```
+    <ai_gen:file_patch path="相对路径/文件名">
+    <patch_item>
+    <search>[要被替换的原代码片段]</search>
+    <replace>[新的代码片段]</replace>
+    </patch_item>
+    </ai_gen:file_patch>
+    ```
+
+    **插入操作格式：**
+    ```
+    <ai_gen:file_patch path="相对路径/文件名">
+    <patch_item>
+    <insert>[要插入的新代码内容]</insert>
+    </patch_item>
+    </ai_gen:file_patch>
+    ```
+
+    ### 核心规则：
+
+    **通用规则：**
+    - 路径规范：path 属性必须基于项目根目录的相对路径
+    - 完整性要求：所有代码片段必须完整且语法正确
+    - 禁止省略：严禁使用任何形式的省略标记或占位符
+    - 多处修改：使用多个 patch_item 标签处理同一文件的多个修改点
+
+    **替换操作规则：**
+    - 精确匹配要求：search 标签中的代码必须与目标文件完全一致
+    - 唯一性要求：search 内容在目标文件中必须唯一存在
+
+    **插入操作规则：**
+    - 新文件创建：当 path 指向不存在的文件时，insert 内容将创建新文件
+    - 末尾追加：当文件已存在时，insert 内容将添加到文件末尾
+    - 完整内容：insert 标签必须包含要添加的全部代码内容
+
+    ### 应用场景示例：
+
+    **示例一：创建配置文件**
+    ```
+    <ai_gen:file_patch path="config/settings.js">
+    <patch_item>
+    <insert>const config = {
+      server: {
+        port: process.env.PORT || 3000,
+        host: process.env.HOST || 'localhost'
+      },
+      database: {
+        url: process.env.DATABASE_URL || 'sqlite://./data.db',
+        maxConnections: 10
+      },
+      logging: {
+        level: process.env.LOG_LEVEL || 'info',
+        file: './logs/app.log'
+      }
+    };
+
+    module.exports = config;</insert>
+    </patch_item>
+    </ai_gen:file_patch>
+    ```
+
+    **示例二：修改现有函数**
+    ```
+    <ai_gen:file_patch path="utils/calculator.js">
+    <patch_item>
+    <search>function calculateTotal(items) {
+      let total = 0;
+      for (let item of items) {
+        total += item.price;
+      }
+      return total;
+    }</search>
+    <replace>function calculateTotal(items, taxRate = 0) {
+      let total = 0;
+      for (let item of items) {
+        total += item.price * item.quantity;
+      }
+      const tax = total * taxRate;
+      return total + tax;
+    }</replace>
+    </patch_item>
+    </ai_gen:file_patch>
+    ```
+
+    **示例三：样式文件末尾追加**
+    ```
+    <ai_gen:file_patch path="styles/main.css">
+    <patch_item>
+    <insert>
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #333;
+      color: white;
+      padding: 15px;
+      border-radius: 5px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .notification.success {
+      background: #28a745;
+    }
+
+    .notification.error {
+      background: #dc3545;
+    }</insert>
+    </patch_item>
+    </ai_gen:file_patch>
+    ```
+
+    **示例四：HTML文件多处修改**
+    ```
+    <ai_gen:file_patch path="templates/index.html">
+    <patch_item>
+    <search><title>My Website</title></search>
+    <replace><title>My Professional Website</title></replace>
+    </patch_item>
+    <patch_item>
+    <search>    <script src="script.js"></script>
+      </body></search>
+    <replace>    <script src="script.js"></script>
+        <script src="analytics.js"></script>
+      </body></replace>
+    </patch_item>
+    </ai_gen:file_patch>
+    ```
+
+    **示例五：Python模块更新**
+    ```
+    <ai_gen:file_patch path="src/data_processor.py">
+    <patch_item>
+    <search>import json
+    import os</search>
+    <replace>import json
+    import os
+    import logging
+    from datetime import datetime</replace>
+    </patch_item>
+    <patch_item>
+    <insert>
+
+    def log_operation(operation_type, details):
+        """记录操作日志"""
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log_entry = f"[{timestamp}] {operation_type}: {details}"
+        logging.info(log_entry)
+        
+    def validate_data(data):
+        """验证数据格式"""
+        if not isinstance(data, dict):
+            raise ValueError("数据必须是字典格式")
+        
+        required_fields = ['id', 'name', 'type']
+        for field in required_fields:
+            if field not in data:
+                raise ValueError(f"缺少必需字段: {field}")
+        
+        return True</insert>
+    </patch_item>
+    </ai_gen:file_patch>
+    ```
+
+    ### 操作优先级和最佳实践：
+
+    **选择准则：**
+    - 新文件创建：使用 insert 操作
+    - 文件末尾添加：使用 insert 操作
+    - 现有代码修改：使用 search/replace 操作
+    - 复杂重构：优先考虑多个精确的 search/replace 操作
+
+    **执行顺序：**
+    - 同一文件内的 patch_item 按照从上到下的顺序执行
+    - insert 操作将在所有 search/replace 操作完成后执行
+    - 多个 insert 操作按照出现顺序依次追加
+    ````
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

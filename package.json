@@ -2,7 +2,7 @@
     "name": "my-assistant",
     "displayName": "My Assistant",
     "description": "plugin of chat assistant and job management client",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "publisher": "jtong",
     "icon": "media/chat-icon.png",
     "repository": "https://github.com/jtong/my_assistant_vs_plugin",
@@ -170,6 +170,11 @@
                 "command": "myAssistant.applyAIGenFilesFromClipboard",
                 "title": "Apply AI Gen Files from Clipboard",
                 "category": "My Assistant Util"
+            },
+            {
+                "command": "myAssistant.applyAIGenFilePatchesFromClipboard",
+                "title": "Apply AI Gen File Patches from Clipboard",
+                "category": "My Assistant Util"
             }
         ],
         "menus": {
@@ -224,7 +229,6 @@
                     "command": "myAssistant.deleteChat",
                     "when": "view == chatList && viewItem == chat",
                     "group": "1_modification"
-
                 },
                 {
                     "command": "myAssistant.renameChat",
