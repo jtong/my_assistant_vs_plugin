@@ -2,7 +2,7 @@
     "name": "my-assistant",
     "displayName": "My Assistant",
     "description": "plugin of chat assistant and job management client",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "publisher": "jtong",
     "icon": "media/chat-icon.png",
     "repository": "https://github.com/jtong/my_assistant_vs_plugin",

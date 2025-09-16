@@ -152,6 +152,10 @@ async function parseClipboardFilePatchCommand() {
  * @returns {string} 生成的提示词
  */
 function generateErrorPrompt(originalInput, multipleMatchErrors, notFoundErrors, parser) {
+    const fs = require('fs');
+    const path = require('path');
+    const { getProjectEnv } = require('./project-env');
+    
     // 提取原始文件补丁
     const filePatches = parser.extractFilePatches(originalInput);
     
@@ -211,8 +215,14 @@ function generateErrorPrompt(originalInput, multipleMatchErrors, notFoundErrors,
             }
             
             if (problematicItems.length > 0) {
+                // 计算完整路径
+                const workspaceFolders = vscode.workspace.workspaceFolders;
+                const projectRoot = workspaceFolders ? workspaceFolders[0].uri.fsPath : '';
+                const fullPath = path.resolve(projectRoot, filePath);
+                
                 problematicPatches.push({
-                    path: filePatch.path,
+                    path: filePath,
+                    fullPath: fullPath,
                     patchItems: problematicItems
                 });
             }
@@ -220,9 +230,33 @@ function generateErrorPrompt(originalInput, multipleMatchErrors, notFoundErrors,
     }
     
     // 生成提示词
-    let prompt = `以下文件补丁在执行时遇到了匹配问题，请根据问题类型提供相应的解决方案：\n\n`;
+    let prompt = `以下文件补丁在执行时遇到了匹配问题，请根据问题类型提供相应的解决方案。\n\n`;
+    
+    // 第一部分：展示需要patch的文件的完整内容
+    prompt += `## 需要修改的文件内容\n\n`;
     
     for (const patch of problematicPatches) {
+        // 读取文件当前实际内容
+        let currentFileContent = '';
+        try {
+            if (fs.existsSync(patch.fullPath)) {
+                currentFileContent = fs.readFileSync(patch.fullPath, 'utf8');
+            } else {
+                currentFileContent = '(文件不存在)';
+            }
+        } catch (error) {
+            currentFileContent = '(无法读取文件内容)';
+        }
+        
+        prompt += `### 文件: ${patch.path}\n\n`;
+        prompt += '```\n' + currentFileContent + '\n```\n\n';
+    }
+    
+    // 第二部分：展示有问题的补丁
+    prompt += `## 出现问题的补丁\n\n`;
+    
+    for (const patch of problematicPatches) {
+        prompt += `### 文件: ${patch.path}\n\n`;
         prompt += `<ai_gen:file_patch path="${patch.path}">\n`;
         
         for (const item of patch.patchItems) {
@@ -237,6 +271,8 @@ function generateErrorPrompt(originalInput, multipleMatchErrors, notFoundErrors,
         prompt += `</ai_gen:file_patch>\n\n`;
     }
     
+    // 第三部分：修改指引
+    prompt += `## 修改要求\n\n`;
     prompt += `请根据错误类型调整补丁：\n`;
     prompt += `1. 对于"多个匹配项"的情况，请添加更多上下文信息使搜索模式更加精确和唯一。\n`;
     prompt += `2. 对于"未找到匹配项"的情况，请检查搜索模式是否正确，或提供替代的匹配方式。\n`;
