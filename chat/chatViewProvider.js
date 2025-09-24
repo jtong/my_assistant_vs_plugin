@@ -368,7 +368,7 @@ class ChatViewProvider {
         let botMessage = {
             id: 'msg_' + Date.now(),
             sender: 'bot',
-            text: '',
+            text: response.getFullMessage() || '',
             isHtml: response.isHtml(),
             timestamp: Date.now(),
             threadId: thread.id,
