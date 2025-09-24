@@ -183,6 +183,16 @@
                     "command": "myAssistant.createThreadFromJson",
                     "when": "resourceExtname == .json",
                     "group": "myAssistant"
+                },
+                {
+                    "command": "myAssistant.applyAIGenFilesFromClipboard",
+                    "when": "explorerResourceIsFolder",
+                    "group": "myAssistant"
+                },
+                {
+                    "command": "myAssistant.applyAIGenFilePatchesFromClipboard", 
+                    "when": "explorerResourceIsFolder",
+                    "group": "myAssistant"
                 }
             ],
             "editor/context": [

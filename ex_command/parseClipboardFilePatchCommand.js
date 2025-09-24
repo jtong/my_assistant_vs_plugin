@@ -2,7 +2,7 @@
 const vscode = require('vscode');
 const AIGenFilePatchParser = require('./AIGenFilePatchParser');
 
-async function parseClipboardFilePatchCommand() {
+async function parseClipboardFilePatchCommand(uri) {
     try {
         // 读取剪贴板内容
         const clipboardText = await vscode.env.clipboard.readText();
@@ -13,16 +13,27 @@ async function parseClipboardFilePatchCommand() {
             return;
         }
 
-        // 获取当前工作区根路径
+        // 获取当前工作区根路径（用于错误报告中的相对路径显示）
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (!workspaceFolders) {
             vscode.window.showErrorMessage('没有打开的工作区文件夹');
             return;
         }
-        const projectRoot = workspaceFolders[0].uri.fsPath;
+        const workspaceRoot = workspaceFolders[0].uri.fsPath;
+
+        // 确定项目根路径（优先使用选中的文件夹，否则使用工作区根路径）
+        let projectRoot;
+        if (uri && uri.fsPath) {
+            projectRoot = uri.fsPath;
+        } else {
+            projectRoot = workspaceRoot;
+        }
 
         // 创建 AIGenFilePatchParser 实例
         const parser = new AIGenFilePatchParser(projectRoot);
+        
+        // 设置工作区根路径用于错误报告
+        parser.workspaceRoot = workspaceRoot;
 
         // 1. 验证输入格式
         const validation = parser.validate(clipboardText);
@@ -108,14 +119,18 @@ async function parseClipboardFilePatchCommand() {
 
         if (results.success.length > 0) {
             resultMessage += `\n✅ 成功处理的文件:\n`;
-            resultMessage += results.success.map(item => 
-                `${item.action === 'created' ? '📄' : '📝'} ${item.path} (${item.patchItemsApplied} 个补丁)`
-            ).join('\n');
+            resultMessage += results.success.map(item => {
+                const relativePath = path.relative(workspaceRoot, path.resolve(projectRoot, item.path));
+                return `${item.action === 'created' ? '📄' : '📝'} ${relativePath} (${item.patchItemsApplied} 个补丁)`;
+            }).join('\n');
         }
 
         if (results.errors.length > 0) {
             resultMessage += `\n❌ 处理失败的文件:\n`;
-            resultMessage += results.errors.map(item => `${item.path}: ${item.error}`).join('\n');
+            resultMessage += results.errors.map(item => {
+                const relativePath = path.relative(workspaceRoot, path.resolve(projectRoot, item.path));
+                return `${relativePath}: ${item.error}`;
+            }).join('\n');
         }
 
         if (results.errors.length > 0) {
@@ -215,10 +230,8 @@ function generateErrorPrompt(originalInput, multipleMatchErrors, notFoundErrors,
             }
             
             if (problematicItems.length > 0) {
-                // 计算完整路径
-                const workspaceFolders = vscode.workspace.workspaceFolders;
-                const projectRoot = workspaceFolders ? workspaceFolders[0].uri.fsPath : '';
-                const fullPath = path.resolve(projectRoot, filePath);
+                // 使用parser的projectRoot而不是工作区根路径
+                const fullPath = path.resolve(parser.projectPath, filePath);
                 
                 problematicPatches.push({
                     path: filePath,

@@ -40,8 +40,8 @@ input:
     - 分清webview的代码和插件的代码和agent app的代码
 
     ## 任务
-    我希望 applyAIGenFilePatchesFromClipboard 生成提示词的时候，先有一个章节把需要patch对应的文件的新内容先用一个章节生成出来，不用紧挨着出错的patch（注意patch对象本来没有fullPath）
-    注意，patch失败的信息提供给AI的方式不许瞎改，保持跟旧的一样。
+    我希望 apply file 和 apply file patch这两个功能可以加一个explorer的菜单项，选择一个folder的时候出现。
+    执行的时候把选中的这个folder作为apply的projectRoot，但你报错的时候还得基于打开工程来报路径。
   skip_clone_if_folder_exist: true  
 output:     
   prompt:

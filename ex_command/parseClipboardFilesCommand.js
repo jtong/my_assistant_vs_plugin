@@ -2,7 +2,7 @@
 const vscode = require('vscode');
 const AIGenFileParser = require('./AIGenFileParser');
 
-async function parseClipboardFilesCommand() {
+async function parseClipboardFilesCommand(uri) {
     try {
         // 读取剪贴板内容
         const clipboardText = await vscode.env.clipboard.readText();
@@ -13,16 +13,27 @@ async function parseClipboardFilesCommand() {
             return;
         }
 
-        // 获取当前工作区根路径
+        // 获取当前工作区根路径（用于错误报告中的相对路径显示）
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (!workspaceFolders) {
             vscode.window.showErrorMessage('没有打开的工作区文件夹');
             return;
         }
-        const projectRoot = workspaceFolders[0].uri.fsPath;
+        const workspaceRoot = workspaceFolders[0].uri.fsPath;
+
+        // 确定项目根路径（优先使用选中的文件夹，否则使用工作区根路径）
+        let projectRoot;
+        if (uri && uri.fsPath) {
+            projectRoot = uri.fsPath;
+        } else {
+            projectRoot = workspaceRoot;
+        }
 
         // 创建 AIGenFileParser 实例
         const parser = new AIGenFileParser(projectRoot);
+        
+        // 设置工作区根路径用于错误报告
+        parser.workspaceRoot = workspaceRoot;
 
         // 1. 验证输入格式
         const validation = parser.validate(clipboardText);
@@ -67,12 +78,18 @@ async function parseClipboardFilesCommand() {
 
         if (results.success.length > 0) {
             resultMessage += `\n✅ 成功处理的文件:\n`;
-            resultMessage += results.success.map(item => `${item.action === 'created' ? '📄' : '📝'} ${item.path}`).join('\n');
+            resultMessage += results.success.map(item => {
+                const relativePath = path.relative(workspaceRoot, path.resolve(projectRoot, item.path));
+                return `${item.action === 'created' ? '📄' : '📝'} ${relativePath}`;
+            }).join('\n');
         }
 
         if (results.errors.length > 0) {
             resultMessage += `\n❌ 处理失败的文件:\n`;
-            resultMessage += results.errors.map(item => `${item.path}: ${item.error}`).join('\n');
+            resultMessage += results.errors.map(item => {
+                const relativePath = path.relative(workspaceRoot, path.resolve(projectRoot, item.path));
+                return `${relativePath}: ${item.error}`;
+            }).join('\n');
         }
 
         if (results.errors.length > 0) {
