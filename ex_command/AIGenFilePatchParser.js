@@ -150,14 +150,14 @@ class AIGenFilePatchParser {
         }
 
         // 检查是否为替换操作
-        const searchMatch = itemContent.match(/<search>([\s\S]*?)<\/search>/);
-        const replaceMatch = itemContent.match(/<replace>([\s\S]*?)<\/replace>/);
+        const originMatch = itemContent.match(/<ai_gen:origin>([\s\S]*?)<\/ai_gen:origin>/);
+        const changeToMatch = itemContent.match(/<ai_gen:change_to>([\s\S]*?)<\/ai_gen:change_to>/);
         
-        if (searchMatch && replaceMatch) {
+        if (originMatch && changeToMatch) {
             return {
                 type: 'replace',
-                search: this.cleanContent(searchMatch[1]),
-                replace: this.cleanContent(replaceMatch[1])
+                search: this.cleanContent(originMatch[1]),
+                replace: this.cleanContent(changeToMatch[1])
             };
         }
 

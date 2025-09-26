@@ -277,8 +277,8 @@ function generateErrorPrompt(originalInput, multipleMatchErrors, notFoundErrors,
             prompt += `<patch_item>\n`;
             prompt += `<!-- 错误类型: ${item.errorType === 'multiple_match' ? '多个匹配项' : '未找到匹配项'} -->\n`;
             prompt += `<!-- 错误详情: ${item.errorMessage} -->\n`;
-            prompt += `<search>${item.search}</search>\n`;
-            prompt += `<replace>${item.replace}</replace>\n`;
+            prompt += `<ai_gen:origin>${item.search}</ai_gen:origin>\n`;
+            prompt += `<ai_gen:change_to>${item.replace}</ai_gen:change_to>\n`;
             prompt += `</patch_item>\n`;
         }
         
@@ -288,8 +288,8 @@ function generateErrorPrompt(originalInput, multipleMatchErrors, notFoundErrors,
     // 第三部分：修改指引
     prompt += `## 修改要求\n\n`;
     prompt += `请根据错误类型调整补丁：\n`;
-    prompt += `1. 对于"多个匹配项"的情况，请添加更多上下文信息使搜索模式更加精确和唯一。\n`;
-    prompt += `2. 对于"未找到匹配项"的情况，请检查搜索模式是否正确，或提供替代的匹配方式。\n`;
+    prompt += `1. 对于"多个匹配项"的情况，请添加更多上下文信息使<ai_gen:origin>标签中的内容更加精确和唯一。\n`;
+    prompt += `2. 对于"未找到匹配项"的情况，请检查<ai_gen:origin>标签中的内容是否正确，或提供替代的匹配方式。\n`;
     
     return prompt;
 }

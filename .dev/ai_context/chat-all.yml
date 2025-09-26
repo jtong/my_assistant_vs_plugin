@@ -33,7 +33,7 @@ project:
       - doc
       - README.md
 read_only_references:
-  - $ref: "/Users/jtong/develop/education/homework-lab/java_microservice/prompt-builder-projects/personal_knowledge/read_only_reference/format/source_code.yml#file_patch"      
+  - $ref: "/Users/jtong/develop/education/homework-lab/java_microservice/prompt-builder-projects/personal_knowledge/read_only_reference/format/source_code.yml#file"      
 input:
   git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
@@ -43,7 +43,7 @@ input:
     - 按照file patch输出
 
     ## 任务
-    我希望 file patch replace的时候不能用replace的API，它支持的是正则表达式，万一代码里有正则表达式的符号，会出问题
+    我希望 file patch 的标签不再使用search和replace，分别换成ai_gen:origin和ai_gen:change_to
   
 output:     
   prompt:
