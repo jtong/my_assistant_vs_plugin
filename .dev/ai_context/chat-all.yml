@@ -32,18 +32,25 @@ project:
       - "**/*.vsix"
       - doc
       - README.md
+read_only_references:
+  - $ref: "/Users/jtong/develop/education/homework-lab/java_microservice/prompt-builder-projects/personal_knowledge/read_only_reference/format/source_code.yml#file_patch"      
 input:
   git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
     ## 任务约束
     
     - 分清webview的代码和插件的代码和agent app的代码
+    - 按照file patch输出
 
     ## 任务
-    我希望 apply file 和 apply file patch这两个功能可以加一个explorer的菜单项，选择一个folder的时候出现。
-    执行的时候把选中的这个folder作为apply的projectRoot，但你报错的时候还得基于打开工程来报路径。
-  skip_clone_if_folder_exist: true  
+    我希望 chatview上选中渲染后的文本可以copy被选中文本的原始markdown。只要块级选择就可以了，但是要求所有的块都要支持，我选中任何一个块，都把选中块的markdown原文都复制出来就好了。注意只把选中的，可以多一点，但不是整个assistant的这条回复
+    我不要修改html文件，我要的是选中渲染后的文本右键弹出一个“复制原始markdown文本”。
+    我要改的是对话历史中的markdown渲染而不是markdown PREview里的。
+    注意，最初的渲染方式不能改。
+  
 output:     
   prompt:
     path: .ai_helper/prompt_builder/output/working
     backup_path: .ai_helper/prompt_builder/output/backup
+
+# 我希望 在webview的chat 窗口里加入搜索功能，可以跳到对应的文本对应的位置，如果多处匹配，可以上下跳转    

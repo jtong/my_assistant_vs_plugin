@@ -31,6 +31,9 @@ function showImageSelectedHint(fileName) {
 
 
 
+// 存储原始markdown文本与行号的映射关系
+let markdownSourceMap = new Map();
+
 const md = window.markdownit({
     highlight: function (str, lang) {
         if (lang && hljs.getLanguage(lang)) {
@@ -42,8 +45,50 @@ const md = window.markdownit({
     }
 });
 
-function renderMarkdown(text) {
-    return md.render(text);
+// 自定义渲染规则，为每个块级元素添加源码行号信息
+function addSourceLineMapping(ruleName) {
+    const originalRule = md.renderer.rules[ruleName] || md.renderer.renderToken.bind(md.renderer);
+    md.renderer.rules[ruleName] = function (tokens, idx, options, env, renderer) {
+        const token = tokens[idx];
+        if (token.map && token.map.length >= 2) {
+            const startLine = token.map[0];
+            const endLine = token.map[1];
+            // 添加源码行号属性
+            if (token.attrJoin) {
+                token.attrJoin('data-source-lines', `${startLine},${endLine}`);
+            } else {
+                token.attrSet('data-source-lines', `${startLine},${endLine}`);
+            }
+        }
+        return originalRule.call(this, tokens, idx, options, env, renderer);
+    };
+}
+
+// 为主要的块级元素添加源码映射
+['paragraph_open', 'heading_open', 'blockquote_open', 'code_block', 
+ 'fence', 'bullet_list_open', 'ordered_list_open', 'list_item_open'].forEach(addSourceLineMapping);
+
+function renderMarkdown(text, messageId) {
+    // 存储原始文本到映射表
+    if (messageId) {
+        markdownSourceMap.set(messageId, text.split('\n'));
+    }
+    
+    const htmlContent = md.render(text);
+    
+    // 后处理：为没有行号信息的元素也添加映射
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+    
+    // 为渲染后的元素添加消息ID引用
+    if (messageId) {
+        const blockElements = tempDiv.querySelectorAll('p, h1, h2, h3, h4, h5, h6, pre, blockquote, ul, ol, li');
+        blockElements.forEach(element => {
+            element.setAttribute('data-message-id', messageId);
+        });
+    }
+    
+    return tempDiv.innerHTML;
 }
 
 // 添加新的 JavaScript 函数
@@ -136,6 +181,294 @@ function hideStopButton() {
     document.getElementById('stop-btn').style.display = 'none';
 }
 
+// 右键菜单相关变量
+let contextMenu = null;
+
+// 创建右键菜单
+function createContextMenu() {
+    if (contextMenu) {
+        document.body.removeChild(contextMenu);
+    }
+    
+    contextMenu = document.createElement('div');
+    contextMenu.className = 'context-menu';
+    contextMenu.innerHTML = `
+        <div class="context-menu-item" id="copy-markdown-source">
+            复制原始 Markdown
+        </div>
+    `;
+    
+    contextMenu.style.cssText = `
+        position: fixed;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        padding: 4px 0;
+        z-index: 10000;
+        display: none;
+        min-width: 150px;
+    `;
+    
+    const menuItem = contextMenu.querySelector('#copy-markdown-source');
+    menuItem.style.cssText = `
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #333;
+    `;
+    
+    menuItem.addEventListener('mouseenter', () => {
+        menuItem.style.backgroundColor = '#f0f0f0';
+    });
+    
+    menuItem.addEventListener('mouseleave', () => {
+        menuItem.style.backgroundColor = '';
+    });
+    
+    document.body.appendChild(contextMenu);
+    return contextMenu;
+}
+
+// 提取选中区域的原始markdown片段
+function extractSelectedMarkdownSource() {
+    const selection = window.getSelection();
+    if (!selection.rangeCount || selection.isCollapsed) {
+        return null;
+    }
+    
+    // 获取选中范围
+    const range = selection.getRangeAt(0);
+    const commonAncestor = range.commonAncestorContainer;
+    
+    // 找到包含选中内容的消息容器
+    const messageContainer = commonAncestor.nodeType === Node.ELEMENT_NODE ? 
+        commonAncestor.closest('[data-message-id]') : 
+        commonAncestor.parentElement.closest('[data-message-id]');
+    
+    if (!messageContainer) {
+        return null;
+    }
+    
+    const messageId = messageContainer.getAttribute('data-message-id');
+    if (!messageId || !markdownSourceMap.has(messageId)) {
+        return null;
+    }
+    
+    const originalLines = markdownSourceMap.get(messageId);
+    
+    // 获取选中范围内的所有块级元素
+    const blockElements = [];
+    const walker = document.createTreeWalker(
+        commonAncestor,
+        NodeFilter.SHOW_ELEMENT,
+        {
+            acceptNode: function(node) {
+                // 检查节点是否与选中范围相交
+                if (range.intersectsNode(node) && 
+                    ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'PRE', 'BLOCKQUOTE', 'UL', 'OL', 'LI'].includes(node.tagName)) {
+                    return NodeFilter.FILTER_ACCEPT;
+                }
+                return NodeFilter.FILTER_SKIP;
+            }
+        }
+    );
+    
+    let node;
+    while (node = walker.nextNode()) {
+        blockElements.push(node);
+    }
+    
+    if (blockElements.length === 0) {
+        return null;
+    }
+    
+    // 收集所有选中块的源码行号范围
+    const sourceRanges = [];
+    
+    for (const element of blockElements) {
+        const sourceLines = element.getAttribute('data-source-lines');
+        if (sourceLines) {
+            const [startLine, endLine] = sourceLines.split(',').map(Number);
+            sourceRanges.push({ start: startLine, end: endLine });
+        } else {
+            // 如果没有行号信息，尝试通过内容匹配
+            const matchedRange = findElementInSource(element, originalLines);
+            if (matchedRange) {
+                sourceRanges.push(matchedRange);
+            }
+        }
+    }
+    
+    if (sourceRanges.length === 0) {
+        return null;
+    }
+    
+    // 合并连续或重叠的范围，并排序
+    sourceRanges.sort((a, b) => a.start - b.start);
+    const mergedRanges = [];
+    let currentRange = sourceRanges[0];
+    
+    for (let i = 1; i < sourceRanges.length; i++) {
+        const nextRange = sourceRanges[i];
+        if (nextRange.start <= currentRange.end + 1) {
+            // 范围连续或重叠，合并
+            currentRange.end = Math.max(currentRange.end, nextRange.end);
+        } else {
+            // 不连续，保存当前范围，开始新范围
+            mergedRanges.push(currentRange);
+            currentRange = nextRange;
+        }
+    }
+    mergedRanges.push(currentRange);
+    
+    // 提取所有范围的文本
+    const extractedParts = mergedRanges.map(range => 
+        originalLines.slice(range.start, range.end).join('\n')
+    );
+    
+    return extractedParts.join('\n\n');
+}
+
+// 通过内容在源码中查找元素对应的范围
+function findElementInSource(element, originalLines) {
+    const elementText = element.textContent.trim();
+    
+    // 对于代码块，查找其中的代码内容
+    if (element.tagName === 'PRE') {
+        const codeElement = element.querySelector('code');
+        const codeText = codeElement ? codeElement.textContent.trim() : elementText;
+        
+        // 在源码中查找匹配的代码块
+        for (let i = 0; i < originalLines.length; i++) {
+            if (originalLines[i].startsWith('```')) {
+                let end = i + 1;
+                let blockContent = '';
+                
+                // 收集代码块内容
+                while (end < originalLines.length && !originalLines[end].startsWith('```')) {
+                    blockContent += originalLines[end] + '\n';
+                    end++;
+                }
+                
+                // 检查内容是否匹配
+                if (blockContent.trim() === codeText) {
+                    return { start: i, end: end + 1 }; // 包含结束的```
+                }
+            }
+        }
+    }
+    
+    // 对于标题
+    if (element.tagName.match(/^H[1-6]$/)) {
+        const level = parseInt(element.tagName[1]);
+        const prefix = '#'.repeat(level) + ' ';
+        
+        for (let i = 0; i < originalLines.length; i++) {
+            if (originalLines[i].startsWith(prefix) && 
+                originalLines[i].substring(prefix.length).trim() === elementText) {
+                return { start: i, end: i + 1 };
+            }
+        }
+    }
+    
+    // 对于段落，查找文本内容匹配的连续行
+    if (element.tagName === 'P') {
+        for (let i = 0; i < originalLines.length; i++) {
+            if (originalLines[i].trim() && elementText.startsWith(originalLines[i].trim())) {
+                // 找到段落的开始和结束
+                let start = i;
+                let end = i + 1;
+                
+                // 向前找段落真正的开始
+                while (start > 0 && originalLines[start - 1].trim() !== '' && 
+                       !originalLines[start - 1].startsWith('#') && 
+                       !originalLines[start - 1].startsWith('```')) {
+                    start--;
+                }
+                
+                // 向后找段落结束
+                while (end < originalLines.length && originalLines[end].trim() !== '' &&
+                       !originalLines[end].startsWith('#') && 
+                       !originalLines[end].startsWith('```')) {
+                    end++;
+                }
+                
+                return { start, end };
+            }
+        }
+    }
+    
+    return null;
+}
+
+// 提取单个元素的原始markdown片段（保留原有功能作为备用）
+function extractMarkdownSource(element) {
+    const messageId = element.getAttribute('data-message-id');
+    const sourceLines = element.getAttribute('data-source-lines');
+    
+    if (!messageId || !markdownSourceMap.has(messageId)) {
+        return null;
+    }
+    
+    const originalLines = markdownSourceMap.get(messageId);
+    
+    if (sourceLines) {
+        // 有具体行号信息
+        const [startLine, endLine] = sourceLines.split(',').map(Number);
+        return originalLines.slice(startLine, endLine).join('\n');
+    } else {
+        // 使用新的查找方法
+        const range = findElementInSource(element, originalLines);
+        if (range) {
+            return originalLines.slice(range.start, range.end).join('\n');
+        }
+    }
+    
+    return null;
+}
+
+// 显示右键菜单
+function showContextMenu(event, element) {
+    event.preventDefault();
+    
+    if (!contextMenu) {
+        createContextMenu();
+    }
+    
+    // 优先尝试提取选中内容的markdown源码
+    let markdownSource = extractSelectedMarkdownSource();
+    
+    // 如果没有选中内容，则尝试提取单个元素的源码
+    if (!markdownSource) {
+        markdownSource = extractMarkdownSource(element);
+    }
+    
+    if (!markdownSource) {
+        return false;
+    }
+    
+    contextMenu.style.left = event.pageX + 'px';
+    contextMenu.style.top = event.pageY + 'px';
+    contextMenu.style.display = 'block';
+    
+    // 绑定复制事件
+    const copyMenuItem = contextMenu.querySelector('#copy-markdown-source');
+    copyMenuItem.onclick = () => {
+        copyToClipboard(markdownSource);
+        hideContextMenu();
+    };
+    
+    return true;
+}
+
+// 隐藏右键菜单
+function hideContextMenu() {
+    if (contextMenu) {
+        contextMenu.style.display = 'none';
+    }
+}
+
 window.onload = function () {
     const threadId = window.threadId;
     if (threadId) {
@@ -164,6 +497,33 @@ window.onload = function () {
         // 如果没有启用预览，隐藏相关按钮和功能
         document.querySelector('.paragraph-toolbar').style.display = 'none';
     }
+    
+    // 添加右键菜单事件监听
+    document.addEventListener('contextmenu', (event) => {
+        const target = event.target;
+        
+        // 检查是否点击在消息内容的块级元素上
+        if (target.closest('.message-text')) {
+            const blockElement = target.closest('p, h1, h2, h3, h4, h5, h6, pre, blockquote, ul, ol, li');
+            
+            if (blockElement && blockElement.getAttribute('data-message-id')) {
+                // 显示自定义右键菜单
+                if (showContextMenu(event, blockElement)) {
+                    return; // 阻止默认菜单
+                }
+            }
+        }
+        
+        // 对于其他情况，隐藏自定义菜单
+        hideContextMenu();
+    });
+    
+    // 点击其他地方隐藏右键菜单
+    document.addEventListener('click', (event) => {
+        if (!event.target.closest('.context-menu')) {
+            hideContextMenu();
+        }
+    });
 };
 
 function loadThread(threadId) {
@@ -323,7 +683,8 @@ function appendBotMessage(messageId, text) {
             if (isHtml) {
                 textContainer.innerHTML = messageElement.getAttribute('data-original-text');
             } else {
-                textContainer.innerHTML = renderMarkdown(messageElement.getAttribute('data-original-text'));
+                const messageId = messageElement.getAttribute('data-message-id');
+                textContainer.innerHTML = renderMarkdown(messageElement.getAttribute('data-original-text'), messageId);
             }
         }
 
@@ -345,7 +706,8 @@ function updateBotMessage(messageId, text) {
             if (isHtml) {
                 textContainer.innerHTML = text;
             } else {
-                textContainer.innerHTML = renderMarkdown(text);
+                const messageId = messageElement.getAttribute('data-message-id');
+                textContainer.innerHTML = renderMarkdown(text, messageId);
             }
         }
 
@@ -590,7 +952,7 @@ function createMessageElement(message) {
     if (message.isHtml) {
         textContainer.innerHTML = message.text;
     } else {
-        textContainer.innerHTML = renderMarkdown(message.text);
+        textContainer.innerHTML = renderMarkdown(message.text, message.id);
     }
 
     // 处理文件附件
