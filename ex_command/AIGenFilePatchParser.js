@@ -203,16 +203,25 @@ class AIGenFilePatchParser {
         for (let i = 0; i < replaceItems.length; i++) {
             const item = replaceItems[i];
             try {
-                const originalContent = fileContent;
-                fileContent = this.applyReplace(fileContent, item.search, item.replace);
-                if (fileContent !== originalContent) {
-                    patchItemsApplied++;
+                const result = this.applyReplace(fileContent, item.search, item.replace);
+                
+                if (result.found) {
+                    fileContent = result.content;
+                    
+                    // 只有当替换前后内容不同时才计为成功操作
+                    if (result.wasChanged) {
+                        patchItemsApplied++;
+                    } else {
+                        // 找到了匹配但内容相同，记录为成功但没有实际变化
+                        patchItemsApplied++;
+                        console.log(`Patch item ${i} found exact match but no content change needed`);
+                    }
                 } else {
                     patchItemsFailed++;
                     errors.push({
-                        message: `Search pattern not found: ${item.search.substring(0, 50)}...`,
+                        message: `Search content not found: ${item.search.substring(0, 50)}...`,
                         patchItemIndex: i,
-                        searchPattern: item.search
+                        searchContent: item.search
                     });
                 }
             } catch (error) {
@@ -220,7 +229,7 @@ class AIGenFilePatchParser {
                 errors.push({
                     message: error.message,
                     patchItemIndex: i,
-                    searchPattern: item.search
+                    searchContent: item.search
                 });
             }
         }
@@ -242,7 +251,7 @@ class AIGenFilePatchParser {
                 errors.push({
                     message: `Insert operation failed: ${error.message}`,
                     patchItemIndex: -1,
-                    searchPattern: null
+                    searchContent: null
                 });
             }
         }
@@ -265,22 +274,35 @@ class AIGenFilePatchParser {
      * @param {string} content - 原始内容
      * @param {string} searchContent - 搜索内容
      * @param {string} replaceContent - 替换内容
-     * @returns {string} 替换后的内容
+     * @returns {Object} 替换结果对象 {found: boolean, wasChanged: boolean, content: string}
      */
     applyReplace(content, searchContent, replaceContent) {
         // 检查搜索内容是否存在且唯一
         const occurrences = content.split(searchContent).length - 1;
         
         if (occurrences === 0) {
-            throw new Error(`Search content not found: ${searchContent.substring(0, 50)}...`);
+            return {
+                found: false,
+                wasChanged: false,
+                content: content
+            };
         }
         
         if (occurrences > 1) {
             throw new Error(`Search content found multiple times (${occurrences}), must be unique: ${searchContent.substring(0, 50)}...`);
         }
 
+        // 检查替换前后内容是否相同
+        const wasChanged = searchContent !== replaceContent;
+
         // 使用纯文本替换，避免正则表达式问题
-        return this.replaceStringLiteral(content, searchContent, replaceContent);
+        const newContent = this.replaceStringLiteral(content, searchContent, replaceContent);
+        
+        return {
+            found: true,
+            wasChanged: wasChanged,
+            content: newContent
+        };
     }
 
     /**

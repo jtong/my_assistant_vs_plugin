@@ -43,7 +43,8 @@ input:
     - 按照file patch输出
 
     ## 任务
-    我希望 file  的标签 查找开始标签的时候用的是 `<ai_gen:file `，加上这个空格可以避免跟<ai_gen:file_patch 混淆。
+    我希望 processFilePatch 发现 Search pattern not found:的逻辑严谨一点，现在没搜到固然会报错，替换前后一样的情况也会报错。替换前后一样的不需要抱错的。我把a替换成了a，不代表我没搜到啊。
+    另外，搜的也不能是pattern，明明就是原文
   
 output:     
   prompt:
