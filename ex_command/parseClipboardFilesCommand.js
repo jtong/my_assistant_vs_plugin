@@ -1,6 +1,7 @@
 // chat/ex_command/parseClipboardFilesCommand.js
 const vscode = require('vscode');
 const AIGenFileParser = require('./AIGenFileParser');
+const path = require('path');
 
 async function parseClipboardFilesCommand(uri) {
     try {

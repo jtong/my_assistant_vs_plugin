@@ -1,6 +1,7 @@
 // ex_command/parseClipboardFilePatchCommand.js
 const vscode = require('vscode');
 const AIGenFilePatchParser = require('./AIGenFilePatchParser');
+const path = require('path');
 
 async function parseClipboardFilePatchCommand(uri) {
     try {
