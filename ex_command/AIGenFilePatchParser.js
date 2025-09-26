@@ -260,25 +260,44 @@ class AIGenFilePatchParser {
     }
 
     /**
-     * 应用替换操作
+     * 应用替换操作 - 使用纯文本替换，避免正则表达式问题
      * @param {string} content - 原始内容
-     * @param {string} searchPattern - 搜索模式
+     * @param {string} searchContent - 搜索内容
      * @param {string} replaceContent - 替换内容
      * @returns {string} 替换后的内容
      */
-    applyReplace(content, searchPattern, replaceContent) {
-        // 检查搜索模式是否存在且唯一
-        const occurrences = content.split(searchPattern).length - 1;
+    applyReplace(content, searchContent, replaceContent) {
+        // 检查搜索内容是否存在且唯一
+        const occurrences = content.split(searchContent).length - 1;
         
         if (occurrences === 0) {
-            throw new Error(`Search pattern not found: ${searchPattern.substring(0, 50)}...`);
+            throw new Error(`Search content not found: ${searchContent.substring(0, 50)}...`);
         }
         
         if (occurrences > 1) {
-            throw new Error(`Search pattern found multiple times (${occurrences}), must be unique: ${searchPattern.substring(0, 50)}...`);
+            throw new Error(`Search content found multiple times (${occurrences}), must be unique: ${searchContent.substring(0, 50)}...`);
         }
 
-        return content.replace(searchPattern, replaceContent);
+        // 使用纯文本替换，避免正则表达式问题
+        return this.replaceStringLiteral(content, searchContent, replaceContent);
+    }
+
+    /**
+     * 进行纯文本字符串替换（仅替换第一个匹配项）
+     * @param {string} content - 原始内容
+     * @param {string} searchContent - 搜索内容
+     * @param {string} replaceContent - 替换内容
+     * @returns {string} 替换后的内容
+     */
+    replaceStringLiteral(content, searchContent, replaceContent) {
+        const index = content.indexOf(searchContent);
+        if (index === -1) {
+            return content;
+        }
+        
+        return content.substring(0, index) + 
+               replaceContent + 
+               content.substring(index + searchContent.length);
     }
 
     /**

@@ -43,10 +43,7 @@ input:
     - 按照file patch输出
 
     ## 任务
-    我希望 chatview上选中渲染后的文本可以copy被选中文本的原始markdown。只要块级选择就可以了，但是要求所有的块都要支持，我选中任何一个块，都把选中块的markdown原文都复制出来就好了。注意只把选中的，可以多一点，但不是整个assistant的这条回复
-    我不要修改html文件，我要的是选中渲染后的文本右键弹出一个“复制原始markdown文本”。
-    我要改的是对话历史中的markdown渲染而不是markdown PREview里的。
-    注意，最初的渲染方式不能改。
+    我希望 file patch replace的时候不能用replace的API，它支持的是正则表达式，万一代码里有正则表达式的符号，会出问题
   
 output:     
   prompt:
