@@ -145,13 +145,13 @@ class AIGenFileParser {
     validate(inputString) {
         const issues = [];
 
-        // 检查是否有ai_gen:file标签
-        if (!inputString.includes('<ai_gen:file')) {
+        // 检查是否有ai_gen:file标签（使用空格避免与ai_gen:file_patch混淆）
+        if (!inputString.includes('<ai_gen:file ')) {
             issues.push('No <ai_gen:file> tags found');
         }
 
-        // 检查文件标签配对
-        const fileOpenCount = (inputString.match(/<ai_gen:file[^>]*>/g) || []).length;
+        // 检查文件标签配对（使用更精确的正则表达式）
+        const fileOpenCount = (inputString.match(/<ai_gen:file\s[^>]*>/g) || []).length;
         const fileCloseCount = (inputString.match(/<\/ai_gen:file>/g) || []).length;
 
         if (fileOpenCount !== fileCloseCount) {

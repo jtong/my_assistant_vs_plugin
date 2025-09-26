@@ -33,7 +33,7 @@ project:
       - doc
       - README.md
 read_only_references:
-  - $ref: "/Users/jtong/develop/education/homework-lab/java_microservice/prompt-builder-projects/personal_knowledge/read_only_reference/format/source_code.yml#file"      
+  - $ref: "/Users/jtong/develop/education/homework-lab/java_microservice/prompt-builder-projects/personal_knowledge/read_only_reference/format/source_code.yml#file_patch"      
 input:
   git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
@@ -43,7 +43,7 @@ input:
     - 按照file patch输出
 
     ## 任务
-    我希望 file patch 的标签不再使用search和replace，分别换成ai_gen:origin和ai_gen:change_to
+    我希望 file  的标签 查找开始标签的时候用的是 `<ai_gen:file `，加上这个空格可以避免跟<ai_gen:file_patch 混淆。
   
 output:     
   prompt:

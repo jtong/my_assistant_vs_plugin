@@ -119,6 +119,7 @@ class AIGenFilePatchParser {
      * @returns {Array} 补丁项数组
      */
     extractPatchItems(patchContent) {
+        console.log(patchContent)
         const patchItemRegex = /<patch_item>([\s\S]*?)<\/patch_item>/g;
         const patchItems = [];
         let match;
