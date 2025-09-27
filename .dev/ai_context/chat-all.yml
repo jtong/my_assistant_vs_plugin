@@ -33,18 +33,17 @@ project:
       - doc
       - README.md
 read_only_references:
-  - $ref: "/Users/jtong/develop/education/homework-lab/java_microservice/prompt-builder-projects/personal_knowledge/read_only_reference/format/source_code.yml#file"      
+  - $ref: "/Users/jtong/develop/education/homework-lab/java_microservice/prompt-builder-projects/personal_knowledge/read_only_reference/format/source_code.yml#file_patch"      
 input:
   git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
     ## 任务约束
     
     - 分清webview的代码和插件的代码和agent app的代码
-    - 按照ai_gen:file输出，严格遵守标签规范。
+    - 按照ai_gen:file_patch输出，严格遵守标签规范。
 
     ## 任务
-    我希望 file patch 匹配search的时候，因为AI有时候会生成 `<<<<<<< SEARCH>`
-    所以我希望这种情况你也能识别，我们就不纠正AI了，用程序避免这种情况不能被识别。
+    我希望 在webview的chat 窗口里加入搜索功能，可以跳到对应的文本对应的位置，如果多处匹配，可以上下跳转    
 output:     
   prompt:
     path: .ai_helper/prompt_builder/output/working
