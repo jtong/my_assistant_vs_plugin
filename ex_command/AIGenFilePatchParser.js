@@ -150,15 +150,13 @@ class AIGenFilePatchParser {
             };
         }
 
-        // 检查是否为替换操作
-        const originMatch = itemContent.match(/<ai_gen:origin>([\s\S]*?)<\/ai_gen:origin>/);
-        const changeToMatch = itemContent.match(/<ai_gen:change_to>([\s\S]*?)<\/ai_gen:change_to>/);
-        
-        if (originMatch && changeToMatch) {
+        // 检查是否为Git风格冲突标记格式
+        const gitStyleMatch = this.parseGitStyleConflict(itemContent);
+        if (gitStyleMatch) {
             return {
                 type: 'replace',
-                search: this.cleanContent(originMatch[1]),
-                replace: this.cleanContent(changeToMatch[1])
+                search: gitStyleMatch.search,
+                replace: gitStyleMatch.replace
             };
         }
 
@@ -166,7 +164,73 @@ class AIGenFilePatchParser {
     }
 
     /**
-     * 清理内容，移除首尾空白行
+     * 解析Git风格的冲突标记格式
+     * @param {string} itemContent - 补丁项内容
+     * @returns {Object|null} 解析后的搜索和替换内容
+     */
+    parseGitStyleConflict(itemContent) {
+        const lines = itemContent.split('\n');
+        let searchStartIndex = -1;
+        let separatorIndex = -1;
+        let replaceEndIndex = -1;
+
+        // 查找标记行
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            
+            // 检查是否是SEARCH标记行（以<字符开始）
+            if (line.match(/^<+\s*SEARCH\s*$/)) {
+                searchStartIndex = i;
+            }
+            // 检查是否是分隔符行（全是=号）
+            else if (line.match(/^=+$/)) {
+                separatorIndex = i;
+            }
+            // 检查是否是REPLACE标记行（以>字符结束）
+            else if (line.match(/^>+\s*REPLACE\s*$/)) {
+                replaceEndIndex = i;
+            }
+        }
+
+        // 如果找到了所有必需的标记
+        if (searchStartIndex >= 0 && separatorIndex >= 0 && replaceEndIndex >= 0 &&
+            searchStartIndex < separatorIndex && separatorIndex < replaceEndIndex) {
+            
+            // 提取搜索内容（从SEARCH标记下一行到分隔符前一行）
+            const searchLines = lines.slice(searchStartIndex + 1, separatorIndex);
+            let searchContent = searchLines.join('\n');
+            
+            // 提取替换内容（从分隔符下一行到REPLACE标记前一行）
+            const replaceLines = lines.slice(separatorIndex + 1, replaceEndIndex);
+            let replaceContent = replaceLines.join('\n');
+            
+            // 统一处理：如果内容以换行符结尾，移除最后一个换行符
+            searchContent = this.removeTrailingNewline(searchContent);
+            replaceContent = this.removeTrailingNewline(replaceContent);
+
+            return {
+                search: searchContent,
+                replace: replaceContent
+            };
+        }
+
+        return null;
+    }
+
+    /**
+     * 移除字符串末尾的换行符（如果存在）
+     * @param {string} content - 内容字符串
+     * @returns {string} 处理后的字符串
+     */
+    removeTrailingNewline(content) {
+        if (content.endsWith('\n')) {
+            return content.slice(0, -1);
+        }
+        return content;
+    }
+
+    /**
+     * 清理文件内容，移除首尾空白行
      * @param {string} content - 原始内容
      * @returns {string} 清理后的内容
      */

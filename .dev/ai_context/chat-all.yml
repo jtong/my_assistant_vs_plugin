@@ -33,19 +33,35 @@ project:
       - doc
       - README.md
 read_only_references:
-  - $ref: "/Users/jtong/develop/education/homework-lab/java_microservice/prompt-builder-projects/personal_knowledge/read_only_reference/format/source_code.yml#file_patch"      
+  - $ref: "/Users/jtong/develop/education/homework-lab/java_microservice/prompt-builder-projects/personal_knowledge/read_only_reference/format/source_code.yml#file"      
 input:
   git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
     ## 任务约束
     
     - 分清webview的代码和插件的代码和agent app的代码
-    - 按照file patch输出
+    - 按照ai_gen:file输出，严格遵守标签规范。
 
     ## 任务
-    我希望 processFilePatch 发现 Search pattern not found:的逻辑严谨一点，现在没搜到固然会报错，替换前后一样的情况也会报错。替换前后一样的不需要抱错的。我把a替换成了a，不代表我没搜到啊。
-    另外，搜的也不能是pattern，明明就是原文
-  
+    我希望 把origin和change_to换成
+    <<<<<<< SEARCH
+    return (
+      <div>
+    =======
+    function handleSubmit() {
+      saveData();
+      setLoading(false);
+    }
+
+    return (
+      <div>
+    >>>>>>> REPLACE
+
+    insert不需要改
+
+    因为AI生成的时候=号和<号、>号未必能保证是7个，你要用更智能的方式判断，语法上我们可以保证这几个记号肯定独占一行。
+
+    因为这些字符默认独占一行，但代码中可能存在最后一个字符不是换行符的情况，所以，我们要在读取search和replace内容的时候统一截取最后一个换行符
 output:     
   prompt:
     path: .ai_helper/prompt_builder/output/working
