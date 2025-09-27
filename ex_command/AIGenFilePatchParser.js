@@ -178,16 +178,17 @@ class AIGenFilePatchParser {
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
             
-            // 检查是否是SEARCH标记行（以<字符开始）
-            if (line.match(/^<+\s*SEARCH\s*$/)) {
+            // 检查是否是SEARCH标记行
+            // 支持：<<<< SEARCH, <<<<< SEARCH>, <<<< SEARCH >>, 等
+            if (line.match(/^<{3,}\s*SEARCH\s*>*\s*$/)) {
                 searchStartIndex = i;
             }
-            // 检查是否是分隔符行（全是=号）
-            else if (line.match(/^=+$/)) {
+            // 检查是否是分隔符行（全是=号,至少三个=号）
+            else if (line.match(/^={3,}$/)) {
                 separatorIndex = i;
             }
-            // 检查是否是REPLACE标记行（以>字符结束）
-            else if (line.match(/^>+\s*REPLACE\s*$/)) {
+            // 检查是否是REPLACE标记行（保持标准格式）
+            else if (line.match(/^>{3,}\s*REPLACE\s*$/)) {
                 replaceEndIndex = i;
             }
         }

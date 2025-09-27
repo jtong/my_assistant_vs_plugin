@@ -43,25 +43,8 @@ input:
     - 按照ai_gen:file输出，严格遵守标签规范。
 
     ## 任务
-    我希望 把origin和change_to换成
-    <<<<<<< SEARCH
-    return (
-      <div>
-    =======
-    function handleSubmit() {
-      saveData();
-      setLoading(false);
-    }
-
-    return (
-      <div>
-    >>>>>>> REPLACE
-
-    insert不需要改
-
-    因为AI生成的时候=号和<号、>号未必能保证是7个，你要用更智能的方式判断，语法上我们可以保证这几个记号肯定独占一行。
-
-    因为这些字符默认独占一行，但代码中可能存在最后一个字符不是换行符的情况，所以，我们要在读取search和replace内容的时候统一截取最后一个换行符
+    我希望 file patch 匹配search的时候，因为AI有时候会生成 `<<<<<<< SEARCH>`
+    所以我希望这种情况你也能识别，我们就不纠正AI了，用程序避免这种情况不能被识别。
 output:     
   prompt:
     path: .ai_helper/prompt_builder/output/working
