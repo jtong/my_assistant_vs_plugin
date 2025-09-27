@@ -1,24 +1,22 @@
 const vscode = require('vscode');
 
 class ChatListViewProvider {
-    constructor(threadRepository) {
+    constructor(threadRepository, config = {}) {
         this._onDidChangeTreeData = new vscode.EventEmitter();
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
-        // this.data = [
-        //     { label: 'Chat 1', threadId: 'thread_1' },
-        //     { label: 'Chat 2', threadId: 'thread_2' }
-        // ];
         this.threadRepository = threadRepository;
+        this.openCommand = config.openCommand;
+        this.contextValue = config.contextValue || 'chat';
     }
 
     getTreeItem(element) {
         const treeItem = new vscode.TreeItem(element.name, vscode.TreeItemCollapsibleState.None);
         treeItem.command = {
-            command: 'myAssistant.openChat',
+            command: this.openCommand || 'myAssistant.openChat',
             title: 'Open Chat',
             arguments: [element.name, element.id]
         };
-        treeItem.contextValue = 'chat'; // 添加这行来支持上下文菜单
+        treeItem.contextValue = this.contextValue || 'chat'; // 添加这行来支持上下文菜单
         return treeItem;
     }
 

@@ -18,7 +18,24 @@ function activate(context) {
     const projectRoot = workspaceFolders[0].uri.fsPath;
     context.workspaceState.update('projectRoot', projectRoot);
 
-    const chatExtension = activateChatExtension(context);
+    // 激活普通聊天扩展
+    const chatExtension = activateChatExtension(context, {
+        chatType: 'chat',
+        viewId: 'chatList',
+        commandPrefix: 'myAssistant',
+        storagePath: 'chat_threads',
+        agentsPath: path.join('agent', 'chat', 'agents.json')
+    });
+
+    // 激活内部聊天扩展
+    const internalChatExtension = activateChatExtension(context, {
+        chatType: 'internalChat',
+        viewId: 'internalChatList',
+        commandPrefix: 'myAssistant',
+        storagePath: 'internal_chat_threads',
+        agentsPath: path.join('agent', 'chat', 'agents.json')
+    });
+
     const jobExtension = activateJobExtension(context);
 
     const agentMarketplaceExtension = new AgentMarketplaceExtension(context);

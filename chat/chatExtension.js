@@ -15,12 +15,24 @@ const createHostUtils = require('./hostUtils');
 // Object to store open chat panels
 const openChatPanels = {};
 
-function activateChatExtension(context) {
+function activateChatExtension(context, chatConfig = {}) {
+    // 默认配置
+    const defaultConfig = {
+        chatType: 'chat',
+        viewId: 'chatList',
+        commandPrefix: 'myAssistant',
+        storagePath: 'chat_threads',
+        agentsPath: path.join('agent', 'chat', 'agents.json')
+    };
+    
+    // 合并配置
+    const finalConfig = { ...defaultConfig, ...chatConfig };
+    
     const projectRoot = context.workspaceState.get('projectRoot');
     const config = vscode.workspace.getConfiguration('myAssistant');
     const settings = config.get('apiKey');
 
-    const agentLoader = new AgentLoader(path.join(projectRoot, '.ai_helper', 'agent', 'chat', 'agents.json'), settings);
+    const agentLoader = new AgentLoader(path.join(projectRoot, '.ai_helper', finalConfig.agentsPath), settings);
     // 监听设置变化
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration('myAssistant.apiKey')) {
@@ -28,14 +40,17 @@ function activateChatExtension(context) {
             agentLoader.updateSettings(updatedSettings);
         }
     }));
-    const threadRepository = new ChatThreadRepository(path.join(projectRoot, '.ai_helper/agent/memory_repo/chat_threads'), agentLoader);
+    const threadRepository = new ChatThreadRepository(path.join(projectRoot, '.ai_helper/agent/memory_repo', finalConfig.storagePath), agentLoader);
 
     const messageHandler = new ChatMessageHandler(threadRepository, agentLoader);
     const chatProvider = new ChatViewProvider(context.extensionUri, threadRepository, messageHandler);
-    const listProvider = new ChatListViewProvider(threadRepository);
+    const listProvider = new ChatListViewProvider(threadRepository, {
+        openCommand: `${finalConfig.commandPrefix}.open${finalConfig.chatType.charAt(0).toUpperCase() + finalConfig.chatType.slice(1)}`,
+        contextValue: finalConfig.chatType
+    });
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('myAssistant.revealInExplorer', (item) => {
+        vscode.commands.registerCommand(`${finalConfig.commandPrefix}.revealInExplorer.${finalConfig.chatType}`, (item) => {
             const threadFolder = path.join(threadRepository.storagePath, item.id);
             if (fs.existsSync(threadFolder)) {
                 vscode.commands.executeCommand('revealInExplorer', vscode.Uri.file(threadFolder));
@@ -46,7 +61,7 @@ function activateChatExtension(context) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('myAssistant.refreshChatList', async () => {
+        vscode.commands.registerCommand(`${finalConfig.commandPrefix}.refresh${finalConfig.chatType.charAt(0).toUpperCase() + finalConfig.chatType.slice(1)}List`, async () => {
             // 重新加载代理配置
             agentLoader.reloadConfig();
 
@@ -63,8 +78,8 @@ function activateChatExtension(context) {
     );
 
     context.subscriptions.push(
-        vscode.window.registerTreeDataProvider('chatList', listProvider),
-        vscode.window.createTreeView('chatList', {
+        vscode.window.registerTreeDataProvider(finalConfig.viewId, listProvider),
+        vscode.window.createTreeView(finalConfig.viewId, {
             treeDataProvider: listProvider,
             showCollapseAll: false,
             canSelectMany: false
@@ -73,7 +88,7 @@ function activateChatExtension(context) {
 
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('myAssistant.newChat', async () => {
+        vscode.commands.registerCommand(`${finalConfig.commandPrefix}.new${finalConfig.chatType.charAt(0).toUpperCase() + finalConfig.chatType.slice(1)}`, async () => {
             const chatName = await vscode.window.showInputBox({
                 prompt: "Enter a name for the new chat"
             });
@@ -88,14 +103,14 @@ function activateChatExtension(context) {
                     const newThreadId = 'thread_' + Date.now();
                     const newThread = threadRepository.createThread(newThreadId, chatName, agentName);
                     listProvider.refresh();
-                    vscode.commands.executeCommand('myAssistant.openChat', chatName, newThreadId);
+                    vscode.commands.executeCommand(`${finalConfig.commandPrefix}.open${finalConfig.chatType.charAt(0).toUpperCase() + finalConfig.chatType.slice(1)}`, chatName, newThreadId);
                 }
             }
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('myAssistant.deleteChat', async (item) => {
+        vscode.commands.registerCommand(`${finalConfig.commandPrefix}.delete${finalConfig.chatType.charAt(0).toUpperCase() + finalConfig.chatType.slice(1)}`, async (item) => {
             const result = await vscode.window.showWarningMessage(
                 `Are you sure you want to delete the chat "${item.name}"?`,
                 { modal: true },
@@ -117,7 +132,7 @@ function activateChatExtension(context) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('myAssistant.renameChat', async (item) => {
+        vscode.commands.registerCommand(`${finalConfig.commandPrefix}.rename${finalConfig.chatType.charAt(0).toUpperCase() + finalConfig.chatType.slice(1)}`, async (item) => {
             const newName = await vscode.window.showInputBox({
                 prompt: "Enter new name for the chat",
                 value: item.name
@@ -285,7 +300,7 @@ function activateChatExtension(context) {
     }
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('myAssistant.openMarkdownChat', async (uri) => {
+        vscode.commands.registerCommand(`${finalConfig.commandPrefix}.openMarkdown${finalConfig.chatType.charAt(0).toUpperCase() + finalConfig.chatType.slice(1)}`, async (uri) => {
             // If uri is not provided, try to get it from active editor
             if (!uri) {
                 const editor = vscode.window.activeTextEditor;
@@ -352,7 +367,7 @@ function activateChatExtension(context) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('myAssistant.openChat', async (chatName, threadId) => {
+        vscode.commands.registerCommand(`${finalConfig.commandPrefix}.open${finalConfig.chatType.charAt(0).toUpperCase() + finalConfig.chatType.slice(1)}`, async (chatName, threadId) => {
             await createAndInitChatPanel(threadId, chatName);
         })
     );
@@ -364,7 +379,7 @@ function activateChatExtension(context) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('myAssistant.openSettingsEditor', async (item) => {
+        vscode.commands.registerCommand(`${finalConfig.commandPrefix}.openSettingsEditor.${finalConfig.chatType}`, async (item) => {
             const threadId = item.id;
             const thread = threadRepository.getThread(threadId);
 
@@ -418,7 +433,7 @@ function activateChatExtension(context) {
 
     // 在 activateChatExtension 函数中添加新的命令注册
     context.subscriptions.push(
-        vscode.commands.registerCommand('myAssistant.createThreadFromJson', async (uri) => {
+        vscode.commands.registerCommand(`${finalConfig.commandPrefix}.createThreadFromJson.${finalConfig.chatType}`, async (uri) => {
             try {
                 // 读取 JSON 文件内容
                 const jsonContent = fs.readFileSync(uri.fsPath, 'utf8');
@@ -498,7 +513,7 @@ function activateChatExtension(context) {
                 listProvider.refresh();
 
                 // 打开新创建的聊天
-                vscode.commands.executeCommand('myAssistant.openChat', chatName, newThreadId);
+                vscode.commands.executeCommand(`${finalConfig.commandPrefix}.open${finalConfig.chatType.charAt(0).toUpperCase() + finalConfig.chatType.slice(1)}`, chatName, newThreadId);
 
                 vscode.window.showInformationMessage(`Successfully created thread from JSON: ${chatName}`);
             } catch (error) {
@@ -509,7 +524,8 @@ function activateChatExtension(context) {
 
     return {
         chatProvider,
-        listProvider
+        listProvider,
+        config: finalConfig
     };
 }
 

@@ -46,6 +46,11 @@
                     "icon": "media/chat-icon.png"
                 },
                 {
+                    "id": "internalChatList",
+                    "name": "Internal Chat",
+                    "icon": "media/chat-icon.png"
+                },
+                {
                     "id": "jobList",
                     "name": "Job",
                     "icon": "media/job-icon.png"
@@ -106,11 +111,37 @@
                 "icon": "$(refresh)"
             },
             {
-                "command": "myAssistant.openSettingsEditor",
-                "title": "Edit Settings"
+                "command": "myAssistant.newInternalChat",
+                "title": "New Internal Chat",
+                "icon": "$(plus)"
             },
             {
-                "command": "myAssistant.revealInExplorer",
+                "command": "myAssistant.deleteInternalChat",
+                "title": "Delete Internal Chat"
+            },
+            {
+                "command": "myAssistant.renameInternalChat",
+                "title": "Rename Internal Chat"
+            },
+            {
+                "command": "myAssistant.refreshInternalChatList",
+                "title": "Refresh Internal Chat List",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "myAssistant.openSettingsEditor.chat",
+                "title": "Edit Chat Settings"
+            },
+            {
+                "command": "myAssistant.openSettingsEditor.internalChat",
+                "title": "Edit Internal Chat Settings"
+            },
+            {
+                "command": "myAssistant.revealInExplorer.chat",
+                "title": "Reveal in Explorer"
+            },
+            {
+                "command": "myAssistant.revealInExplorer.internalChat",
                 "title": "Reveal in Explorer"
             },
             {
@@ -154,12 +185,20 @@
                 "icon": "$(refresh)"
             },
             {
-                "command": "myAssistant.createThreadFromJson",
+                "command": "myAssistant.createThreadFromJson.chat",
                 "title": "Create Chat Thread From JSON"
+            },
+            {
+                "command": "myAssistant.createThreadFromJson.internalChat",
+                "title": "Create Internal Chat Thread From JSON"
             },
             {
                 "command": "myAssistant.openMarkdownChat",
                 "title": "MyCanvas Chat"
+            },
+            {
+                "command": "myAssistant.openMarkdownInternalChat",
+                "title": "MyCanvas Internal Chat"
             },
             {
                 "command": "myAssistant.unescapeClipboard",
@@ -180,7 +219,12 @@
         "menus": {
             "explorer/context": [
                 {
-                    "command": "myAssistant.createThreadFromJson",
+                    "command": "myAssistant.createThreadFromJson.chat",
+                    "when": "resourceExtname == .json",
+                    "group": "myAssistant"
+                },
+                {
+                    "command": "myAssistant.createThreadFromJson.internalChat",
                     "when": "resourceExtname == .json",
                     "group": "myAssistant"
                 },
@@ -197,7 +241,12 @@
             ],
             "editor/context": [
                 {
-                    "command": "myAssistant.createThreadFromJson",
+                    "command": "myAssistant.createThreadFromJson.chat",
+                    "when": "resourceExtname == .json",
+                    "group": "myAssistant"
+                },
+                {
+                    "command": "myAssistant.createThreadFromJson.internalChat",
                     "when": "resourceExtname == .json",
                     "group": "myAssistant"
                 }
@@ -211,6 +260,16 @@
                 {
                     "command": "myAssistant.refreshChatList",
                     "when": "view == chatList",
+                    "group": "navigation"
+                },
+                {
+                    "command": "myAssistant.newInternalChat",
+                    "when": "view == internalChatList",
+                    "group": "navigation"
+                },
+                {
+                    "command": "myAssistant.refreshInternalChatList",
+                    "when": "view == internalChatList",
                     "group": "navigation"
                 },
                 {
@@ -246,13 +305,33 @@
                     "group": "1_modification"
                 },
                 {
-                    "command": "myAssistant.revealInExplorer",
+                    "command": "myAssistant.revealInExplorer.chat",
                     "when": "view == chatList && viewItem == chat",
                     "group": "1_modification"
                 },
                 {
-                    "command": "myAssistant.openSettingsEditor",
+                    "command": "myAssistant.openSettingsEditor.chat",
                     "when": "view == chatList && viewItem == chat",
+                    "group": "2_modification"
+                },
+                {
+                    "command": "myAssistant.deleteInternalChat",
+                    "when": "view == internalChatList && viewItem == internalChat",
+                    "group": "1_modification"
+                },
+                {
+                    "command": "myAssistant.renameInternalChat",
+                    "when": "view == internalChatList && viewItem == internalChat",
+                    "group": "1_modification"
+                },
+                {
+                    "command": "myAssistant.revealInExplorer.internalChat",
+                    "when": "view == internalChatList && viewItem == internalChat",
+                    "group": "1_modification"
+                },
+                {
+                    "command": "myAssistant.openSettingsEditor.internalChat",
+                    "when": "view == internalChatList && viewItem == internalChat",
                     "group": "2_modification"
                 },
                 {
