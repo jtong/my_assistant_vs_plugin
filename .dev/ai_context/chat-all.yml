@@ -43,8 +43,7 @@ input:
     - 按照ai_gen:file_patch输出，严格遵守标签规范。
 
     ## 任务
-    我希望 给 chat Agent增加一个新的空间，叫internal_chat，跟chat文件夹并列，所有功能都一样，就是多一个view用来展示，memory_repo存的位置有区别，叫internal_chat_threads，其他都不变。
-    不需要重写，而是要让我们现在的代码更具可配置性。 
+    我希望 新的internal chat的space，它的agent要安装在internal_chat文件夹下，而不是chat文件夹下
 output:     
   prompt:
     path: .ai_helper/prompt_builder/output/working

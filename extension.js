@@ -33,7 +33,7 @@ function activate(context) {
         viewId: 'internalChatList',
         commandPrefix: 'myAssistant',
         storagePath: 'internal_chat_threads',
-        agentsPath: path.join('agent', 'chat', 'agents.json')
+        agentsPath: path.join('agent', 'internal_chat', 'agents.json')
     });
 
     const jobExtension = activateJobExtension(context);
