@@ -50,7 +50,10 @@ async function gotoPathCommand(extensionContext) {
         const ChatThreadRepository = require('../chat/chatThreadRepository');
         
         const config = vscode.workspace.getConfiguration('myAssistant');
-        const settings = config.get('apiKey');
+        const settings = {
+            apiKey: config.get('apiKey'),
+            agentRepositoryUrl: config.get('agentRepositoryUrl')
+        };
         
         const agentLoader = new AgentLoader(agentConfigPath, settings);
         const threadRepository = new ChatThreadRepository(
@@ -58,7 +61,7 @@ async function gotoPathCommand(extensionContext) {
             agentLoader
         );
         
-        const newThread = threadRepository.createThread(newThreadId, chatName, 'goto');
+        const newThread = threadRepository.createThread(newThreadId, chatName, gotoAgent.name);
 
         // 添加用户消息，带上 autoProcess 标记
         const userMessage = {

@@ -49,7 +49,7 @@ input:
     - 按照ai_gen:file_patch输出，严格遵守标签规范。
 
     ## 任务
-    我希望 添加一个Ex command，叫goto path。可以调用internal chat中的goto agent。（该Agent）
+    我希望 settings不要拍平，我们取整个 myAssistant 配置对象，保持结构传给AgentLoader，更新同理
 output:     
   prompt:
     path: .ai_helper/prompt_builder/output/working

@@ -29,14 +29,22 @@ function activateChatExtension(context, chatConfig = {}) {
     const finalConfig = { ...defaultConfig, ...chatConfig };
     
     const projectRoot = context.workspaceState.get('projectRoot');
+  
     const config = vscode.workspace.getConfiguration('myAssistant');
-    const settings = config.get('apiKey');
+    const settings = {
+        apiKey: config.get('apiKey'),
+        agentRepositoryUrl: config.get('agentRepositoryUrl')
+    };
 
     const agentLoader = new AgentLoader(path.join(projectRoot, '.ai_helper', finalConfig.agentsPath), settings);
     // 监听设置变化
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
-        if (e.affectsConfiguration('myAssistant.apiKey')) {
-            const updatedSettings = vscode.workspace.getConfiguration('myAssistant').get('apiKey');
+        if (e.affectsConfiguration('myAssistant')) {
+            const updatedConfig = vscode.workspace.getConfiguration('myAssistant');
+            const updatedSettings = {
+                apiKey: updatedConfig.get('apiKey'),
+                agentRepositoryUrl: updatedConfig.get('agentRepositoryUrl')
+            };
             agentLoader.updateSettings(updatedSettings);
         }
     }));
@@ -273,27 +281,37 @@ function activateChatExtension(context, chatConfig = {}) {
             delete openChatPanels[chatName];
         });
 
-        // 处理 bootMessage 和 bootTASK
+        // 处理 bootMessage、initTask 或标记为自动处理的用户消息
         const messagesAfterLastMarker = threadRepository.getMessagesAfterLastMarker(thread);
-        if (messagesAfterLastMarker.length === 0 && agentConfig) {
-            if (agentConfig.metadata && agentConfig.metadata.bootMessage) {
-                const bootResponse = Response.fromJSON(agentConfig.metadata.bootMessage);
-                chatProvider.handleNormalResponse(bootResponse, thread, panel, host_utils);
-            }
+        
+        // 检查最后一条消息是否是需要自动处理的用户消息
+        const lastMessage = messagesAfterLastMarker.length > 0 ? 
+            messagesAfterLastMarker[messagesAfterLastMarker.length - 1] : null;
+        const shouldAutoProcessLastMessage = lastMessage && 
+            lastMessage.sender === 'user' && 
+            lastMessage.meta?.autoProcess === true;
+        
+        // 检查是否需要执行 initTask
+        const shouldExecuteInitTask = shouldAutoProcessLastMessage || 
+            (messagesAfterLastMarker.length === 0 && agentConfig?.metadata?.initTask);
+        
+        if (messagesAfterLastMarker.length === 0 && agentConfig?.metadata?.bootMessage) {
+            const bootResponse = Response.fromJSON(agentConfig.metadata.bootMessage);
+            chatProvider.handleNormalResponse(bootResponse, thread, panel, host_utils);
+        }
 
-            if (agentConfig.metadata && agentConfig.metadata.initTask) {
-                const initTask = new Task({
-                    name: "InitTask",
-                    type: Task.TYPE_ACTION,
-                    message: "",
-                    meta: {},
-                    host_utils,
-                    skipUserMessage: true,
-                    skipBotMessage: false
-                });
-    
-                chatProvider.handleThread(thread, initTask, panel);
-            }
+        if (shouldExecuteInitTask) {
+            const initTask = new Task({
+                name: "InitTask",
+                type: Task.TYPE_ACTION,
+                message: "",
+                meta: {},
+                host_utils,
+                skipUserMessage: true,
+                skipBotMessage: false
+            });
+
+            chatProvider.handleThread(thread, initTask, panel);
         }
         
         return panel;
