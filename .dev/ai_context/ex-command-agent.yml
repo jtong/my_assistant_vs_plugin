@@ -47,9 +47,10 @@ input:
     
     - 分清webview的代码和插件的代码和agent app的代码
     - 按照ai_gen:file_patch输出，严格遵守标签规范。
+    - 被调用的Agent都遵循Agent 开发规范。
 
     ## 任务
-    我希望 添加一个Ex command，叫goto path。可以调用internal chat中的goto agent。（该Agent）
+    我希望 添加一个Ex command，叫goto path。可以调用internal chat中的goto agent。创建一个thread，把用户消息发给Agent
 output:     
   prompt:
     path: .ai_helper/prompt_builder/output/working

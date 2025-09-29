@@ -4,6 +4,7 @@ const path = require('path');
 const unescapeClipboardCommand = require('./unescapeClipboardCommand');
 const parseClipboardFilesCommand = require('./parseClipboardFilesCommand');
 const parseClipboardFilePatchCommand = require('./parseClipboardFilePatchCommand');
+const gotoPathCommand = require('./gotoPathCommand');
 
 function registerExtendedCommands(context) {
     // 注册剪贴板反转义命令
@@ -20,7 +21,11 @@ function registerExtendedCommands(context) {
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.applyAIGenFilePatchesFromClipboard', parseClipboardFilePatchCommand)
     );
-    
+
+    // 注册 goto path 命令
+    context.subscriptions.push(
+        vscode.commands.registerCommand('myAssistant.gotoPath', (context) => gotoPathCommand(context))
+    );
 }
 
 module.exports = registerExtendedCommands;

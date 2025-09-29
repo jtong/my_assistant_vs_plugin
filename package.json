@@ -214,6 +214,11 @@
                 "command": "myAssistant.applyAIGenFilePatchesFromClipboard",
                 "title": "Apply AI Gen File Patches from Clipboard",
                 "category": "My Assistant Util"
+            },
+            {
+                "command": "myAssistant.gotoPath",
+                "title": "Goto Path",
+                "category": "My Assistant Util"
             }
         ],
         "menus": {
