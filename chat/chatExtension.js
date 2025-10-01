@@ -11,6 +11,7 @@ const fs = require('fs');
 const yaml = require('js-yaml');
 const { Response, Task, AvailableTask } = require('ai-agent-response');
 const createHostUtils = require('./hostUtils');
+const companionPluginRegistry = require('../companionPluginRegistry');
 
 // Object to store open chat panels
 const openChatPanels = {};
