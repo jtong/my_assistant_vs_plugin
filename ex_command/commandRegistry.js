@@ -5,6 +5,7 @@ const unescapeClipboardCommand = require('./unescapeClipboardCommand');
 const parseClipboardFilesCommand = require('./parseClipboardFilesCommand');
 const parseClipboardFilePatchCommand = require('./parseClipboardFilePatchCommand');
 const gotoPathCommand = require('./gotoPathCommand');
+const generateTextAtCursorCommand = require('./generateTextAtCursorCommand');
 
 function registerExtendedCommands(context) {
     // 注册剪贴板反转义命令
@@ -25,6 +26,11 @@ function registerExtendedCommands(context) {
     // 注册 goto path 命令
     context.subscriptions.push(
         vscode.commands.registerCommand('myAssistant.gotoPath', (context) => gotoPathCommand(context))
+    );
+
+    // 注册光标位置文本生成命令
+    context.subscriptions.push(
+        vscode.commands.registerCommand('myAssistant.generateTextAtCursor', (context) => generateTextAtCursorCommand(context))
     );
 }
 
