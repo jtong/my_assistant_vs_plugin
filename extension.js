@@ -7,6 +7,7 @@ const activateJobExtension = require('./job/jobExtension');
 const AgentMarketplaceExtension = require('./agent_marketplace/agentMarketplaceExtension');
 const activeAppExtention = require("./app/appExtension");
 const registerExtendedCommands = require('./ex_command/commandRegistry');
+const companionPluginRegistry = require('./companionPluginRegistry');
 
 function activate(context) {
     // 获取当前打开的工作区文件夹路径
@@ -47,6 +48,10 @@ function activate(context) {
     registerExtendedCommands(context);
     console.log('Ex Command activated successfully');
 
+    // 导出伴生插件注册器供其他扩展使用
+    return {
+        companionPluginRegistry
+    };
 }
 
 function deactivate() { }

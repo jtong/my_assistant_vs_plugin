@@ -19,6 +19,7 @@
     "files": [
         "extension.js",
         "agentLoader.js",
+        "companionPluginRegistry.js",
         "logger.js",
         "chat/**",
         "ex_command/**",

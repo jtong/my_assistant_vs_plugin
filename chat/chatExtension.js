@@ -193,6 +193,14 @@ function activateChatExtension(context, chatConfig = {}) {
             return openChatPanels[chatName];
         }
 
+        // 获取所有伴生插件的扩展路径
+        const companionExtensionPaths = companionPluginRegistry.getAllExtensionPaths();
+        const localResourceRoots = [
+            vscode.Uri.file(path.join(context.extensionPath)),
+            vscode.Uri.file(projectRoot),
+            ...companionExtensionPaths.map(p => vscode.Uri.file(p))
+        ];
+
         // 创建新的面板
         const panel = vscode.window.createWebviewPanel(
             'chatView',
@@ -201,10 +209,7 @@ function activateChatExtension(context, chatConfig = {}) {
             {
                 enableScripts: true,
                 retainContextWhenHidden: true,
-                localResourceRoots: [
-                    vscode.Uri.file(path.join(context.extensionPath)),
-                    vscode.Uri.file(projectRoot)
-                ]
+                localResourceRoots: localResourceRoots
             }
         );
 

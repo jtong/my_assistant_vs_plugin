@@ -49,7 +49,9 @@ input:
     - 按照ai_gen:file_patch输出，严格遵守标签规范。
 
     ## 任务
-    我希望 settings不要拍平，我们取整个 myAssistant 配置对象，保持结构传给AgentLoader，更新同理
+    我希望 加入一个给伴生插件的注册功能。
+    伴生插件可以把提供给webview专用的js和css的Uri注册进来，主插件加载webview的时候放进去。
+    伴生插件的js也会发布事件，都有统一的name格式，主插件接到这个格式的事件就会转发给伴生插件，伴生插件也可以通过统一的name格式给自己的js插件发送消息，也会被主插件转发。
 output:     
   prompt:
     path: .ai_helper/prompt_builder/output/working

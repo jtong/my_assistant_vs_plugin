@@ -3,6 +3,7 @@ const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
 const { Response, Task, AvailableTask } = require('ai-agent-response');
+const companionPluginRegistry = require('../companionPluginRegistry');
 
 class ChatViewProvider {
     constructor(extensionUri, threadRepository, messageHandler) {
@@ -42,6 +43,10 @@ class ChatViewProvider {
         const highlightJsUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'chat', 'webview', 'lib', 'highlight.min.js')));
         const highlightCssUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'chat', 'webview', 'lib', 'highlight.default.min.css')));
 
+        // 获取伴生插件的资源
+        const companionScripts = companionPluginRegistry.generateScriptTags(webview);
+        const companionStyles = companionPluginRegistry.generateStyleTags(webview);
+
         htmlContent = htmlContent.replace('${markdownPreviewScriptUri}', markdownPreviewScriptUri);
         htmlContent = htmlContent.replace('${markdownPreviewStyleUri}', markdownPreviewStyleUri);
         htmlContent = htmlContent.replace('${scriptUri}', scriptUri);
@@ -50,6 +55,8 @@ class ChatViewProvider {
         htmlContent = htmlContent.replace('${highlightJsUri}', highlightJsUri);
         htmlContent = htmlContent.replace('${highlightCssUri}', highlightCssUri);
         htmlContent = htmlContent.replace('${threadId}', threadId || '');
+        htmlContent = htmlContent.replace('${companionScripts}', companionScripts);
+        htmlContent = htmlContent.replace('${companionStyles}', companionStyles);
 
         htmlContent = htmlContent.replace('${previewClass}', enablePreview ? 'with-preview' : 'no-preview');
         htmlContent = htmlContent.replace('${previewDisplay}', enablePreview ? '' : 'display:none');
@@ -62,6 +69,12 @@ class ChatViewProvider {
 
         panel.webview.onDidReceiveMessage(async (message) => {
             const threadId = message.threadId;
+
+            // 优先检查是否是伴生插件消息
+            const handled = companionPluginRegistry.handleWebviewMessage(message, panel);
+            if (handled) {
+                return;
+            }
 
             switch (message.type) {
                 case 'getMessages':
