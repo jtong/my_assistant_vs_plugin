@@ -39,24 +39,25 @@ read_only_references:
     filters:
       - filter_in:
         - "coding_spec.md"
-  - $ref: "/Users/jtong/develop/education/homework-lab/java_microservice/prompt-builder-projects/personal_knowledge/read_only_reference/format/source_code.yml#file_patch"      
+  # - $ref: "/Users/jtong/develop/education/homework-lab/java_microservice/prompt-builder-projects/personal_knowledge/read_only_reference/format/source_code.yml#file_patch"      
 input:
   git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
     ## 任务约束
     
     - 分清webview的代码和插件的代码和agent app的代码
-    - 按照ai_gen:file_patch输出，严格遵守标签规范。
 
     ## 任务
-    我希望 加入一个给伴生插件的注册功能。
-    伴生插件可以把提供给webview专用的js和css的Uri注册进来，主插件加载webview的时候放进去。
-    伴生插件的js也会发布事件，都有统一的name格式，主插件接到这个格式的事件就会转发给伴生插件，伴生插件也可以通过统一的name格式给自己的js插件发送消息，也会被主插件转发。
 
-    但目前报错： companionPluginRegistry is not defined
+    我希望 发消息和执行命令可以跟UI解耦，通知UI只是其中一种后处理。也就是handleThread及相关处理应该是单独一个类。
+    只保留现在的 panel.webview.postMessage 相关调用作为 UI 回调可以了，传入回调函数给新类，默认回调函数都为空即可，不需要过度设计。
+    除了 panel.webview.postMessage 相关调用其他子函数都是新类的方法。
+
 output:     
   prompt:
     path: .ai_helper/prompt_builder/output/working
     backup_path: .ai_helper/prompt_builder/output/backup
 
 # 我希望 在webview的chat 窗口里加入搜索功能，可以跳到对应的文本对应的位置，如果多处匹配，可以上下跳转    
+# 我希望 ex command 中的goto path和text gen支持一个debug模式，通过setting来设置，如果是debug模式，才打开消息，否则直接执行任务。
+# - 按照ai_gen:file_patch输出，严格遵守标签规范。

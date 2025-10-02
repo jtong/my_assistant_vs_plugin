@@ -303,7 +303,7 @@ function activateChatExtension(context, chatConfig = {}) {
         
         if (messagesAfterLastMarker.length === 0 && agentConfig?.metadata?.bootMessage) {
             const bootResponse = Response.fromJSON(agentConfig.metadata.bootMessage);
-            chatProvider.handleNormalResponse(bootResponse, thread, panel, host_utils);
+            await chatProvider.handleNormalResponse(bootResponse, thread, panel, host_utils);
         }
 
         if (shouldExecuteInitTask) {
@@ -317,7 +317,7 @@ function activateChatExtension(context, chatConfig = {}) {
                 skipBotMessage: false
             });
 
-            chatProvider.handleThread(thread, initTask, panel);
+            await chatProvider.handleThread(thread, initTask, panel);
         }
         
         return panel;

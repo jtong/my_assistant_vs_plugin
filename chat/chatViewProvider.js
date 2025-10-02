@@ -4,13 +4,16 @@ const fs = require('fs');
 const path = require('path');
 const { Response, Task, AvailableTask } = require('ai-agent-response');
 const companionPluginRegistry = require('../companionPluginRegistry');
+const ThreadProcessor = require('./threadProcessor');
 
 class ChatViewProvider {
     constructor(extensionUri, threadRepository, messageHandler) {
         this._extensionUri = extensionUri;
         this.threadRepository = threadRepository;
         this.messageHandler = messageHandler;
-        this.stopGenerationFlags = new Map(); // 添加停止标志Map，跟踪每个线程的停止状态
+        
+        // 为每个 panel 创建独立的 ThreadProcessor，在 resolveWebviewPanel 中初始化
+        this.threadProcessors = new Map();
     }
 
     getWebviewContent(webview, threadId) {
@@ -66,6 +69,63 @@ class ChatViewProvider {
     }
 
     resolveWebviewPanel(panel, host_utils) {
+        // 创建 ThreadProcessor 并配置 UI 回调
+        const processor = new ThreadProcessor(
+            this.threadRepository, 
+            this.messageHandler,
+            {
+                onBotMessageStart: (message, isStreaming) => {
+                    panel.webview.postMessage({
+                        type: 'addBotMessage',
+                        message: message,
+                        isStreaming: isStreaming
+                    });
+                },
+                onBotMessageAppend: (messageId, text) => {
+                    panel.webview.postMessage({
+                        type: 'appendBotMessage',
+                        messageId: messageId,
+                        text: text
+                    });
+                },
+                onBotMessageComplete: (message) => {
+                    // 消息完成时不需要额外的UI通知，由 onProcessingComplete 统一处理
+                },
+                onAvailableTasksAdded: (messageId, availableTasks) => {
+                    panel.webview.postMessage({
+                        type: 'addAvailableTasks',
+                        messageId: messageId,
+                        availableTasks: availableTasks
+                    });
+                },
+                onUserMessageAdded: (userMessage) => {
+                    panel.webview.postMessage({
+                        type: 'addUserMessage',
+                        message: userMessage
+                    });
+                },
+                onError: (errorMessage, error) => {
+                    panel.webview.postMessage({
+                        type: 'addBotMessage',
+                        message: errorMessage
+                    });
+                },
+                onProcessingComplete: (threadId) => {
+                    panel.webview.postMessage({
+                        type: 'botResponseComplete'
+                    });
+                }
+            }
+        );
+
+        // 存储 processor，用于后续调用
+        const panelId = panel.webview.html; // 使用一个唯一标识
+        this.threadProcessors.set(panel, processor);
+
+        // 清理
+        panel.onDidDispose(() => {
+            this.threadProcessors.delete(panel);
+        });
 
         panel.webview.onDidReceiveMessage(async (message) => {
             const threadId = message.threadId;
@@ -88,13 +148,13 @@ class ChatViewProvider {
                     await this.handleSelectInitialFile(threadId, panel);
                     break;
                 case 'sendMessage':
-                    await this.handleSendMessage(message, threadId, panel, host_utils);
+                    await this.handleSendMessage(message, threadId, panel, host_utils, processor);
                     break;
                 case 'retryMessage':
-                    await this.handleRetryMessage(threadId, panel, host_utils);
+                    await this.handleRetryMessage(threadId, panel, host_utils, processor);
                     break;
                 case 'executeTask':
-                    await this.handleExecuteTask(message, threadId, panel, host_utils);
+                    await this.handleExecuteTask(message, threadId, panel, host_utils, processor);
                     break;
                 case 'updateMessage':
                     this.threadRepository.updateMessage(this.threadRepository.getThread(threadId), message.messageId, { text: message.newText });
@@ -113,7 +173,7 @@ class ChatViewProvider {
                     this.handleOpenAttachedFile(message);
                     break;
                 case 'stopGeneration':
-                    this.handleStopGeneration(threadId, panel);
+                    this.handleStopGeneration(threadId, panel, processor);
                     break;
                 case 'openImage':
                     this.handleOpenImage(message);
@@ -131,12 +191,12 @@ class ChatViewProvider {
             vscode.window.showErrorMessage('图片不存在或已被删除。');
         }
     }
-    handleStopGeneration(threadId, panel) {
-        this.stopGenerationFlags.set(threadId, true);
+
+    handleStopGeneration(threadId, panel, processor) {
+        processor.stopGeneration(threadId);
         panel.webview.postMessage({
             type: 'botResponseComplete'
         });
-        console.log(`Generation stopped for thread: ${threadId}`);
     }
 
     async handleSelectInitialFile(threadId, panel) {
@@ -157,7 +217,7 @@ class ChatViewProvider {
         }
     }
 
-    async handleSendMessage(message, threadId, panel, host_utils) {
+    async handleSendMessage(message, threadId, panel, host_utils, processor) {
         let thread = this.threadRepository.getThread(threadId);
 
         // 处理文件附件
@@ -181,26 +241,18 @@ class ChatViewProvider {
                 fs.mkdirSync(threadFolder, { recursive: true });
             }
 
-            // 创建唯一文件名
             const timestamp = Date.now();
             const imageName = `image_${timestamp}_${message.imageData.name}`;
             const imagePath = path.join(threadFolder, imageName);
 
-            // 将base64数据转换为图片文件
             const imageDataParts = message.imageData.data.split(',');
             const imageBuffer = Buffer.from(imageDataParts[1], 'base64');
             fs.writeFileSync(imagePath, imageBuffer);
 
-            // 存储相对路径
-            message.imagePath = imageName; // 只保存图片文件名作为相对路径
-            
-            // 提前转换URI并添加到消息中供前端使用
+            message.imagePath = imageName;
             message.imageUri = host_utils.getImageUri(thread.id, imageName);
-
-            // 删除base64数据以减少存储和传输负担
             delete message.imageData;
         }
-
 
         const updatedThread = this.messageHandler.addUserMessageToThread(thread, message.message, message.filePath, message.imagePath, message.imageUri);
         const userMessage = updatedThread.messages[updatedThread.messages.length - 1];
@@ -211,11 +263,10 @@ class ChatViewProvider {
         });
 
         const messageTask = this.buildMessageTask(userMessage.text, updatedThread, host_utils);
-        await this.handleThread(updatedThread, messageTask, panel);
+        await processor.handleThread(updatedThread, messageTask);
     }
 
-
-    async handleRetryMessage(threadId, panel, host_utils) {
+    async handleRetryMessage(threadId, panel, host_utils, processor) {
         const removedMessages = this.threadRepository.removeMessagesAfterLastUser(threadId);
         if (removedMessages.length > 0) {
             panel.webview.postMessage({
@@ -226,30 +277,19 @@ class ChatViewProvider {
         const thread = this.threadRepository.getThread(threadId);
         const lastUserMessage = thread.messages[thread.messages.length - 1].text;
         const retryTask = this.buildMessageTask(lastUserMessage, thread, host_utils);
-
-        // 添加重试标记到任务的 meta 中
         retryTask.meta._ui_action = "retry";
 
-        await this.handleThread(thread, retryTask, panel);
+        await processor.handleThread(thread, retryTask);
     }
 
-    async handleExecuteTask(message, threadId, panel, host_utils) {
+    async handleExecuteTask(message, threadId, panel, host_utils, processor) {
         const task = message.task;
-
-        let thread = this.threadRepository.getThread(threadId);
-
-        if (!task.skipUserMessage) {
-            const updatedThread = this.messageHandler.addUserMessageToThread(thread, task.message);
-            const userMessage = updatedThread.messages[updatedThread.messages.length - 1];
-            panel.webview.postMessage({
-                type: 'addUserMessage',
-                message: userMessage
-            });
-        }
         task.host_utils = host_utils;
-        if (task) {
-            await this.handleThread(thread, task, panel);
-        }
+        
+        const thread = this.threadRepository.getThread(threadId);
+        
+        // 使用 processor 的 executeTask 方法
+        await processor.executeTask(thread, task);
     }
 
     handleUpdateSetting(message, threadId) {
@@ -295,158 +335,31 @@ class ChatViewProvider {
         });
     }
 
-    addAvailableTasks(message, availableTasks, panel) {
-        message.availableTasks = availableTasks;
-        availableTasks.forEach(availableTask => {
-            availableTask.task.host_utils = undefined;
-        })
-        const thread = this.threadRepository.getThread(message.threadId);
-        this.threadRepository.updateMessage(thread, message.id, message);
-
-        // 使用独立的 addAvailableTasks 消息
-        panel.webview.postMessage({
-            type: 'addAvailableTasks',
-            messageId: message.id,
-            availableTasks: availableTasks
-        });
-    }
-
-    async handleNormalResponse(response, updatedThread, panel, host_utils) {
-        const botMessage = await this.addNewBotMessage(response, updatedThread, panel);
-
-        if (response.hasAvailableTasks()) {
-            // 使用新的独立方法
-            this.addAvailableTasks(botMessage, response.getAvailableTasks(), panel);
-        }
-
-        await this.handleNextTasks(response, updatedThread, panel, host_utils, botMessage.id);
-
-    }
-
-    async handleNextTasks(response, updatedThread, panel, host_utils, messageId) {
-        if (response.hasNextTasks()) {
-            const nextTasks = response.getNextTasks();
-            for (const nextTask of nextTasks) {
-                nextTask.host_utils = host_utils;
-                nextTask.meta = { ...nextTask.meta, messageId: messageId };
-                await this.handleThread(updatedThread, nextTask, panel);
-            }
-        }
-    }
-
-    async handleThread(thread, task, panel) {
-        try {
-            if (task.skipBotMessage) {
-                // 如果任务设置了跳过机器人消息，使用一个不添加消息的处理器
-                const silentResponseHandler = async (response, updatedThread) => {
-
-                    if (response.hasAvailableTasks()) {
-                        const botMessage = task.host_utils.threadRepository.getMessageById(thread.id, task.meta.messageId);
-                        this.addAvailableTasks(botMessage, response.getAvailableTasks(), panel);
-                    }
-
-                    await this.handleNextTasks(response, updatedThread, panel, task.host_utils, task.meta.messageId);
-                };
-                await this.messageHandler.handleTask(thread, task, silentResponseHandler);
-            } else {
-                await this.messageHandler.handleTask(thread, task, async (response, updatedThread) =>
-                    await this.handleNormalResponse(response, updatedThread, panel, task.host_utils)
-                );
-            }
-        } catch (error) {
-            console.error('Error in handleThread:', error);
-            const errorMessage = {
-                id: 'error_' + Date.now(),
-                sender: 'bot',
-                text: 'An unexpected error occurred while processing your task.',
-                isHtml: false,
-                timestamp: Date.now(),
-                threadId: thread.id
-            };
-            this.threadRepository.addMessage(thread, errorMessage);
-            panel.webview.postMessage({
-                type: 'addBotMessage',
-                message: errorMessage
-            });
-        } finally {
-            setTimeout(() => {
-                panel.webview.postMessage({
-                    type: 'botResponseComplete'
-                });
-            }, 500);
-        }
-    }
-
-    async addNewBotMessage(response, thread, panel) {
-        let botMessage = {
-            id: 'msg_' + Date.now(),
-            sender: 'bot',
-            text: response.getFullMessage() || '',
-            isHtml: response.isHtml(),
-            timestamp: Date.now(),
-            threadId: thread.id,
-            meta: response.getMeta(),
-            isVirtual: response.getMeta()?.isVirtual || false
-        };
-
-
-        this.threadRepository.addMessage(thread, botMessage);
-
-        // 重置停止标志
-        this.stopGenerationFlags.delete(thread.id);
-
-        if (response.isStream()) {
-            panel.webview.postMessage({
-                type: 'addBotMessage',
-                message: botMessage
-            });
-
-            try {
-                for await (const chunk of response.getStream()) {
-                    // 检查停止标志，如果设置了就停止处理
-                    if (this.stopGenerationFlags.get(thread.id)) {
-                        console.log('Stream processing stopped by user');
-                        break;
-                    }
-
-                    botMessage.text += chunk;
-                    // 使用 appendBotMessage 而不是 updateBotMessage
-                    panel.webview.postMessage({
-                        type: 'appendBotMessage',
-                        messageId: botMessage.id,
-                        text: chunk
-                    });
-                }
-            } catch (streamError) {
-                console.error('Error in stream processing:', streamError);
-                if (!this.stopGenerationFlags.get(thread.id)) {
-                    botMessage.text += ' An error occurred during processing.';
-                    // 使用 appendBotMessage
-                    panel.webview.postMessage({
-                        type: 'appendBotMessage',
-                        messageId: botMessage.id,
-                        text: ' An error occurred during processing.'
-                    });
-                }
-            } finally {
-                // 清理停止标志
-                this.stopGenerationFlags.delete(thread.id);
-            }
+    /**
+     * 为没有 panel 的场景提供的便捷方法
+     * 处理正常响应（透传给 processor）
+     */
+    async handleNormalResponse(response, thread, panel, host_utils) {
+        const processor = this.threadProcessors.get(panel);
+        if (processor) {
+            await processor.handleNormalResponse(response, thread, host_utils);
         } else {
-            botMessage.text = response.getFullMessage();
-            panel.webview.postMessage({
-                type: 'addBotMessage',
-                message: botMessage
-            });
+            console.warn('No processor found for panel');
         }
-
-        this.threadRepository.updateMessage(thread, botMessage.id, {
-            text: botMessage.text
-        });
-
-        return botMessage;
     }
 
+    /**
+     * 为没有 panel 的场景提供的便捷方法
+     * 处理线程（透传给 processor）
+     */
+    async handleThread(thread, task, panel) {
+        const processor = this.threadProcessors.get(panel);
+        if (processor) {
+            await processor.handleThread(thread, task);
+        } else {
+            console.warn('No processor found for panel');
+        }
+    }
 }
 
 module.exports = ChatViewProvider;
