@@ -49,9 +49,8 @@ input:
 
     ## 任务
 
-    我希望 发消息和执行命令可以跟UI解耦，通知UI只是其中一种后处理。也就是handleThread及相关处理应该是单独一个类。
-    只保留现在的 panel.webview.postMessage 相关调用作为 UI 回调可以了，传入回调函数给新类，默认回调函数都为空即可，不需要过度设计。
-    除了 panel.webview.postMessage 相关调用其他子函数都是新类的方法。
+    我希望 chat/chatExtension.js 里部分逻辑要放到 chat/chatViewProvider.js 中提升内聚性
+    
 
 output:     
   prompt:

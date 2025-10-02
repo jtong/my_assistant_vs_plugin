@@ -9,11 +9,9 @@ const ChatThreadRepository = require('./chatThreadRepository');
 const SettingsEditorProvider = require('./settingsEditorProvider');
 const fs = require('fs');
 const yaml = require('js-yaml');
-const { Response, Task, AvailableTask } = require('ai-agent-response');
 const createHostUtils = require('./hostUtils');
 const companionPluginRegistry = require('../companionPluginRegistry');
-
-// Object to store open chat panels
+// 存储打开的聊天面板
 const openChatPanels = {};
 
 function activateChatExtension(context, chatConfig = {}) {
@@ -38,6 +36,7 @@ function activateChatExtension(context, chatConfig = {}) {
     };
 
     const agentLoader = new AgentLoader(path.join(projectRoot, '.ai_helper', finalConfig.agentsPath), settings);
+    
     // 监听设置变化
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration('myAssistant')) {
@@ -49,15 +48,20 @@ function activateChatExtension(context, chatConfig = {}) {
             agentLoader.updateSettings(updatedSettings);
         }
     }));
+
     const threadRepository = new ChatThreadRepository(path.join(projectRoot, '.ai_helper/agent/memory_repo', finalConfig.storagePath), agentLoader);
 
     const messageHandler = new ChatMessageHandler(threadRepository, agentLoader);
-    const chatProvider = new ChatViewProvider(context.extensionUri, threadRepository, messageHandler);
+    
+    // 传入 agentLoader
+    const chatProvider = new ChatViewProvider(context.extensionUri, threadRepository, messageHandler, agentLoader);
+    
     const listProvider = new ChatListViewProvider(threadRepository, {
         openCommand: `${finalConfig.commandPrefix}.open${finalConfig.chatType.charAt(0).toUpperCase() + finalConfig.chatType.slice(1)}`,
         contextValue: finalConfig.chatType
     });
 
+    // 注册 revealInExplorer 命令
     context.subscriptions.push(
         vscode.commands.registerCommand(`${finalConfig.commandPrefix}.revealInExplorer.${finalConfig.chatType}`, (item) => {
             const threadFolder = path.join(threadRepository.storagePath, item.id);
@@ -69,6 +73,7 @@ function activateChatExtension(context, chatConfig = {}) {
         })
     );
 
+    // 注册刷新命令
     context.subscriptions.push(
         vscode.commands.registerCommand(`${finalConfig.commandPrefix}.refresh${finalConfig.chatType.charAt(0).toUpperCase() + finalConfig.chatType.slice(1)}List`, async () => {
             // 重新加载代理配置
@@ -86,6 +91,7 @@ function activateChatExtension(context, chatConfig = {}) {
         })
     );
 
+    // 注册 TreeView
     context.subscriptions.push(
         vscode.window.registerTreeDataProvider(finalConfig.viewId, listProvider),
         vscode.window.createTreeView(finalConfig.viewId, {
@@ -95,7 +101,7 @@ function activateChatExtension(context, chatConfig = {}) {
         })
     );
 
-
+    // 注册新建聊天命令
     context.subscriptions.push(
         vscode.commands.registerCommand(`${finalConfig.commandPrefix}.new${finalConfig.chatType.charAt(0).toUpperCase() + finalConfig.chatType.slice(1)}`, async () => {
             const chatName = await vscode.window.showInputBox({
@@ -118,6 +124,7 @@ function activateChatExtension(context, chatConfig = {}) {
         })
     );
 
+    // 注册删除聊天命令
     context.subscriptions.push(
         vscode.commands.registerCommand(`${finalConfig.commandPrefix}.delete${finalConfig.chatType.charAt(0).toUpperCase() + finalConfig.chatType.slice(1)}`, async (item) => {
             const result = await vscode.window.showWarningMessage(
@@ -140,6 +147,7 @@ function activateChatExtension(context, chatConfig = {}) {
         })
     );
 
+    // 注册重命名聊天命令
     context.subscriptions.push(
         vscode.commands.registerCommand(`${finalConfig.commandPrefix}.rename${finalConfig.chatType.charAt(0).toUpperCase() + finalConfig.chatType.slice(1)}`, async (item) => {
             const newName = await vscode.window.showInputBox({
@@ -160,6 +168,7 @@ function activateChatExtension(context, chatConfig = {}) {
             }
         })
     );
+
 
     // 创建并初始化面板的通用函数
     async function createAndInitChatPanel(threadId, chatName) {
@@ -219,67 +228,13 @@ function activateChatExtension(context, chatConfig = {}) {
         const host_utils = createHostUtils(panel, threadRepository);
         chatProvider.resolveWebviewPanel(panel, host_utils);
         
-        // 如果有预览且线程有关联的附件文件
+        // 如果有预览功能，设置预览
         if (enablePreview) {
-            const attachment = threadRepository.getAttachment(threadId);
-            if (attachment) {
-                try {
-                    const markdownContent = fs.readFileSync(attachment.path, 'utf8');
-                    panel.webview.postMessage({
-                        type: 'updateMarkdown',
-                        content: markdownContent,
-                        filePath: attachment.path
-                    });
-                    
-                    // 设置文件监听
-                    const fileWatcher = vscode.workspace.createFileSystemWatcher(attachment.path);
-                    fileWatcher.onDidChange(async () => {
-                        try {
-                            const updatedContent = fs.readFileSync(attachment.path, 'utf8');
-                            panel.webview.postMessage({
-                                type: 'updateMarkdown',
-                                content: updatedContent
-                            });
-                        } catch (error) {
-                            console.error('Error reading updated markdown:', error);
-                        }
-                    });
-                    
-                    panel.onDidDispose(() => {
-                        fileWatcher.dispose();
-                    });
-                } catch (error) {
-                    console.error('Error reading markdown attachment:', error);
-                }
-            }
+            await chatProvider.setupMarkdownPreview(panel, threadId);
         }
 
-        // 加载agent操作
-        const agent = await agentLoader.loadAgentForThread(thread);
-        let operations = [];
-
-        // 尝试从agent获取operations
-        if (agent && typeof agent.loadOperations === 'function') {
-            try {
-                operations = await agent.loadOperations(thread) || [];
-            } catch (error) {
-                console.error('Error loading operations from agent:', error);
-                // 如果从agent加载失败，退回到使用配置中的operations
-                operations = agentConfig.operations || [];
-            }
-        } else {
-            operations = agentConfig.operations || [];
-        }
-
-        // 获取当前线程的设置
-        const currentSettings = threadRepository.getThreadSettings(threadId) || {};
-
-        // 发送 operations 和当前设置到前端
-        panel.webview.postMessage({
-            type: 'loadOperations',
-            operations: operations,
-            currentSettings: currentSettings
-        });
+        // 加载并发送operations
+        await chatProvider.loadAndSendOperations(panel, thread);
 
         openChatPanels[chatName] = panel;
 
@@ -287,42 +242,13 @@ function activateChatExtension(context, chatConfig = {}) {
             delete openChatPanels[chatName];
         });
 
-        // 处理 bootMessage、initTask 或标记为自动处理的用户消息
-        const messagesAfterLastMarker = threadRepository.getMessagesAfterLastMarker(thread);
-        
-        // 检查最后一条消息是否是需要自动处理的用户消息
-        const lastMessage = messagesAfterLastMarker.length > 0 ? 
-            messagesAfterLastMarker[messagesAfterLastMarker.length - 1] : null;
-        const shouldAutoProcessLastMessage = lastMessage && 
-            lastMessage.sender === 'user' && 
-            lastMessage.meta?.autoProcess === true;
-        
-        // 检查是否需要执行 initTask
-        const shouldExecuteInitTask = shouldAutoProcessLastMessage || 
-            (messagesAfterLastMarker.length === 0 && agentConfig?.metadata?.initTask);
-        
-        if (messagesAfterLastMarker.length === 0 && agentConfig?.metadata?.bootMessage) {
-            const bootResponse = Response.fromJSON(agentConfig.metadata.bootMessage);
-            await chatProvider.handleNormalResponse(bootResponse, thread, panel, host_utils);
-        }
-
-        if (shouldExecuteInitTask) {
-            const initTask = new Task({
-                name: "InitTask",
-                type: Task.TYPE_ACTION,
-                message: "",
-                meta: {},
-                host_utils,
-                skipUserMessage: true,
-                skipBotMessage: false
-            });
-
-            await chatProvider.handleThread(thread, initTask, panel);
-        }
+        // 处理初始任务
+        await chatProvider.handleInitialTasks(panel, thread, host_utils);
         
         return panel;
     }
 
+    // 注册打开 Markdown 聊天命令
     context.subscriptions.push(
         vscode.commands.registerCommand(`${finalConfig.commandPrefix}.openMarkdown${finalConfig.chatType.charAt(0).toUpperCase() + finalConfig.chatType.slice(1)}`, async (uri) => {
             // If uri is not provided, try to get it from active editor
@@ -390,18 +316,21 @@ function activateChatExtension(context, chatConfig = {}) {
         })
     );
 
+    // 注册打开聊天命令
     context.subscriptions.push(
         vscode.commands.registerCommand(`${finalConfig.commandPrefix}.open${finalConfig.chatType.charAt(0).toUpperCase() + finalConfig.chatType.slice(1)}`, async (chatName, threadId) => {
             await createAndInitChatPanel(threadId, chatName);
         })
     );
 
+    // 注册设置编辑器
     const settingsEditorProvider = new SettingsEditorProvider(threadRepository, agentLoader);
 
     context.subscriptions.push(
         vscode.workspace.registerTextDocumentContentProvider('chat-settings', settingsEditorProvider)
     );
 
+    // 注册打开设置编辑器命令
     context.subscriptions.push(
         vscode.commands.registerCommand(`${finalConfig.commandPrefix}.openSettingsEditor.${finalConfig.chatType}`, async (item) => {
             const threadId = item.id;
@@ -455,7 +384,7 @@ function activateChatExtension(context, chatConfig = {}) {
         })
     );
 
-    // 在 activateChatExtension 函数中添加新的命令注册
+    // 注册从 JSON 创建线程命令
     context.subscriptions.push(
         vscode.commands.registerCommand(`${finalConfig.commandPrefix}.createThreadFromJson.${finalConfig.chatType}`, async (uri) => {
             try {

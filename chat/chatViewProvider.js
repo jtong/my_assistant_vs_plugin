@@ -7,13 +7,120 @@ const companionPluginRegistry = require('../companionPluginRegistry');
 const ThreadProcessor = require('./threadProcessor');
 
 class ChatViewProvider {
-    constructor(extensionUri, threadRepository, messageHandler) {
+    constructor(extensionUri, threadRepository, messageHandler, agentLoader) {
         this._extensionUri = extensionUri;
         this.threadRepository = threadRepository;
         this.messageHandler = messageHandler;
+        this.agentLoader = agentLoader;
         
-        // 为每个 panel 创建独立的 ThreadProcessor，在 resolveWebviewPanel 中初始化
+        // 为每个 panel 创建独立的 ThreadProcessor
         this.threadProcessors = new Map();
+    }
+
+    /**
+     * 设置markdown预览功能
+     */
+    async setupMarkdownPreview(panel, threadId) {
+        const attachment = this.threadRepository.getAttachment(threadId);
+        if (!attachment) return;
+
+        try {
+            const markdownContent = fs.readFileSync(attachment.path, 'utf8');
+            panel.webview.postMessage({
+                type: 'updateMarkdown',
+                content: markdownContent,
+                filePath: attachment.path
+            });
+            
+            // 设置文件监听
+            const fileWatcher = vscode.workspace.createFileSystemWatcher(attachment.path);
+            fileWatcher.onDidChange(async () => {
+                try {
+                    const updatedContent = fs.readFileSync(attachment.path, 'utf8');
+                    panel.webview.postMessage({
+                        type: 'updateMarkdown',
+                        content: updatedContent
+                    });
+                } catch (error) {
+                    console.error('Error reading updated markdown:', error);
+                }
+            });
+            
+            panel.onDidDispose(() => {
+                fileWatcher.dispose();
+            });
+        } catch (error) {
+            console.error('Error reading markdown attachment:', error);
+        }
+    }
+
+    /**
+     * 加载并发送operations到webview
+     */
+    async loadAndSendOperations(panel, thread) {
+        const agentConfig = this.agentLoader.getAgentConfig(thread.agent);
+        const agent = await this.agentLoader.loadAgentForThread(thread);
+        let operations = [];
+
+        // 尝试从agent获取operations
+        if (agent && typeof agent.loadOperations === 'function') {
+            try {
+                operations = await agent.loadOperations(thread) || [];
+            } catch (error) {
+                console.error('Error loading operations from agent:', error);
+                operations = agentConfig.operations || [];
+            }
+        } else {
+            operations = agentConfig.operations || [];
+        }
+
+        // 获取当前线程的设置
+        const currentSettings = this.threadRepository.getThreadSettings(thread.id) || {};
+
+        // 发送 operations 和当前设置到前端
+        panel.webview.postMessage({
+            type: 'loadOperations',
+            operations: operations,
+            currentSettings: currentSettings
+        });
+    }
+
+    /**
+     * 处理初始任务（bootMessage, initTask, autoProcess消息）
+     */
+    async handleInitialTasks(panel, thread, host_utils) {
+        const agentConfig = this.agentLoader.getAgentConfig(thread.agent);
+        const messagesAfterLastMarker = this.threadRepository.getMessagesAfterLastMarker(thread);
+        
+        // 检查最后一条消息是否是需要自动处理的用户消息
+        const lastMessage = messagesAfterLastMarker.length > 0 ? 
+            messagesAfterLastMarker[messagesAfterLastMarker.length - 1] : null;
+        const shouldAutoProcessLastMessage = lastMessage && 
+            lastMessage.sender === 'user' && 
+            lastMessage.meta?.autoProcess === true;
+        
+        // 检查是否需要执行 initTask
+        const shouldExecuteInitTask = shouldAutoProcessLastMessage || 
+            (messagesAfterLastMarker.length === 0 && agentConfig?.metadata?.initTask);
+        
+        if (messagesAfterLastMarker.length === 0 && agentConfig?.metadata?.bootMessage) {
+            const bootResponse = Response.fromJSON(agentConfig.metadata.bootMessage);
+            await this.handleNormalResponse(bootResponse, thread, panel, host_utils);
+        }
+
+        if (shouldExecuteInitTask) {
+            const initTask = new Task({
+                name: "InitTask",
+                type: Task.TYPE_ACTION,
+                message: "",
+                meta: {},
+                host_utils,
+                skipUserMessage: true,
+                skipBotMessage: false
+            });
+
+            await this.handleThread(thread, initTask, panel);
+        }
     }
 
     getWebviewContent(webview, threadId) {
@@ -29,7 +136,7 @@ class ChatViewProvider {
 
         if (agentName) {
             try {
-                const agentConfig = this.messageHandler.agentLoader.getAgentConfig(agentName);
+                const agentConfig = this.agentLoader.getAgentConfig(agentName);
                 enablePreview = agentConfig?.metadata?.enablePreview === true;
             } catch (error) {
                 console.error('Error getting agent config:', error);
@@ -119,7 +226,6 @@ class ChatViewProvider {
         );
 
         // 存储 processor，用于后续调用
-        const panelId = panel.webview.html; // 使用一个唯一标识
         this.threadProcessors.set(panel, processor);
 
         // 清理
@@ -297,7 +403,7 @@ class ChatViewProvider {
         const thread = this.threadRepository.loadThread(threadId);
         let currentSettings = thread.settings || {};
         if (Object.keys(currentSettings).length === 0) {
-            const agentConfig = this.messageHandler.agentLoader.getAgentConfig(this.threadRepository.getThread(threadId).agent);
+            const agentConfig = this.agentLoader.getAgentConfig(this.threadRepository.getThread(threadId).agent);
             currentSettings = { ...agentConfig.settings };
         }
         currentSettings[settingKey] = value;
