@@ -4,6 +4,10 @@ const path = require('path');
 
 async function gotoPathCommand(extensionContext) {
     try {
+        // 获取 debug 模式配置
+        const config = vscode.workspace.getConfiguration('myAssistant');
+        const debugMode = config.get('debugMode', false);
+
         // 获取当前工作区根路径
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (!workspaceFolders) {
@@ -49,7 +53,6 @@ async function gotoPathCommand(extensionContext) {
         const AgentLoader = require('../agentLoader');
         const ChatThreadRepository = require('../chat/chatThreadRepository');
         
-        const config = vscode.workspace.getConfiguration('myAssistant');
         const settings = {
             apiKey: config.get('apiKey'),
             agentRepositoryUrl: config.get('agentRepositoryUrl')
@@ -79,8 +82,28 @@ async function gotoPathCommand(extensionContext) {
         // 刷新 internal chat 列表
         await vscode.commands.executeCommand('myAssistant.refreshInternalChatList');
 
-        // 打开这个 chat，让 chatViewProvider 处理后续的 agent 调用
-        await vscode.commands.executeCommand('myAssistant.openInternalChat', chatName, newThreadId);
+        if (debugMode) {
+            // Debug 模式：打开 UI
+            await vscode.commands.executeCommand('myAssistant.openInternalChat', chatName, newThreadId);
+        } else {
+            // 非 Debug 模式：后台执行 InitTask
+            const Task = require('ai-agent-response').Task;
+            const initTask = new Task({
+                name: "InitTask",
+                type: Task.TYPE_ACTION,
+                message: "",
+                meta: {},
+                skipUserMessage: true,
+                skipBotMessage: false
+            });
+
+            // 调用后台执行命令
+            await vscode.commands.executeCommand(
+                'myAssistant.executeTaskInBackground.internalChat',
+                newThreadId,
+                initTask
+            );
+        }
 
     } catch (error) {
         console.error('Goto path command error:', error);

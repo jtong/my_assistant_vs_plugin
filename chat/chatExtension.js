@@ -323,6 +323,96 @@ function activateChatExtension(context, chatConfig = {}) {
         })
     );
 
+    // 注册后台执行任务命令
+    context.subscriptions.push(
+        vscode.commands.registerCommand(`${finalConfig.commandPrefix}.executeTaskInBackground.${finalConfig.chatType}`, async (threadId, task) => {
+            let hiddenPanel = null;
+            
+            try {
+                const thread = threadRepository.getThread(threadId);
+                if (!thread) {
+                    throw new Error(`Thread not found: ${threadId}`);
+                }
+
+                // 获取所有伴生插件的扩展路径
+                const companionExtensionPaths = companionPluginRegistry.getAllExtensionPaths();
+                const localResourceRoots = [
+                    vscode.Uri.file(path.join(context.extensionPath)),
+                    vscode.Uri.file(projectRoot),
+                    ...companionExtensionPaths.map(p => vscode.Uri.file(p))
+                ];
+
+                // 创建一个隐藏的 webview panel 用于生成正确的 URI
+                hiddenPanel = vscode.window.createWebviewPanel(
+                    'chatViewBackground',
+                    'Background Task',
+                    { viewColumn: vscode.ViewColumn.One, preserveFocus: true },
+                    {
+                        enableScripts: true,
+                        retainContextWhenHidden: true,
+                        localResourceRoots: localResourceRoots
+                    }
+                );
+
+                // 立即隐藏 panel（不显示给用户）
+                // 注意：panel 仍然存在，只是不可见，可以正常使用 asWebviewUri
+                hiddenPanel.webview.html = '<html><body>Background task running...</body></html>';
+
+                // 创建真实的 host_utils，使用隐藏 panel 的 webview
+                const backgroundHostUtils = createHostUtils(hiddenPanel, threadRepository);
+                
+                // 将 host_utils 附加到 task
+                task.host_utils = backgroundHostUtils;
+
+                // 创建一个 ThreadProcessor 实例来处理任务
+                const ThreadProcessor = require('./threadProcessor');
+                const processor = new ThreadProcessor(
+                    threadRepository,
+                    messageHandler,
+                    {
+                        onBotMessageStart: (message, isStreaming) => {
+                            console.log(`[Background] Bot message started: ${message.id}`);
+                        },
+                        onBotMessageAppend: (messageId, text) => {
+                            // 后台执行，不需要 UI 更新
+                        },
+                        onBotMessageComplete: (message) => {
+                            console.log(`[Background] Bot message completed: ${message.id}`);
+                        },
+                        onAvailableTasksAdded: (messageId, availableTasks) => {
+                            console.log(`[Background] Available tasks added: ${availableTasks.length}`);
+                        },
+                        onUserMessageAdded: (userMessage) => {
+                            console.log(`[Background] User message added: ${userMessage.id}`);
+                        },
+                        onError: (errorMessage, error) => {
+                            console.error(`[Background] Error:`, error);
+                            vscode.window.showErrorMessage(`Background task failed: ${error.message}`);
+                        },
+                        onProcessingComplete: (threadId) => {
+                            console.log(`[Background] Processing complete for thread: ${threadId}`);
+                            vscode.window.showInformationMessage('Background task completed successfully');
+                        }
+                    }
+                );
+
+                // 执行任务
+                await processor.handleThread(thread, task);
+                
+                return { success: true, threadId: thread.id };
+            } catch (error) {
+                console.error('Background task execution error:', error);
+                vscode.window.showErrorMessage(`Background task failed: ${error.message}`);
+                return { success: false, error: error.message };
+            } finally {
+                // 任务完成后，销毁隐藏的 panel
+                if (hiddenPanel) {
+                    hiddenPanel.dispose();
+                }
+            }
+        })
+    );
+
     // 注册设置编辑器
     const settingsEditorProvider = new SettingsEditorProvider(threadRepository, agentLoader);
 

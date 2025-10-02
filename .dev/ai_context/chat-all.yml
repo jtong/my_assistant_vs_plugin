@@ -39,17 +39,20 @@ read_only_references:
     filters:
       - filter_in:
         - "coding_spec.md"
-  # - $ref: "/Users/jtong/develop/education/homework-lab/java_microservice/prompt-builder-projects/personal_knowledge/read_only_reference/format/source_code.yml#file_patch"      
+  - $ref: "/Users/jtong/develop/education/homework-lab/java_microservice/prompt-builder-projects/personal_knowledge/read_only_reference/format/source_code.yml#file_patch"      
 input:
   git_clone_to_path: .ai_helper/prompt_builder/git_repo
   instruction: |
     ## 任务约束
     
     - 分清webview的代码和插件的代码和agent app的代码
+    - 按照ai_gen:file_patch输出，严格遵守标签规范。
 
     ## 任务
 
-    我希望 chat/chatExtension.js 里部分逻辑要放到 chat/chatViewProvider.js 中提升内聚性
+    我希望 ex command 中的goto path和text gen支持一个debug模式，通过setting来设置，如果是debug模式，才打开消息，否则直接执行任务。
+    在后台执行文本生成任务，不打开 UI 应该是个专属的command，在chat extension里注册，Ex里只需要调用就可以了
+
     
 
 output:     
@@ -58,5 +61,5 @@ output:
     backup_path: .ai_helper/prompt_builder/output/backup
 
 # 我希望 在webview的chat 窗口里加入搜索功能，可以跳到对应的文本对应的位置，如果多处匹配，可以上下跳转    
-# 我希望 ex command 中的goto path和text gen支持一个debug模式，通过setting来设置，如果是debug模式，才打开消息，否则直接执行任务。
-# - 按照ai_gen:file_patch输出，严格遵守标签规范。
+# 
+# 

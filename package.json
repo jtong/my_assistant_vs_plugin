@@ -89,6 +89,11 @@
                     "additionalProperties": {
                         "type": "string"
                     }
+                },
+                "myAssistant.debugMode": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable debug mode to show UI when executing goto path and text generation commands. When disabled, commands run in background."
                 }
             }
         },

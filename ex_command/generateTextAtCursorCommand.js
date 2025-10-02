@@ -64,6 +64,9 @@ async function generateTextAtCursorCommand(context) {
             apiKey: config.get('apiKey'),
             agentRepositoryUrl: config.get('agentRepositoryUrl')
         };
+                // 获取 debug 模式配置
+        const debugMode = config.get('debugMode', false);
+
         
         const agentLoader = new AgentLoader(agentConfigPath, settings);
         const threadRepository = new ChatThreadRepository(
@@ -94,12 +97,32 @@ async function generateTextAtCursorCommand(context) {
         };
         threadRepository.addMessage(newThread, userMessage);
 
-        // 显示进度提示
-        vscode.window.showInformationMessage('正在生成文本，请稍候...');
-
-        // 刷新列表并打开 chat，让 Agent 自动处理后续流程
+        // 刷新列表
         await vscode.commands.executeCommand('myAssistant.refreshInternalChatList');
-        await vscode.commands.executeCommand('myAssistant.openInternalChat', chatName, newThreadId);
+
+        if (debugMode) {
+            // Debug 模式：显示进度提示并打开 UI
+            vscode.window.showInformationMessage('正在生成文本，请稍候...');
+            await vscode.commands.executeCommand('myAssistant.openInternalChat', chatName, newThreadId);
+        } else {
+            // 非 Debug 模式：后台执行 InitTask
+            const Task = require('ai-agent-response').Task;
+            const initTask = new Task({
+                name: "InitTask",
+                type: Task.TYPE_ACTION,
+                message: "",
+                meta: {},
+                skipUserMessage: true,
+                skipBotMessage: false
+            });
+
+            // 调用后台执行命令
+            await vscode.commands.executeCommand(
+                'myAssistant.executeTaskInBackground.internalChat',
+                newThreadId,
+                initTask
+            );
+        }
 
     } catch (error) {
         console.error('文本生成命令错误:', error);
