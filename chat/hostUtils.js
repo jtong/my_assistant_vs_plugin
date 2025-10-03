@@ -36,5 +36,37 @@ function createHostUtils(panel, threadRepository) {
     };
 }
 
+function createBackgroundHostUtils(threadRepository) {
+    return {
+        getConfig: () => {
+            const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+            const projectRoot = workspaceFolder ? workspaceFolder.uri.fsPath : '';
+            const projectName = workspaceFolder ? workspaceFolder.name : '';
 
-module.exports = createHostUtils;
+            const aiHelperRoot = path.join(projectRoot, '.ai_helper');
+            const chatWorkingSpaceRoot = path.join(aiHelperRoot, 'agent', 'memory_repo', 'chat_working_space');
+
+            return {
+                projectRoot: projectRoot,
+                projectName: projectName,
+                aiHelperRoot: aiHelperRoot,
+                chatWorkingSpaceRoot: chatWorkingSpaceRoot,
+            };
+        },
+        convertToWebviewUri: (absolutePath) => {
+            throw new Error('convertToWebviewUri is not available in background mode. This function requires a webview panel.');
+        },
+        getImageUri: (threadId, imagePath) => {
+            throw new Error('getImageUri is not available in background mode. This function requires a webview panel.');
+        },
+        threadRepository: threadRepository,
+        postMessage: (message) => {
+            // do nothing
+        }
+    };
+}
+
+module.exports = {
+    createHostUtils,
+    createBackgroundHostUtils
+};

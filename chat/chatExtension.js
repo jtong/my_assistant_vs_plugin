@@ -9,7 +9,7 @@ const ChatThreadRepository = require('./chatThreadRepository');
 const SettingsEditorProvider = require('./settingsEditorProvider');
 const fs = require('fs');
 const yaml = require('js-yaml');
-const createHostUtils = require('./hostUtils');
+const { createHostUtils, createBackgroundHostUtils } = require('./hostUtils');
 const companionPluginRegistry = require('../companionPluginRegistry');
 // 存储打开的聊天面板
 const openChatPanels = {};
@@ -326,40 +326,14 @@ function activateChatExtension(context, chatConfig = {}) {
     // 注册后台执行任务命令
     context.subscriptions.push(
         vscode.commands.registerCommand(`${finalConfig.commandPrefix}.executeTaskInBackground.${finalConfig.chatType}`, async (threadId, task) => {
-            let hiddenPanel = null;
-            
             try {
                 const thread = threadRepository.getThread(threadId);
                 if (!thread) {
                     throw new Error(`Thread not found: ${threadId}`);
                 }
 
-                // 获取所有伴生插件的扩展路径
-                const companionExtensionPaths = companionPluginRegistry.getAllExtensionPaths();
-                const localResourceRoots = [
-                    vscode.Uri.file(path.join(context.extensionPath)),
-                    vscode.Uri.file(projectRoot),
-                    ...companionExtensionPaths.map(p => vscode.Uri.file(p))
-                ];
-
-                // 创建一个隐藏的 webview panel 用于生成正确的 URI
-                hiddenPanel = vscode.window.createWebviewPanel(
-                    'chatViewBackground',
-                    'Background Task',
-                    { viewColumn: vscode.ViewColumn.One, preserveFocus: true },
-                    {
-                        enableScripts: true,
-                        retainContextWhenHidden: true,
-                        localResourceRoots: localResourceRoots
-                    }
-                );
-
-                // 立即隐藏 panel（不显示给用户）
-                // 注意：panel 仍然存在，只是不可见，可以正常使用 asWebviewUri
-                hiddenPanel.webview.html = '<html><body>Background task running...</body></html>';
-
-                // 创建真实的 host_utils，使用隐藏 panel 的 webview
-                const backgroundHostUtils = createHostUtils(hiddenPanel, threadRepository);
+                // 创建后台模式的 host_utils（不需要 webview）
+                const backgroundHostUtils = createBackgroundHostUtils(threadRepository);
                 
                 // 将 host_utils 附加到 task
                 task.host_utils = backgroundHostUtils;
@@ -404,11 +378,6 @@ function activateChatExtension(context, chatConfig = {}) {
                 console.error('Background task execution error:', error);
                 vscode.window.showErrorMessage(`Background task failed: ${error.message}`);
                 return { success: false, error: error.message };
-            } finally {
-                // 任务完成后，销毁隐藏的 panel
-                if (hiddenPanel) {
-                    hiddenPanel.dispose();
-                }
             }
         })
     );

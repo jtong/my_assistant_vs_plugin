@@ -50,9 +50,7 @@ input:
 
     ## 任务
 
-    我希望 ex command 中的goto path和text gen支持一个debug模式，通过setting来设置，如果是debug模式，才打开消息，否则直接执行任务。
-    在后台执行文本生成任务，不打开 UI 应该是个专属的command，在chat extension里注册，Ex里只需要调用就可以了
-
+    我希望 ex command 中的goto path和text gen 非debug模式的时候，不要弹出个webview，那么原来需要webview的函数直接抛出异常好了。避免用户调用。
     
 
 output:     
