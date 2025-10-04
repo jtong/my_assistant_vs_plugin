@@ -326,6 +326,9 @@ function activateChatExtension(context, chatConfig = {}) {
     // 注册后台执行任务命令
     context.subscriptions.push(
         vscode.commands.registerCommand(`${finalConfig.commandPrefix}.executeTaskInBackground.${finalConfig.chatType}`, async (threadId, task) => {
+            const statusMessage = vscode.window.setStatusBarMessage('$(sync~spin) Executing background task...');
+            vscode.window.showInformationMessage('Start executing background task...');
+
             try {
                 const thread = threadRepository.getThread(threadId);
                 if (!thread) {
@@ -378,6 +381,9 @@ function activateChatExtension(context, chatConfig = {}) {
                 console.error('Background task execution error:', error);
                 vscode.window.showErrorMessage(`Background task failed: ${error.message}`);
                 return { success: false, error: error.message };
+            } finally {
+                // 任务完成后自动隐藏状态消息
+                statusMessage.dispose();
             }
         })
     );
