@@ -97,6 +97,15 @@ class ThreadProcessor {
 
         this.threadRepository.addMessage(thread, botMessage);
 
+        await this.updateMessageText(thread, botMessage, response);
+
+        return botMessage;
+    }
+
+    /**
+     * 更新消息文本
+     */
+    async updateMessageText(thread, botMessage, response) {
         // 重置停止标志
         this.stopGenerationFlags.delete(thread.id);
 
@@ -136,8 +145,6 @@ class ThreadProcessor {
 
         // 通知消息完成
         this.callbacks.onBotMessageComplete(botMessage);
-
-        return botMessage;
     }
 
     /**

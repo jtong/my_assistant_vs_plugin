@@ -17,6 +17,7 @@
 - [ ] markdown的文档
 - [x] 支持转字符串的命令
 - [ ] operation并不是setting里有值了都会用
+- [ ] updateLastMessage，如果要更新text，就去更新text
 
 ## known issue
 
