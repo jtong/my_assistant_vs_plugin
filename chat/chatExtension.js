@@ -347,8 +347,8 @@ function activateChatExtension(context, chatConfig = {}) {
                     threadRepository,
                     messageHandler,
                     {
-                        onBotMessageStart: (message, isStreaming) => {
-                            console.log(`[Background] Bot message started: ${message.id}`);
+                        onBotMessageAdded: (message, isStreaming) => {
+                            console.log(`[Background] Bot message added: ${message.id}`);
                         },
                         onBotMessageAppend: (messageId, text) => {
                             // 后台执行，不需要 UI 更新

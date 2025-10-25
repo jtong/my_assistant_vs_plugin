@@ -13,7 +13,7 @@ class ThreadProcessor {
         
         // 默认的空回调函数
         this.callbacks = {
-            onBotMessageStart: callbacks.onBotMessageStart || (() => {}),
+            onBotMessageAdded: callbacks.onBotMessageAdded || (() => {}),
             onBotMessageAppend: callbacks.onBotMessageAppend || (() => {}),
             onBotMessageComplete: callbacks.onBotMessageComplete || (() => {}),
             onAvailableTasksAdded: callbacks.onAvailableTasksAdded || (() => {}),
@@ -36,6 +36,11 @@ class ThreadProcessor {
                     if (response.hasAvailableTasks()) {
                         const botMessage = this.threadRepository.getMessageById(thread.id, task.meta.messageId);
                         this.handleAvailableTasks(botMessage, response.getAvailableTasks());
+                    }
+
+                    if(response.shouldUpdateLastMessage()){
+                        const botMessage = this.threadRepository.getMessageById(thread.id, task.meta.messageId);
+                        this.updateMessageText(updatedThread, botMessage, response);
                     }
 
                     await this.handleNextTasks(response, updatedThread, task.host_utils, task.meta.messageId);
@@ -87,7 +92,7 @@ class ThreadProcessor {
         let botMessage = {
             id: 'msg_' + Date.now(),
             sender: 'bot',
-            text: response.getFullMessage() || '',
+            text: '',
             isHtml: response.isHtml(),
             timestamp: Date.now(),
             threadId: thread.id,
@@ -96,6 +101,9 @@ class ThreadProcessor {
         };
 
         this.threadRepository.addMessage(thread, botMessage);
+
+        // 通知消息添加
+        this.callbacks.onBotMessageAdded(botMessage, response.isStream());
 
         await this.updateMessageText(thread, botMessage, response);
 
@@ -109,8 +117,8 @@ class ThreadProcessor {
         // 重置停止标志
         this.stopGenerationFlags.delete(thread.id);
 
-        // 通知消息开始
-        this.callbacks.onBotMessageStart(botMessage, response.isStream());
+        botMessage.text += response.getFullMessage();
+        this.callbacks.onBotMessageAppend(botMessage.id, response.getFullMessage());
 
         if (response.isStream()) {
             try {

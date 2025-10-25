@@ -181,7 +181,7 @@ class ChatViewProvider {
             this.threadRepository, 
             this.messageHandler,
             {
-                onBotMessageStart: (message, isStreaming) => {
+                onBotMessageAdded: (message, isStreaming) => {
                     panel.webview.postMessage({
                         type: 'addBotMessage',
                         message: message,
